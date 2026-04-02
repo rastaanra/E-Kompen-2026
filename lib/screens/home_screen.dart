@@ -12,11 +12,11 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _primaryRed, // Biar background di belakang header ikut merah
+      backgroundColor: _primaryRed, 
       body: Column(
         children: [
           _buildHeader(),
-          // Expanded cream area dengan rounded top corners
+         
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
