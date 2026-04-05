@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/login/login_screen.dart';
 
 void main() {
   runApp(const KompenApp());
@@ -11,12 +11,12 @@ class KompenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kompen Mahasiswa',
+      title: 'E-Kompen JTI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
       ),
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }

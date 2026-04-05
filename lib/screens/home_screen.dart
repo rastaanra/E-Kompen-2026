@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,11 +13,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _primaryRed, 
+      backgroundColor: _primaryRed,
       body: Column(
         children: [
-          _buildHeader(),
-         
+          _buildHeader(context),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -55,30 +55,32 @@ class HomeScreen extends StatelessWidget {
   }
 
   // ── Header merah
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       color: _primaryRed,
       padding: const EdgeInsets.only(top: 52, left: 20, right: 20, bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Logo + nama app
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: const [
-                  Icon(Icons.school, color: Colors.white, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    'E-Kompen JTI',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+            children: const [
+              Icon(Icons.school, color: Colors.white, size: 22),
+              SizedBox(width: 8),
+              Text(
+                'E-Kompen JTI',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
               ),
+            ],
+          ),
+
+          // Notif + Logout
+          Row(
+            children: [
               Stack(
                 children: [
                   const Icon(
@@ -99,6 +101,20 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                child: const Icon(
+                  Icons.logout,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
             ],
           ),
@@ -130,10 +146,7 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(height: 6),
                 Text(
                   'NIM: 244107060064',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _textGrey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: _textGrey),
                 ),
               ],
             ),
@@ -142,7 +155,7 @@ class HomeScreen extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Color.fromRGBO(183, 28, 28, 0.15),
+              color: const Color.fromRGBO(183, 28, 28, 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
