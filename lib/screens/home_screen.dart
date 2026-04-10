@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login/login_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -48,13 +48,13 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildBottomNav(),
+          _buildBottomNav(context),
         ],
       ),
     );
   }
 
-  // ── Header merah
+  // ── Header merah (tanpa logout)
   Widget _buildHeader(BuildContext context) {
     return Container(
       color: _primaryRed,
@@ -62,9 +62,8 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo + nama app
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.school, color: Colors.white, size: 22),
               SizedBox(width: 8),
               Text(
@@ -77,43 +76,24 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-
-          // Notif + Logout
-          Row(
+          // Hanya notifikasi, tanpa logout
+          Stack(
             children: [
-              Stack(
-                children: [
-                  const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.yellow,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
+              const Icon(
+                Icons.notifications_outlined,
+                color: Colors.white,
+                size: 26,
               ),
-              const SizedBox(width: 16),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  );
-                },
-                child: const Icon(
-                  Icons.logout,
-                  color: Colors.white,
-                  size: 22,
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.yellow,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ],
@@ -123,7 +103,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Greeting
   Widget _buildGreetingCard() {
     return Container(
       width: double.infinity,
@@ -169,7 +148,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Status Kompen
   Widget _buildStatusKompen() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -224,7 +202,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Rekapitulasi
   Widget _buildRekapitulasiSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,8 +260,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Bottom Nav
-  Widget _buildBottomNav() {
+  // ── Bottom Nav dengan navigasi ke Profil
+  Widget _buildBottomNav(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -303,7 +280,16 @@ class HomeScreen extends StatelessWidget {
           _buildNavItem(icon: Icons.home, label: 'Home', isActive: true),
           _buildNavItem(icon: Icons.list_alt_outlined, label: 'Pengajuan'),
           _buildNavItem(icon: Icons.check_circle_outline, label: 'Tracking'),
-          _buildNavItem(icon: Icons.person_outline, label: 'Profil'),
+          _buildNavItem(
+            icon: Icons.person_outline,
+            label: 'Profil',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -313,33 +299,37 @@ class HomeScreen extends StatelessWidget {
     required IconData icon,
     required String label,
     bool isActive = false,
+    VoidCallback? onTap,
   }) {
     final color = isActive ? _primaryRed : _textGrey;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            color: color,
-          ),
-        ),
-        if (isActive) ...[
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
           const SizedBox(height: 3),
-          Container(
-            width: 4,
-            height: 4,
-            decoration: const BoxDecoration(
-              color: _primaryRed,
-              shape: BoxShape.circle,
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              color: color,
             ),
           ),
+          if (isActive) ...[
+            const SizedBox(height: 3),
+            Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                color: _primaryRed,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

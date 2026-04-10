@@ -371,7 +371,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
-                                'Login Sebagai:',
+                                'Login sebagai:',
                                 style:
                                     TextStyle(fontSize: 12, color: _textGrey),
                               ),
