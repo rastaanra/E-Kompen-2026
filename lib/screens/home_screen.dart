@@ -54,7 +54,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // ── Header merah (tanpa logout)
+  // ── Header merah 
   Widget _buildHeader(BuildContext context) {
     return Container(
       color: _primaryRed,
