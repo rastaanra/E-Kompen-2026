@@ -88,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Header (notif saja, tanpa logout)
+  // ── Header (notif saja tanpa logout)
   Widget _buildHeader(BuildContext context) {
     return Container(
       color: _primaryRed,
