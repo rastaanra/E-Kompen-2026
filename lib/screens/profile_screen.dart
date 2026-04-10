@@ -490,7 +490,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Bottom Nav (Profil aktif)
+  // ── Bottom Nav /Profil aktif
   Widget _buildBottomNav(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
