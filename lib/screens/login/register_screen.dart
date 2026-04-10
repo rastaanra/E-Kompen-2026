@@ -213,7 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // No Telp
+                      // No Telepon
                       _buildField(
                         controller: _telpController,
                         hint: 'Nomor Telepon',
