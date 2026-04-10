@@ -88,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Header (notif saja tanpa logout)
+  // ── Header 
   Widget _buildHeader(BuildContext context) {
     return Container(
       color: _primaryRed,
@@ -457,7 +457,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Tombol logout → ke LoginScreen, hapus semua route
+  // ── Tombol logout → ke LoginScreen
   Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
