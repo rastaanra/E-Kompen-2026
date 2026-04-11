@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'login/login_screen.dart';
+import 'home_screen.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_nav.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -15,7 +18,7 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          _buildHeader(context),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -25,9 +28,11 @@ class ProfileScreen extends StatelessWidget {
                   topRight: Radius.circular(35),
                 ),
               ),
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+              child: ScrollConfiguration(
+                behavior: const ScrollBehavior().copyWith(overscroll: false),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -79,62 +84,26 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                   ],
                 ),
+                ),
               ),
             ),
           ),
-          _buildBottomNav(context),
+          AppBottomNav(
+            activeTab: NavTab.profil,
+            onTabSelected: (tab) {
+              if (tab == NavTab.home) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomeScreen()),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
   }
 
-  // ── Header 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: _primaryRed,
-      padding: const EdgeInsets.only(top: 52, left: 20, right: 20, bottom: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.school, color: Colors.white, size: 22),
-              SizedBox(width: 8),
-              Text(
-                'E-Kompen JTI',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 26,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.yellow,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   // ── Kartu profil utama
   Widget _buildProfileCard() {
@@ -457,17 +426,83 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Tombol logout → ke LoginScreen
+  // Tombol logout 
   Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
+        onPressed: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'Keluar dari Akun',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _textDark,
+                ),
+              ),
+              content: const Text(
+                'Yakin keluar dari akun?',
+                style: TextStyle(fontSize: 14, color: _textGrey),
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              actions: [
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: _primaryRed),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: const Text(
+                    'Tidak',
+                    style: TextStyle(
+                      color: _primaryRed,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryRed,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Ya',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
+          if (confirm == true && context.mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
         },
         icon: const Icon(Icons.logout, color: Colors.white, size: 18),
         label: const Text(
@@ -490,77 +525,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Bottom Nav /Profil aktif
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.08),
-            blurRadius: 12,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(
-            icon: Icons.home_outlined,
-            label: 'Home',
-            onTap: () => Navigator.pop(context),
-          ),
-          _buildNavItem(icon: Icons.list_alt_outlined, label: 'Pengajuan'),
-          _buildNavItem(icon: Icons.check_circle_outline, label: 'Tracking'),
-          _buildNavItem(
-            icon: Icons.person,
-            label: 'Profil',
-            isActive: true,
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    final color = isActive ? _primaryRed : _textGrey;
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-              color: color,
-            ),
-          ),
-          if (isActive) ...[
-            const SizedBox(height: 3),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: _primaryRed,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 // ── Model data baris info

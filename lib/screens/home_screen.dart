@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'profile_screen.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,7 +18,7 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          _buildHeader(context),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -48,55 +50,26 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildBottomNav(context),
-        ],
-      ),
-    );
-  }
-
-  // ── Header merah 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: _primaryRed,
-      padding: const EdgeInsets.only(top: 52, left: 20, right: 20, bottom: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.school, color: Colors.white, size: 22),
-              SizedBox(width: 8),
-              Text(
-                'E-Kompen JTI',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          // Hanya notifikasi, tanpa logout
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 26,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.yellow,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
+          AppBottomNav(
+            activeTab: NavTab.home,
+            onTabSelected: (tab) {
+              switch (tab) {
+                case NavTab.profil:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                  break;
+                case NavTab.pengajuan:
+                  // Navigator.push(context, MaterialPageRoute(builder: (_) => const PengajuanScreen()));
+                  break;
+                case NavTab.tracking:
+                  // Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackingScreen()));
+                  break;
+                case NavTab.home:
+                  break;
+              }
+            },
           ),
         ],
       ),
@@ -110,10 +83,10 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Halo, Sally Savista!',
                   style: TextStyle(
@@ -130,18 +103,109 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(183, 28, 28, 0.15),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.description_outlined,
-              color: _primaryRed,
-              size: 36,
-            ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(183, 28, 28, 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              Positioned(
+                top: -8,
+                left: 6,
+                child: Container(
+                  width: 52,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(7),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: List.generate(5, (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Container(
+                          height: 4,
+                          width: i == 0 ? 32 : i == 2 ? 24 : 28,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0E0E0),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      )),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 4,
+                left: 28,
+                child: Container(
+                  width: 52,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(7),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: List.generate(5, (i) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Container(
+                          height: 4,
+                          width: i == 0 ? 32 : i == 2 ? 20 : 26,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0E0E0),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      )),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -6,
+                right: -4,
+                child: Container(
+                  width: 26,
+                  height: 26,
+                  decoration: const BoxDecoration(
+                    color: _primaryRed,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 14,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -154,11 +218,11 @@ class HomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color.fromRGBO(0, 0, 0, 0.05),
+            color: Color.fromRGBO(0, 0, 0, 0.05),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -255,79 +319,6 @@ class HomeScreen extends StatelessWidget {
               color: _textDark,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Nav dengan navigasi ke Profil
-  Widget _buildBottomNav(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.08),
-            blurRadius: 12,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(icon: Icons.home, label: 'Home', isActive: true),
-          _buildNavItem(icon: Icons.list_alt_outlined, label: 'Pengajuan'),
-          _buildNavItem(icon: Icons.check_circle_outline, label: 'Tracking'),
-          _buildNavItem(
-            icon: Icons.person_outline,
-            label: 'Profil',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    final color = isActive ? _primaryRed : _textGrey;
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-              color: color,
-            ),
-          ),
-          if (isActive) ...[
-            const SizedBox(height: 3),
-            Container(
-              width: 4,
-              height: 4,
-              decoration: const BoxDecoration(
-                color: _primaryRed,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
         ],
       ),
     );
