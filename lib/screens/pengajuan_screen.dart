@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'home_screen.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -111,7 +112,7 @@ class _State extends State<PengajuanKompenScreen> with SingleTickerProviderState
             ),
           ),
           AppBottomNav(
-            activeTab: NavTab.kompen,
+            activeTab: NavTab.pengajuan,
             onTabSelected: (t) {
               if (t == NavTab.home) Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => const HomeScreen()));
