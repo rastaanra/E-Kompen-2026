@@ -16,7 +16,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
 
-  String _inputType = 'email'; // 'email' atau 'phone'
+  String _inputType = 'email'; // 'email' atau 'no telepon'
 
   @override
   void dispose() {
