@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
                   );
                   break;
                 case NavTab.pengajuan:
-                  // Navigator.push(context, MaterialPageRoute(builder: (_) => const PengajuanScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PengajuanScreen()));
                   break;
                 case NavTab.tracking:
                   // Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackingScreen()));
