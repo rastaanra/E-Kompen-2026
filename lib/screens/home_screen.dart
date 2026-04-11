@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'profile_screen.dart';
+import 'pengajuan_screen.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
 
@@ -61,8 +62,11 @@ class HomeScreen extends StatelessWidget {
                   );
                   break;
                 case NavTab.pengajuan:
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PengajuanScreen()));
-                  break;
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (_) => const PengajuanScreen()), 
+                  );
+                break;
                 case NavTab.tracking:
                   // Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackingScreen()));
                   break;
