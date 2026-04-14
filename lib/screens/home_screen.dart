@@ -3,6 +3,7 @@ import 'profile_screen.dart';
 import 'pengajuan_screen.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'tracking_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -68,7 +69,10 @@ class HomeScreen extends StatelessWidget {
                   );
                 break;
                 case NavTab.tracking:
-                  // Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackingScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TrackingListScreen()),
+                  );
                   break;
                 case NavTab.home:
                   break;
