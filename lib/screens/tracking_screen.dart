@@ -255,126 +255,137 @@ class TrackingScreen extends StatelessWidget {
                           );
                         }
 
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Dot dengan ring putih + garis nyambung
-                            SizedBox(
-                              width: 40,
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    margin: const EdgeInsets.only(top: 10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: isDone
-                                              ? _primaryRed.withOpacity(0.15)
-                                              : Colors.black.withOpacity(0.06),
-                                          blurRadius: 6,
-                                          spreadRadius: 1,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Center(
-                                      child: Container(
-                                        width: 26,
-                                        height: 26,
-                                        decoration: BoxDecoration(
-                                          color: isDone
-                                              ? _primaryRed
-                                              : isActive
-                                                  ? Colors.white
-                                                  : const Color(0xFFE0E0E0),
-                                          shape: BoxShape.circle,
-                                          border: isActive
-                                              ? Border.all(color: _primaryRed, width: 2.5)
-                                              : null,
-                                        ),
-                                        child: isDone
-                                            ? const Icon(Icons.check, color: Colors.white, size: 13)
-                                            : isActive
-                                                ? Center(
-                                                    child: Container(
-                                                      width: 9,
-                                                      height: 9,
-                                                      decoration: const BoxDecoration(
-                                                        color: _primaryRed,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                    ),
-                                                  )
-                                                : null,
-                                      ),
-                                    ),
-                                  ),
-                                  if (!isLast)
-                                    Container(
-                                      width: 2,
-                                      height: 52,
-                                      color: isDone
-                                          ? _primaryRed.withOpacity(0.2)
-                                          : const Color(0xFFE0E0E0),
-                                    ),
-                                ],
-                              ),
-                            ),
-
-                            // Card konten
-                            Expanded(
-                              child: Container(
-                                margin: const EdgeInsets.only(left: 8, top: 6, bottom: 6),
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: isActive
-                                      ? Border.all(color: _primaryRed.withOpacity(0.3))
-                                      : null,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color.fromRGBO(0, 0, 0, 0.04),
-                                      blurRadius: 6,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
+                        // ── FIX: IntrinsicHeight + Expanded pada garis
+                        // IntrinsicHeight bikin Column kiri tau tinggi card kanan,
+                        // lalu Expanded pada garis mengisi PERSIS dari bawah lingkaran
+                        // sampai ujung bawah card — tidak ada jarak sama sekali.
+                        return IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ── Kolom kiri: lingkaran + garis nyambung
+                              SizedBox(
+                                width: 40,
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      status['title'],
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                        color: isActive ? _primaryRed : _textDark,
+                                    // Lingkaran (tidak pakai margin top lagi)
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: isDone
+                                                ? _primaryRed.withOpacity(0.15)
+                                                : Colors.black.withOpacity(0.06),
+                                            blurRadius: 6,
+                                            spreadRadius: 1,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Container(
+                                          width: 26,
+                                          height: 26,
+                                          decoration: BoxDecoration(
+                                            color: isDone
+                                                ? _primaryRed
+                                                : isActive
+                                                    ? Colors.white
+                                                    : const Color(0xFFE0E0E0),
+                                            shape: BoxShape.circle,
+                                            border: isActive
+                                                ? Border.all(color: _primaryRed, width: 2.5)
+                                                : null,
+                                          ),
+                                          child: isDone
+                                              ? const Icon(Icons.check, color: Colors.white, size: 13)
+                                              : isActive
+                                                  ? Center(
+                                                      child: Container(
+                                                        width: 9,
+                                                        height: 9,
+                                                        decoration: const BoxDecoration(
+                                                          color: _primaryRed,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  : null,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      status['subtitle'],
-                                      style: const TextStyle(fontSize: 12, color: _textGrey),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.access_time, size: 12, color: _textGrey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          status['date'],
-                                          style: const TextStyle(fontSize: 11, color: _textGrey),
+
+                                    // Garis: Expanded = mengisi sisa tinggi IntrinsicHeight
+                                    // sehingga garis persis nyambung dari bawah lingkaran
+                                    // sampai bawah card konten di sebelahnya
+                                    if (!isLast)
+                                      Expanded(
+                                        child: Container(
+                                          width: 2,
+                                          color: isDone
+                                              ? _primaryRed.withOpacity(0.25)
+                                              : const Color(0xFFE0E0E0),
                                         ),
-                                      ],
-                                    ),
+                                      ),
                                   ],
                                 ),
                               ),
-                            ),
-                          ],
+
+                              // ── Kolom kanan: card konten
+                              Expanded(
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 8, top: 6, bottom: 6),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: isActive
+                                        ? Border.all(color: _primaryRed.withOpacity(0.3))
+                                        : null,
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color.fromRGBO(0, 0, 0, 0.04),
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        status['title'],
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: isActive ? _primaryRed : _textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        status['subtitle'],
+                                        style: const TextStyle(fontSize: 12, color: _textGrey),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.access_time, size: 12, color: _textGrey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            status['date'],
+                                            style: const TextStyle(fontSize: 11, color: _textGrey),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -385,30 +396,30 @@ class TrackingScreen extends StatelessWidget {
           ),
           AppBottomNav(
             activeTab: NavTab.tracking,
-              onTabSelected: (tab) {
-                    switch (tab) {
-                    case NavTab.home:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      );
-                      break;
-                    case NavTab.pengajuan:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
-                      );
-                      break;
-                    case NavTab.profil:
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                      );
-                      break;
-                    case NavTab.tracking:
-                      break;
-                  }
-                },
+            onTabSelected: (tab) {
+              switch (tab) {
+                case NavTab.home:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  );
+                  break;
+                case NavTab.pengajuan:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
+                  );
+                  break;
+                case NavTab.profil:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                  break;
+                case NavTab.tracking:
+                  break;
+              }
+            },
           ),
         ],
       ),
