@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../home_screen.dart';
+import '../dosen/home_screen.dart';
+import '../kaprodi/home_screen.dart';
+import '../admin/home_screen.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
@@ -31,23 +34,43 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
-    if (_selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan pilih login sebagai terlebih dahulu'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    }
+  if (_selectedRole == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Silakan pilih login sebagai terlebih dahulu'),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
   }
+
+  if (_formKey.currentState!.validate()) {
+    Widget targetScreen;
+
+    switch (_selectedRole) {
+      case 'Mahasiswa':
+        targetScreen = const HomeScreen();
+        break;
+      case 'Dosen':
+        targetScreen = const DosenHomeScreen();
+        break;
+      case 'Kaprodi':
+        targetScreen = const KaprodiHomeScreen(); // nanti ganti screen kaprodi
+        break;
+      case 'Admin':
+        targetScreen = const AdminHomeScreen(); // nanti ganti screen admin
+        break;
+      default:
+        targetScreen = const HomeScreen();
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => targetScreen),
+    );
+  }
+}
 
   Widget _buildRoleButton(String label, IconData icon) {
     final bool isSelected = _selectedRole == label;

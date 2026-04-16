@@ -21,6 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
 
+  String? _selectedProdi;
+
   bool _obscurePassword = true;
   bool _obscureKonfirmasi = true;
 
@@ -181,14 +183,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 12),
 
                       // Program Studi
-                      _buildField(
-                        controller: _prodiController,
-                        hint: 'Program Studi',
-                        icon: Icons.school_outlined,
+                      DropdownButtonFormField<String>(
+                        value: _selectedProdi,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedProdi = value;
+                          });
+                        },
                         validator: (v) =>
                             (v == null || v.isEmpty) ? 'Program studi tidak boleh kosong' : null,
+                        decoration: InputDecoration(
+                          hintText: 'Program Studi',
+                          prefixIcon: const Icon(Icons.school_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'TI', child: Text('D-IV Teknik Informatika')),
+                          DropdownMenuItem(value: 'SIB', child: Text('D-IV Sistem Informasi Bisnis')),
+                        ],
                       ),
-                      const SizedBox(height: 12),
 
                       // Email
                       _buildField(

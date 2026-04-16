@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'home_screen.dart';
+import 'tracking_screen.dart';
+import 'profile_screen.dart';
+
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -133,9 +136,29 @@ class _State extends State<PengajuanKompenScreen> {
           ),
           AppBottomNav(
             activeTab: NavTab.pengajuan,
-            onTabSelected: (t) {
-              if (t == NavTab.home) Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+            onTabSelected: (tab) {
+                switch (tab) {
+                case NavTab.home:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                  );
+                  break;
+                case NavTab.tracking:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TrackingScreen()),
+                  );
+                  break;
+                case NavTab.profil:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                  break;
+                case NavTab.pengajuan:
+                  break;
+              }
             },
           ),
         ],

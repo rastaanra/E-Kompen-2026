@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'login/login_screen.dart';
+import 'home_screen.dart';
+import 'pengajuan_screen.dart';
+import 'profile_screen.dart';
+
 
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
@@ -380,21 +385,30 @@ class TrackingScreen extends StatelessWidget {
           ),
           AppBottomNav(
             activeTab: NavTab.tracking,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTab.home:
-                  Navigator.pop(context);
-                  break;
-                case NavTab.pengajuan:
-                  Navigator.pop(context);
-                  break;
-                case NavTab.profil:
-                  Navigator.pop(context);
-                  break;
-                case NavTab.tracking:
-                  break;
-              }
-            },
+              onTabSelected: (tab) {
+                    switch (tab) {
+                    case NavTab.home:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      );
+                      break;
+                    case NavTab.pengajuan:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
+                      );
+                      break;
+                    case NavTab.profil:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                      );
+                      break;
+                    case NavTab.tracking:
+                      break;
+                  }
+                },
           ),
         ],
       ),
