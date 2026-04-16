@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/kompen_card.dart';
 import '../widgets/primary_button.dart';
 import 'kompen_form_screen.dart';
 import 'kompen_list_screen.dart';
+import 'profile_screen.dart';
+import 'pengajuan_screen.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_nav.dart';
+import 'tracking_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,10 +45,72 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
+<<<<<<< HEAD
           _buildHomeContent(),
           const KompenListScreen(),
           const Center(child: Text('Mahasiswa')),
           const Center(child: Text('Profil')),
+=======
+          const AppHeader(),
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: _backgroundCream,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(35),
+                  topRight: Radius.circular(35),
+                ),
+              ),
+              child: Column(
+                children: [
+                  _buildGreetingCard(),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildStatusKompen(),
+                          const SizedBox(height: 16),
+                          _buildRekapitulasiSection(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AppBottomNav(
+            activeTab: NavTab.home,
+            onTabSelected: (tab) {
+              switch (tab) {
+                case NavTab.profil:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                  break;
+                case NavTab.pengajuan:
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()), 
+                  );
+                break;
+                case NavTab.tracking:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TrackingListScreen()),
+                  );
+                  break;
+                case NavTab.home:
+                  break;
+              }
+            },
+          ),
+>>>>>>> cbb7972acdd313439f983345e7adc6d203e1b8ea
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),

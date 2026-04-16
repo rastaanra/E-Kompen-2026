@@ -11,8 +11,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
   final _nimController = TextEditingController();
-  final _jurusanController = TextEditingController();
-  final _telpController = TextEditingController();
+  final _prodiController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _konfirmasiController = TextEditingController();
@@ -29,8 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _namaController.dispose();
     _nimController.dispose();
-    _jurusanController.dispose();
-    _telpController.dispose();
+    _prodiController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _konfirmasiController.dispose();
@@ -75,9 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ? GestureDetector(
                 onTap: onToggleObscure,
                 child: Icon(
-                  obscure
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
+                  obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                   color: Colors.black45,
                   size: 20,
                 ),
@@ -85,10 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : null,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.black12),
@@ -128,20 +121,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 const Text(
                   'Daftar Akun',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -165,18 +150,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Biodata Diri',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: _textDark,
-                        ),
-                      ),
-                      Text(
-                        'Lengkapi data berikut untuk mendaftar',
-                        style: TextStyle(fontSize: 13, color: _textGrey),
-                      ),
+                      Text('Biodata Diri',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textDark)),
+                      Text('Lengkapi data berikut untuk mendaftar',
+                          style: TextStyle(fontSize: 13, color: _textGrey)),
                       const SizedBox(height: 24),
 
                       // Nama
@@ -203,27 +180,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Jurusan
+                      // Program Studi
                       _buildField(
-                        controller: _jurusanController,
-                        hint: 'Jurusan',
+                        controller: _prodiController,
+                        hint: 'Program Studi',
                         icon: Icons.school_outlined,
                         validator: (v) =>
-                            (v == null || v.isEmpty) ? 'Jurusan tidak boleh kosong' : null,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // No Telepon
-                      _buildField(
-                        controller: _telpController,
-                        hint: 'Nomor Telepon',
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'No. telepon tidak boleh kosong';
-                          if (v.length < 10) return 'No. telepon tidak valid';
-                          return null;
-                        },
+                            (v == null || v.isEmpty) ? 'Program studi tidak boleh kosong' : null,
                       ),
                       const SizedBox(height: 12),
 
@@ -235,9 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         keyboardType: TextInputType.emailAddress,
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Email tidak boleh kosong';
-                          final emailRegex = RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          );
+                          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                           if (!emailRegex.hasMatch(v)) return 'Format email tidak valid';
                           return null;
                         },
@@ -268,9 +229,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.lock_outline,
                         obscure: _obscureKonfirmasi,
                         showToggle: true,
-                        onToggleObscure: () => setState(
-                          () => _obscureKonfirmasi = !_obscureKonfirmasi,
-                        ),
+                        onToggleObscure: () =>
+                            setState(() => _obscureKonfirmasi = !_obscureKonfirmasi),
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Konfirmasi password tidak boleh kosong';
                           if (v != _passwordController.text) return 'Password tidak cocok';
@@ -287,18 +247,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primaryRed,
                             padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
                           child: const Text(
                             'Daftar',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
