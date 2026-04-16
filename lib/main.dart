@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart';
+import 'package:tugas4_pm/screens/splash_screen.dart';
+import 'package:tugas4_pm/screens/dosen/home_screen.dart';
+import 'package:tugas4_pm/screens/dosen/pengajuan_screen.dart';
+import 'package:tugas4_pm/screens/dosen/verifikasi_screen.dart';
+import 'package:tugas4_pm/screens/dosen/profile_screen.dart';
 
 void main() {
   runApp(const KompenApp());
@@ -16,7 +20,7 @@ class KompenApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
       ),
-      home: const SplashScreen(), // ← ganti dari LoginScreen ke SplashScreen
+      home: DosenHomeScreen(),
     );
   }
 }
