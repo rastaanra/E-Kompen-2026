@@ -45,12 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-<<<<<<< HEAD
           _buildHomeContent(),
           const KompenListScreen(),
           const Center(child: Text('Mahasiswa')),
           const Center(child: Text('Profil')),
-=======
           const AppHeader(),
           Expanded(
             child: Container(
@@ -110,7 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
           ),
->>>>>>> cbb7972acdd313439f983345e7adc6d203e1b8ea
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
