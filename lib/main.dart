@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tugas4_pm/screens/splash_screen.dart';
-import 'package:tugas4_pm/screens/dosen/home_screen.dart';
-import 'package:tugas4_pm/screens/dosen/pengajuan_screen.dart';
-import 'package:tugas4_pm/screens/dosen/verifikasi_screen.dart';
-import 'package:tugas4_pm/screens/dosen/profile_screen.dart';
+import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const KompenApp());
@@ -15,12 +12,10 @@ class KompenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'E-Kompen JTI',
+      title: 'Kompen App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
-      ),
-      home: DosenHomeScreen(),
+      theme: AppTheme.theme,
+      home: const HomeScreen(),
     );
   }
 }
