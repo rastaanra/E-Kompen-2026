@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:tugas4_pm/screens/tracking_screen.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/kompen_card.dart';
 import '../widgets/primary_button.dart';
 import 'kompen_form_screen.dart';
 import 'kompen_list_screen.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_bottom_nav.dart';
+import 'pengajuan_screen.dart';
+import 'tracking_list_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,22 +39,56 @@ class _HomeScreenState extends State<HomeScreen> {
     },
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCream,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildHomeContent(),
-          const KompenListScreen(),
-          const Center(child: Text('Mahasiswa')),
-          const Center(child: Text('Profil')),
-        ],
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: AppTheme.primaryRed,
+    body: Column(
+      children: [
+        const AppHeader(),
+        Expanded(
+  child: Container(
+    decoration: const BoxDecoration(
+      color: AppTheme.backgroundCream,
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(35),
+        topRight: Radius.circular(35),
       ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
+    ),
+    child: _buildHomeContent(),
+  ),
+),
+        AppBottomNav(
+          activeTab: NavTab.home,
+          onTabSelected: (tab) {
+            switch (tab) {
+              case NavTab.pengajuan:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
+                );
+                break;
+              case NavTab.tracking:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TrackingScreen()),
+                );
+                break;
+              case NavTab.profil:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+                break;
+              case NavTab.home:
+                break;
+            }
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildHomeContent() {
     return CustomScrollView(
@@ -286,7 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(

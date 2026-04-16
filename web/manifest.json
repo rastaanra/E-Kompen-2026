@@ -1,6 +1,7 @@
 {
-    "name": "kelompok3_tugas4",
-    "short_name": "kelompok3_tugas4",
+    "name": "tugas4_pm",
+    "short_name": "tugas4_pm",
+
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
