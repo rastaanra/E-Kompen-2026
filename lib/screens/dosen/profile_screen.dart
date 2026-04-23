@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'login/login_screen.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import '../utils/nav_mahasiswa.dart';
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+import '../login/login_screen.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/dosen/app_bottom_nav_dosen.dart';
+import '../../utils/nav_dosen.dart';
+
+class ProfileDosenScreen extends StatelessWidget {
+  const ProfileDosenScreen({super.key});
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
@@ -30,73 +31,52 @@ class ProfileScreen extends StatelessWidget {
               child: ScrollConfiguration(
                 behavior: const ScrollBehavior().copyWith(overscroll: false),
                 child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics()),
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildProfileCard(),
-                    const SizedBox(height: 20),
-                    _buildSectionLabel('Informasi Akademik'),
-                    const SizedBox(height: 10),
-                    _buildInfoCard(items: [
-                      _InfoItem(
-                        icon: Icons.school_outlined,
-                        label: 'Program Studi',
-                        value: 'Sistem Informasi Bisnis',
-                      ),
-                      _InfoItem(
-                        icon: Icons.menu_book_outlined,
-                        label: 'Semester',
-                        value: '4 (Genap 2025/2026)',
-                      ),
-                      _InfoItem(
-                        icon: Icons.person_outline,
-                        label: 'Dosen Pembimbing Akademik',
-                        value: 'Luqman Affandi, S.Kom., MMSI',
-                        isLast: true,
-                      ),
-                    ]),
-                    const SizedBox(height: 20),
-                    _buildSectionLabel('Kontak'),
-                    const SizedBox(height: 10),
-                    _buildInfoCard(items: [
-                      _InfoItem(
-                        icon: Icons.email_outlined,
-                        label: 'Email',
-                        value: 'sally.savista@student.jti.ac.id',
-                        valueColor: _primaryRed,
-                      ),
-                      _InfoItem(
-                        icon: Icons.phone_outlined,
-                        label: 'No. Telepon',
-                        value: '+62 812-3456-7890',
-                        isLast: true,
-                      ),
-                    ]),
-                    const SizedBox(height: 20),
-                    _buildSectionLabel('Pengaturan'),
-                    const SizedBox(height: 10),
-                    _buildSettingsCard(context),
-                    const SizedBox(height: 24),
-                    _buildLogoutButton(context),
-                    const SizedBox(height: 8),
-                  ],
-                ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildProfileCard(),
+                      const SizedBox(height: 20),
+                      _buildSectionLabel('Kontak'),
+                      const SizedBox(height: 10),
+                      _buildInfoCard(items: [
+                        _InfoItem(
+                          icon: Icons.email_outlined,
+                          label: 'Email',
+                          value: 'luqman.affandi@dosen.jti.ac.id',
+                          valueColor: _primaryRed,
+                        ),
+                        _InfoItem(
+                          icon: Icons.phone_outlined,
+                          label: 'No. Telepon',
+                          value: '+62 811-2233-4455',
+                          isLast: true,
+                        ),
+                      ]),
+                      const SizedBox(height: 20),
+                      _buildSectionLabel('Pengaturan'),
+                      const SizedBox(height: 10),
+                      _buildSettingsCard(context),
+                      const SizedBox(height: 24),
+                      _buildLogoutButton(context),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-          AppBottomNav(
-            activeTab: NavTab.profil,
+          AppBottomNavDosen(
+            activeTab: NavTabDosen.profil,
             onTabSelected: (tab) =>
-                NavMahasiswa.handleBottomNav(context, tab, NavTab.profil),
+                NavDosen.handleBottomNav(context, tab, NavTabDosen.profil),
           ),
         ],
       ),
     );
   }
-
 
   // ── Kartu profil utama
   Widget _buildProfileCard() {
@@ -127,7 +107,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             child: const Center(
               child: Text(
-                'SS',
+                'LA',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -137,22 +117,22 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Nama + NIM + badge
+          // Nama + NIP + badge
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Sally Savista',
+                  'Luqman Affandi, S.Kom., MMSI',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 18,
+                    fontSize: 16,
                     color: _textDark,
                   ),
                 ),
                 const SizedBox(height: 3),
                 const Text(
-                  '244107060064',
+                  'NIP: 198803012015041001',
                   style: TextStyle(
                     fontSize: 13,
                     color: _textGrey,
@@ -181,7 +161,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       const Text(
-                        'Mahasiswa Aktif',
+                        'Dosen Aktif',
                         style: TextStyle(
                           fontSize: 11,
                           color: _primaryRed,
@@ -224,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Card info (akademik & kontak)
+  // ── Card info (kontak)
   Widget _buildInfoCard({required List<_InfoItem> items}) {
     return Container(
       width: double.infinity,
@@ -419,7 +399,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Tombol logout 
+  // ── Tombol logout
   Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
@@ -517,8 +497,6 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-
-
 }
 
 // ── Model data baris info

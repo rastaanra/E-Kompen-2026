@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,6 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+
+  String? _selectedProdi;
 
   bool _obscurePassword = true;
   bool _obscureKonfirmasi = true;
@@ -56,6 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required IconData icon,
     required String? Function(String?) validator,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
     bool obscure = false,
     VoidCallback? onToggleObscure,
     bool showToggle = false,
@@ -63,6 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       obscureText: obscure,
       validator: validator,
       decoration: InputDecoration(
@@ -172,6 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hint: 'NIM',
                         icon: Icons.badge_outlined,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'NIM tidak boleh kosong';
                           if (v.length < 6) return 'NIM tidak valid';
@@ -181,14 +187,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 12),
 
                       // Program Studi
-                      _buildField(
-                        controller: _prodiController,
-                        hint: 'Program Studi',
-                        icon: Icons.school_outlined,
+                      DropdownButtonFormField<String>(
+                        value: _selectedProdi,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedProdi = value;
+                          });
+                        },
                         validator: (v) =>
                             (v == null || v.isEmpty) ? 'Program studi tidak boleh kosong' : null,
+                        decoration: InputDecoration(
+                          hintText: 'Program Studi',
+                          prefixIcon: const Icon(Icons.school_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'TI', child: Text('D-IV Teknik Informatika')),
+                          DropdownMenuItem(value: 'SIB', child: Text('D-IV Sistem Informasi Bisnis')),
+                        ],
                       ),
-                      const SizedBox(height: 12),
 
                       // Email
                       _buildField(
