@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'login/login_screen.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
-import 'home_screen.dart';
-import 'pengajuan_screen.dart';
-import 'tracking_screen.dart';
+import '../utils/nav_mahasiswa.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -91,30 +89,8 @@ class ProfileScreen extends StatelessWidget {
           ),
           AppBottomNav(
             activeTab: NavTab.profil,
-           onTabSelected: (tab) {
-                switch (tab) {
-                case NavTab.home:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                  );
-                  break;
-                case NavTab.pengajuan:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),            
-                  );
-                  break;
-                case NavTab.tracking:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TrackingScreen()),
-                  );
-                  break;
-                case NavTab.profil:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavMahasiswa.handleBottomNav(context, tab, NavTab.profil),
           ),
         ],
       ),

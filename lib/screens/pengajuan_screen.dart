@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
-import 'home_screen.dart';
-import 'tracking_screen.dart';
-import 'profile_screen.dart';
+import '../utils/nav_mahasiswa.dart';
 
 
 const _red = Color(0xFFB71C1C);
@@ -136,30 +134,8 @@ class _State extends State<PengajuanKompenScreen> {
           ),
           AppBottomNav(
             activeTab: NavTab.pengajuan,
-            onTabSelected: (tab) {
-                switch (tab) {
-                case NavTab.home:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                  );
-                  break;
-                case NavTab.tracking:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TrackingScreen()),
-                  );
-                  break;
-                case NavTab.profil:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  );
-                  break;
-                case NavTab.pengajuan:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavMahasiswa.handleBottomNav(context, tab, NavTab.pengajuan),
           ),
         ],
       ),

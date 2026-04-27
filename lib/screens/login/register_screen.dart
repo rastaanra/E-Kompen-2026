@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -58,6 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required IconData icon,
     required String? Function(String?) validator,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
     bool obscure = false,
     VoidCallback? onToggleObscure,
     bool showToggle = false,
@@ -65,6 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       obscureText: obscure,
       validator: validator,
       decoration: InputDecoration(
@@ -174,6 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hint: 'NIM',
                         icon: Icons.badge_outlined,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'NIM tidak boleh kosong';
                           if (v.length < 6) return 'NIM tidak valid';

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
-import 'home_screen.dart';
-import 'pengajuan_screen.dart';
-import 'profile_screen.dart';
+import '../../utils/nav_dosen.dart';
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -177,32 +175,10 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
               ),
             ),
           ),
-                              AppBottomNavDosen(
+          AppBottomNavDosen(
             activeTab: NavTabDosen.verifikasi,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTabDosen.home:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DosenHomeScreen()),
-                  );
-                  break;
-                case NavTabDosen.pengajuan:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => DosenPengajuanScreen()),
-                  );
-                  break;
-                case NavTabDosen.profil:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileDosenScreen()),
-                  );
-                  break;
-                case NavTabDosen.verifikasi:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavDosen.handleBottomNav(context, tab, NavTabDosen.verifikasi),
           ),
         ],
       ),
