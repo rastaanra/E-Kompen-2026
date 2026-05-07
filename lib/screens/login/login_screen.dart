@@ -34,43 +34,43 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
-  if (_selectedRole == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Silakan pilih login sebagai terlebih dahulu'),
-        backgroundColor: Colors.orange,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    return;
-  }
-
-  if (_formKey.currentState!.validate()) {
-    Widget targetScreen;
-
-    switch (_selectedRole) {
-      case 'Mahasiswa':
-        targetScreen = const HomeScreen();
-        break;
-      case 'Dosen':
-        targetScreen = const DosenHomeScreen();
-        break;
-      case 'Kaprodi':
-        targetScreen = const KaprodiHomeScreen(); // nanti ganti screen kaprodi
-        break;
-      case 'Admin':
-        targetScreen = const AdminHomeScreen(); // nanti ganti screen admin
-        break;
-      default:
-        targetScreen = const HomeScreen();
+    if (_selectedRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih login sebagai terlebih dahulu'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => targetScreen),
-    );
+    if (_formKey.currentState!.validate()) {
+      Widget targetScreen;
+
+      switch (_selectedRole) {
+        case 'Mahasiswa':
+          targetScreen = const HomeScreen();
+          break;
+        case 'Dosen':
+          targetScreen = const DosenHomeScreen();
+          break;
+        case 'Kaprodi':
+          targetScreen = const KaprodiHomeScreen();
+          break;
+        case 'Admin':
+          targetScreen = const AdminHomeScreen();
+          break;
+        default:
+          targetScreen = const HomeScreen();
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => targetScreen),
+      );
+    }
   }
-}
 
   Widget _buildRoleButton(String label, IconData icon) {
     final bool isSelected = _selectedRole == label;
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Judul
-                        Text(
+                        const Text(
                           'Selamat Datang!',
                           style: TextStyle(
                             fontSize: 22,
@@ -162,9 +162,41 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
+                        const Text(
                           'Silakan masuk ke akun Anda',
                           style: TextStyle(fontSize: 12, color: _textGrey),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // ── Pilih Role
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: Colors.brown.withOpacity(0.3))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                'Login sebagai:',
+                                style: TextStyle(fontSize: 12, color: _textGrey),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Colors.brown.withOpacity(0.3))),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _buildRoleButton('Mahasiswa', Icons.school_outlined),
+                            const SizedBox(width: 10),
+                            _buildRoleButton('Dosen', Icons.badge_outlined),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _buildRoleButton('Kaprodi', Icons.work_outline),
+                            const SizedBox(width: 10),
+                            _buildRoleButton('Admin', Icons.settings_outlined),
+                          ],
                         ),
                         const SizedBox(height: 14),
 
@@ -187,69 +219,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             key: _formKey,
                             child: Column(
                               children: [
-                                // Email
+                                // Username
                                 TextFormField(
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Email tidak boleh kosong';
-                                    }
-                                    final emailRegex = RegExp(
-                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                    );
-                                    if (!emailRegex.hasMatch(value)) {
-                                      return 'Format email tidak valid';
+                                      return 'Username tidak boleh kosong';
                                     }
                                     return null;
                                   },
                                   decoration: InputDecoration(
                                     hintText: 'Username',
-                                    hintStyle: const TextStyle(
-                                      color: Colors.black38,
-                                      fontSize: 13,
-                                    ),
-                                    prefixIcon: const Icon(
-                                      Icons.person_outline,
-                                      color: Colors.black45,
-                                      size: 20,
-                                    ),
+                                    hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
+                                    prefixIcon: const Icon(Icons.person_outline, color: Colors.black45, size: 20),
                                     filled: true,
                                     fillColor: const Color(0xFFF8F4EE),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 13,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: Colors.black12,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: _primaryRed,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    errorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: Colors.redAccent,
-                                      ),
-                                    ),
-                                    focusedErrorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: Colors.redAccent,
-                                        width: 1.5,
-                                      ),
-                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _primaryRed, width: 1.5)),
+                                    errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent)),
+                                    focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
                                   ),
                                 ),
                                 const SizedBox(height: 10),
@@ -269,63 +260,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                   decoration: InputDecoration(
                                     hintText: 'Password',
-                                    hintStyle: const TextStyle(
-                                      color: Colors.black38,
-                                      fontSize: 13,
-                                    ),
-                                    prefixIcon: const Icon(
-                                      Icons.lock_outline,
-                                      color: Colors.black45,
-                                      size: 20,
-                                    ),
+                                    hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
+                                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.black45, size: 20),
                                     suffixIcon: GestureDetector(
-                                      onTap: () => setState(
-                                        () => _obscurePassword = !_obscurePassword,
-                                      ),
+                                      onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                                       child: Icon(
-                                        _obscurePassword
-                                            ? Icons.visibility_off_outlined
-                                            : Icons.visibility_outlined,
+                                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                         color: Colors.black45,
                                         size: 18,
                                       ),
                                     ),
                                     filled: true,
                                     fillColor: const Color(0xFFF8F4EE),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 13,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: Colors.black12,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: _primaryRed,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    errorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: Colors.redAccent,
-                                      ),
-                                    ),
-                                    focusedErrorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(
-                                        color: Colors.redAccent,
-                                        width: 1.5,
-                                      ),
-                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _primaryRed, width: 1.5)),
+                                    errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent)),
+                                    focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
                                   ),
                                 ),
                                 const SizedBox(height: 10),
@@ -337,21 +289,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     onPressed: _login,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: _primaryRed,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 13,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 13),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       elevation: 0,
                                     ),
                                     child: const Text(
                                       'Masuk',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                      style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ),
@@ -361,70 +305,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                 GestureDetector(
                                   onTap: () => Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const ForgotPasswordScreen(),
-                                    ),
+                                    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                   ),
                                   child: const Text(
                                     'Lupa Password?',
-                                    style: TextStyle(
-                                      color: _primaryRed,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: TextStyle(color: _primaryRed, fontSize: 12, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // ── Divider login sebagai
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                color: Colors.brown.withOpacity(0.3),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              child: Text(
-                                'Login sebagai:',
-                                style:
-                                    TextStyle(fontSize: 12, color: _textGrey),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                color: Colors.brown.withOpacity(0.3),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Role baris 1
-                        Row(
-                          children: [
-                            _buildRoleButton('Mahasiswa', Icons.school_outlined),
-                            const SizedBox(width: 10),
-                            _buildRoleButton('Dosen', Icons.badge_outlined),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Role baris 2
-                        Row(
-                          children: [
-                            _buildRoleButton('Kaprodi', Icons.work_outline),
-                            const SizedBox(width: 10),
-                            _buildRoleButton('Admin', Icons.settings_outlined),
-                          ],
                         ),
 
                         const Spacer(),
@@ -435,24 +325,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Belum punya akun? ',
-                              style: TextStyle(fontSize: 12, color: _textDark),
-                            ),
+                            Text('Belum punya akun? ', style: TextStyle(fontSize: 12, color: _textDark)),
                             GestureDetector(
                               onTap: () => Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (_) => const RegisterScreen(),
-                                ),
+                                MaterialPageRoute(builder: (_) => const RegisterScreen()),
                               ),
                               child: const Text(
                                 'Daftar.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
