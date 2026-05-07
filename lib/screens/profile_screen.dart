@@ -1,15 +1,102 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'login/login_screen.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../utils/nav_mahasiswa.dart';
-class ProfileScreen extends StatelessWidget {
+
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+
+  File? _fotoProfile;
+  final ImagePicker _picker = ImagePicker();
+
+  // Method untuk pilih foto dari kamera atau galeri
+  Future<void> _pilihFoto(ImageSource source) async {
+    final XFile? picked = await _picker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (picked != null) {
+      setState(() {
+        _fotoProfile = File(picked.path);
+      });
+    }
+  }
+
+  // Tampilkan dialog pilihan sumber foto
+  void _showPilihFotoDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ganti Foto Profil',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Color(0xFF2D2D2D),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE5E5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.camera_alt_outlined, color: _primaryRed),
+                ),
+                title: const Text('Ambil Foto dari Kamera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pilihFoto(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE5E5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.photo_library_outlined, color: _primaryRed),
+                ),
+                title: const Text('Pilih dari Galeri'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pilihFoto(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +122,7 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildProfileCard(),
+                    _buildProfileCard(context),
                     const SizedBox(height: 20),
                     _buildSectionLabel('Informasi Akademik'),
                     const SizedBox(height: 10),
@@ -99,7 +186,7 @@ class ProfileScreen extends StatelessWidget {
 
 
   // ── Kartu profil utama
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -117,23 +204,58 @@ class ProfileScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar lingkaran merah
-          Container(
-            width: 66,
-            height: 66,
-            decoration: const BoxDecoration(
-              color: _primaryRed,
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Text(
-                'SS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+          // Avatar dengan foto profil
+          GestureDetector(
+            onTap: () => _showPilihFotoDialog(context),
+            child: Stack(
+              children: [
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: const BoxDecoration(
+                    color: _primaryRed,
+                    shape: BoxShape.circle,
+                  ),
+                  child: _fotoProfile != null
+                      ? ClipOval(
+                          child: Image.file(
+                            _fotoProfile!,
+                            width: 66,
+                            height: 66,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : const Center(
+                          child: Text(
+                            'SS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                 ),
-              ),
+                // Badge kamera kecil di pojok bawah
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: _primaryRed,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                      size: 11,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 16),
@@ -195,16 +317,19 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           // Tombol edit
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE5E5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.edit_outlined,
-              color: _primaryRed,
-              size: 18,
+          GestureDetector(
+            onTap: () => _showPilihFotoDialog(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE5E5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.edit_outlined,
+                color: _primaryRed,
+                size: 18,
+              ),
             ),
           ),
         ],
