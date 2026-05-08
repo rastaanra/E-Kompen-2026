@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-<<<<<<<< HEAD:lib/screens/dosen/profile_screen.dart
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
@@ -7,16 +6,6 @@ import '../../utils/nav_dosen.dart';
 
 class ProfileDosenScreen extends StatelessWidget {
   const ProfileDosenScreen({super.key});
-========
-import 'login/login_screen.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import 'home_screen.dart';
-import 'pengajuan_screen.dart';
-import 'tracking_screen.dart';
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
->>>>>>>> 64118a0ea9aa4ac760d609181422c26e49467529:lib/screens/profile_screen.dart
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
@@ -73,39 +62,10 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-<<<<<<<< HEAD:lib/screens/dosen/profile_screen.dart
           AppBottomNavDosen(
             activeTab: NavTabDosen.profil,
             onTabSelected: (tab) =>
                 NavDosen.handleBottomNav(context, tab, NavTabDosen.profil),
-========
-          AppBottomNav(
-            activeTab: NavTab.profil,
-           onTabSelected: (tab) {
-                switch (tab) {
-                case NavTab.home:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                  );
-                  break;
-                case NavTab.pengajuan:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),            
-                  );
-                  break;
-                case NavTab.tracking:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TrackingScreen()),
-                  );
-                  break;
-                case NavTab.profil:
-                  break;
-              }
-            },
->>>>>>>> 64118a0ea9aa4ac760d609181422c26e49467529:lib/screens/profile_screen.dart
           ),
         ],
       ),
