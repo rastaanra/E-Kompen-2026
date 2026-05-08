@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/pengajuan_screen.dart';
-import '../screens/tracking_screen.dart';
+import '../screens/tracking_list_screen.dart';
 import '../screens/profile_screen.dart';
 import '../widgets/app_bottom_nav.dart';
 
@@ -23,7 +23,7 @@ class NavMahasiswa {
   static void toTracking(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const TrackingScreen()),
+      MaterialPageRoute(builder: (_) => const TrackingListScreen()),
     );
   }
 

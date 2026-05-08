@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'login/login_screen.dart';
-import '../utils/nav_mahasiswa.dart';
 
 
 class TrackingScreen extends StatelessWidget {
@@ -391,11 +390,6 @@ class TrackingScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-          AppBottomNav(
-            activeTab: NavTab.tracking,
-            onTabSelected: (tab) =>
-                NavMahasiswa.handleBottomNav(context, tab, NavTab.tracking),
           ),
         ],
       ),
