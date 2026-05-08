@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/app_bottom_nav.dart';
 import 'tracking_screen.dart';
 
 class TrackingListScreen extends StatelessWidget {

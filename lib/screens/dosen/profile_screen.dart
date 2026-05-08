@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
-import 'home_screen.dart';
-import 'pengajuan_screen.dart';
-import 'verifikasi_screen.dart';
+import '../../utils/nav_dosen.dart';
 
 class ProfileDosenScreen extends StatelessWidget {
   const ProfileDosenScreen({super.key});
@@ -50,12 +48,6 @@ class ProfileDosenScreen extends StatelessWidget {
                           value: 'luqman.affandi@dosen.jti.ac.id',
                           valueColor: _primaryRed,
                         ),
-                        _InfoItem(
-                          icon: Icons.phone_outlined,
-                          label: 'No. Telepon',
-                          value: '+62 811-2233-4455',
-                          isLast: true,
-                        ),
                       ]),
                       const SizedBox(height: 20),
                       _buildSectionLabel('Pengaturan'),
@@ -70,32 +62,10 @@ class ProfileDosenScreen extends StatelessWidget {
               ),
             ),
           ),
-                  AppBottomNavDosen(
+          AppBottomNavDosen(
             activeTab: NavTabDosen.profil,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTabDosen.home:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DosenHomeScreen()),
-                  );
-                  break;
-                case NavTabDosen.pengajuan:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => DosenPengajuanScreen()),
-                  );
-                  break;
-                case NavTabDosen.verifikasi:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => DosenVerifikasiScreen()),
-                  );
-                  break;
-                case NavTabDosen.profil:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavDosen.handleBottomNav(context, tab, NavTabDosen.profil),
           ),
         ],
       ),

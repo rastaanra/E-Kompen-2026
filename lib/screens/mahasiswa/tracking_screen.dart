@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import 'login/login_screen.dart';
-import 'home_screen.dart';
-import 'pengajuan_screen.dart';
-import 'profile_screen.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/app_bottom_nav.dart';
+import '../../utils/nav_mahasiswa.dart';
+import '../../utils/location_helper.dart';
 
-
-class TrackingScreen extends StatelessWidget {
+class TrackingScreen extends StatefulWidget {
   const TrackingScreen({super.key});
+
+  @override
+  State<TrackingScreen> createState() => _TrackingScreenState();
+}
+
+class _TrackingScreenState extends State<TrackingScreen> {
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+
+  Position? _posisiSekarang;
+  bool _loadingLokasi = false;
+  final MapController _mapController = MapController();
 
   static const List<Map<String, dynamic>> _statusList = [
     {
@@ -89,6 +99,169 @@ class TrackingScreen extends StatelessWidget {
       "isFinal": false,
     },
   ];
+
+  // Ambil lokasi GPS mahasiswa saat ini
+  Future<void> _ambilLokasi() async {
+    setState(() => _loadingLokasi = true);
+    final pos = await LocationHelper.getCurrentPosition();
+    setState(() {
+      _posisiSekarang = pos;
+      _loadingLokasi = false;
+    });
+    if (pos != null) {
+      _mapController.move(LatLng(pos.latitude, pos.longitude), 17);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak dapat mengakses lokasi. Pastikan GPS aktif.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Widget peta lokasi
+  Widget _buildMapSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on_outlined, color: _primaryRed, size: 18),
+                const SizedBox(width: 6),
+                const Text(
+                  'Lokasi Pengerjaan',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: _textDark,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _loadingLokasi ? null : _ambilLokasi,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE5E5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: _loadingLokasi
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: _primaryRed,
+                            ),
+                          )
+                        : const Row(
+                            children: [
+                              Icon(Icons.my_location, color: _primaryRed, size: 13),
+                              SizedBox(width: 4),
+                              Text(
+                                'Tandai Lokasi',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: _primaryRed,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Peta OpenStreetMap
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(14),
+              bottomRight: Radius.circular(14),
+            ),
+            child: SizedBox(
+              height: 200,
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: _posisiSekarang != null
+                      ? LatLng(_posisiSekarang!.latitude, _posisiSekarang!.longitude)
+                      : const LatLng(-7.9402, 112.6178), // koordinat default Polinema
+                  initialZoom: 17,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.tugas4_pm',
+                  ),
+                  if (_posisiSekarang != null)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(
+                            _posisiSekarang!.latitude,
+                            _posisiSekarang!.longitude,
+                          ),
+                          width: 40,
+                          height: 40,
+                          child: const Icon(
+                            Icons.location_pin,
+                            color: _primaryRed,
+                            size: 40,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          // Info koordinat
+          if (_posisiSekarang != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.gps_fixed, size: 12, color: _textGrey),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_posisiSekarang!.latitude.toStringAsFixed(5)}, '
+                    '${_posisiSekarang!.longitude.toStringAsFixed(5)}',
+                    style: const TextStyle(fontSize: 11, color: _textGrey),
+                  ),
+                ],
+              ),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.fromLTRB(14, 8, 14, 12),
+              child: Text(
+                'Tap "Tandai Lokasi" untuk menampilkan posisi kamu sekarang',
+                style: TextStyle(fontSize: 11, color: _textGrey),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +341,21 @@ class TrackingScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+                    child: Text(
+                      'LOKASI PENGERJAAN',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _textGrey,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+
+                  _buildMapSection(),
 
                   const Padding(
                     padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -396,30 +584,8 @@ class TrackingScreen extends StatelessWidget {
           ),
           AppBottomNav(
             activeTab: NavTab.tracking,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTab.home:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                  );
-                  break;
-                case NavTab.pengajuan:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
-                  );
-                  break;
-                case NavTab.profil:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  );
-                  break;
-                case NavTab.tracking:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavMahasiswa.handleBottomNav(context, tab, NavTab.tracking),
           ),
         ],
       ),

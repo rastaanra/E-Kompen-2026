@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import 'home_screen.dart';
-import 'tracking_screen.dart';
-import 'profile_screen.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/app_bottom_nav.dart';
+import '../../utils/nav_mahasiswa.dart';
 
 
 const _red = Color(0xFFB71C1C);
@@ -110,8 +108,6 @@ class _State extends State<PengajuanKompenScreen> {
                         const Text('Ajukan kompensasi kehadiran kamu di sini',
                             style: TextStyle(fontSize: 13, color: _grey)),
                         const SizedBox(height: 16),
-                        _alphaSummaryCard(),
-                        const SizedBox(height: 20),
                         _infoBanner(),
                         const SizedBox(height: 16),
                         _formCard(),
@@ -136,61 +132,15 @@ class _State extends State<PengajuanKompenScreen> {
           ),
           AppBottomNav(
             activeTab: NavTab.pengajuan,
-            onTabSelected: (tab) {
-                switch (tab) {
-                case NavTab.home:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                  );
-                  break;
-                case NavTab.tracking:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TrackingScreen()),
-                  );
-                  break;
-                case NavTab.profil:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  );
-                  break;
-                case NavTab.pengajuan:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavMahasiswa.handleBottomNav(context, tab, NavTab.pengajuan),
           ),
         ],
       ),
     );
   }
 
-  // ── Alpha summary
-  Widget _alphaSummaryCard() => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [Color(0xFFB71C1C), Color(0xFFD32F2F)]),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [BoxShadow(color: _red.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
-    ),
-    child: Row(children: [
-      _alphaStat('Total Jam Alpha', '12 Jam'),
-      Container(width: 1, height: 40, color: Colors.white24),
-      _alphaStat('Sudah Dikompensasi', '4 Jam'),
-      Container(width: 1, height: 40, color: Colors.white24),
-      _alphaStat('Sisa Alpha', '8 Jam'),
-    ]),
-  );
-
-  Widget _alphaStat(String label, String value) => Expanded(
-    child: Column(children: [
-      Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-      const SizedBox(height: 4),
-      Text(label, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 10)),
-    ]),
-  );
+ 
 
   // ── Info banner
   Widget _infoBanner() => Container(

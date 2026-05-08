@@ -9,9 +9,8 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _namaController = TextEditingController();
   final _nimController = TextEditingController();
-  final _prodiController = TextEditingController();
+  final _nipController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _konfirmasiController = TextEditingController();
@@ -21,16 +20,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
 
-  String? _selectedProdi;
-
   bool _obscurePassword = true;
   bool _obscureKonfirmasi = true;
+  String? _selectedRole; // 'Mahasiswa' | 'Dosen/Kaprodi'
 
   @override
   void dispose() {
-    _namaController.dispose();
     _nimController.dispose();
-    _prodiController.dispose();
+    _nipController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _konfirmasiController.dispose();
@@ -38,6 +35,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _register() {
+    if (_selectedRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Silakan pilih role terlebih dahulu'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -50,6 +57,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pop(context);
       });
     }
+  }
+
+  Widget _buildRoleButton(String label, IconData icon) {
+    final bool isSelected = _selectedRole == label;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedRole = label),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF8B0000) : _primaryRed,
+            borderRadius: BorderRadius.circular(12),
+            border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildField({
@@ -84,26 +130,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.black12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.black12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _primaryRed, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.redAccent),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _primaryRed, width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
       ),
     );
   }
@@ -152,125 +183,132 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Biodata Diri',
+                      Text('Daftar Sebagai',
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textDark)),
-                      Text('Lengkapi data berikut untuk mendaftar',
+                      Text('Pilih role dan lengkapi data berikut',
                           style: TextStyle(fontSize: 13, color: _textGrey)),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
-                      // Nama
-                      _buildField(
-                        controller: _namaController,
-                        hint: 'Nama Lengkap',
-                        icon: Icons.person_outline,
-                        validator: (v) =>
-                            (v == null || v.isEmpty) ? 'Nama tidak boleh kosong' : null,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // NIM
-                      _buildField(
-                        controller: _nimController,
-                        hint: 'NIM',
-                        icon: Icons.badge_outlined,
-                        keyboardType: TextInputType.number,
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'NIM tidak boleh kosong';
-                          if (v.length < 6) return 'NIM tidak valid';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Program Studi
-                      DropdownButtonFormField<String>(
-                        value: _selectedProdi,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedProdi = value;
-                          });
-                        },
-                        validator: (v) =>
-                            (v == null || v.isEmpty) ? 'Program studi tidak boleh kosong' : null,
-                        decoration: InputDecoration(
-                          hintText: 'Program Studi',
-                          prefixIcon: const Icon(Icons.school_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(value: 'TI', child: Text('D-IV Teknik Informatika')),
-                          DropdownMenuItem(value: 'SIB', child: Text('D-IV Sistem Informasi Bisnis')),
+                      // ── Pilih Role
+                      Row(
+                        children: [
+                          _buildRoleButton('Mahasiswa', Icons.school_outlined),
+                          const SizedBox(width: 10),
+                          _buildRoleButton('Dosen/Kaprodi', Icons.badge_outlined),
                         ],
                       ),
+                      const SizedBox(height: 24),
 
-                      // Email
-                      _buildField(
-                        controller: _emailController,
-                        hint: 'Email Aktif',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'Email tidak boleh kosong';
-                          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                          if (!emailRegex.hasMatch(v)) return 'Format email tidak valid';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Password
-                      _buildField(
-                        controller: _passwordController,
-                        hint: 'Password',
-                        icon: Icons.lock_outline,
-                        obscure: _obscurePassword,
-                        showToggle: true,
-                        onToggleObscure: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'Password tidak boleh kosong';
-                          if (v.length < 6) return 'Password minimal 6 karakter';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Konfirmasi password
-                      _buildField(
-                        controller: _konfirmasiController,
-                        hint: 'Konfirmasi Password',
-                        icon: Icons.lock_outline,
-                        obscure: _obscureKonfirmasi,
-                        showToggle: true,
-                        onToggleObscure: () =>
-                            setState(() => _obscureKonfirmasi = !_obscureKonfirmasi),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return 'Konfirmasi password tidak boleh kosong';
-                          if (v != _passwordController.text) return 'Password tidak cocok';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 28),
-
-                      // Tombol daftar
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _primaryRed,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
+                      // ── Form menyesuaikan role
+                      if (_selectedRole == null)
+                        Center(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 24),
+                              Icon(Icons.person_outline, size: 48, color: _textGrey.withOpacity(0.5)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Pilih role terlebih dahulu',
+                                style: TextStyle(fontSize: 14, color: _textGrey),
+                              ),
+                            ],
                           ),
-                          child: const Text(
-                            'Daftar',
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                        )
+                      else ...[
+                        // NIM (Mahasiswa) atau NIP (Dosen/Kaprodi)
+                        if (_selectedRole == 'Mahasiswa')
+                          _buildField(
+                            controller: _nimController,
+                            hint: 'NIM',
+                            icon: Icons.badge_outlined,
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'NIM tidak boleh kosong';
+                              if (v.length < 6) return 'NIM tidak valid';
+                              return null;
+                            },
+                          )
+                        else
+                          _buildField(
+                            controller: _nipController,
+                            hint: 'NIP',
+                            icon: Icons.badge_outlined,
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'NIP tidak boleh kosong';
+                              if (v.length < 6) return 'NIP tidak valid';
+                              return null;
+                            },
+                          ),
+                        const SizedBox(height: 12),
+
+                        // Email
+                        _buildField(
+                          controller: _emailController,
+                          hint: 'Email Aktif',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Email tidak boleh kosong';
+                            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                            if (!emailRegex.hasMatch(v)) return 'Format email tidak valid';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Password
+                        _buildField(
+                          controller: _passwordController,
+                          hint: 'Password',
+                          icon: Icons.lock_outline,
+                          obscure: _obscurePassword,
+                          showToggle: true,
+                          onToggleObscure: () =>
+                              setState(() => _obscurePassword = !_obscurePassword),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Password tidak boleh kosong';
+                            if (v.length < 6) return 'Password minimal 6 karakter';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Konfirmasi Password
+                        _buildField(
+                          controller: _konfirmasiController,
+                          hint: 'Konfirmasi Password',
+                          icon: Icons.lock_outline,
+                          obscure: _obscureKonfirmasi,
+                          showToggle: true,
+                          onToggleObscure: () =>
+                              setState(() => _obscureKonfirmasi = !_obscureKonfirmasi),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Konfirmasi password tidak boleh kosong';
+                            if (v != _passwordController.text) return 'Password tidak cocok';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 28),
+
+                        // Tombol Daftar
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _register,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primaryRed,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Daftar',
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

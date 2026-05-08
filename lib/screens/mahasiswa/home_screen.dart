@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'profile_screen.dart';
-import 'pengajuan_screen.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import 'tracking_list_screen.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/app_bottom_nav.dart';
+import '../../utils/nav_mahasiswa.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -54,30 +52,8 @@ class HomeScreen extends StatelessWidget {
           ),
           AppBottomNav(
             activeTab: NavTab.home,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTab.profil:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  );
-                  break;
-                case NavTab.pengajuan:
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()), 
-                  );
-                break;
-                case NavTab.tracking:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TrackingListScreen()),
-                  );
-                  break;
-                case NavTab.home:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavMahasiswa.handleBottomNav(context, tab, NavTab.home),
           ),
         ],
       ),

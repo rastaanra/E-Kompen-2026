@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
-import 'home_screen.dart';
-import 'verifikasi_screen.dart';
-import 'profile_screen.dart';
+import '../../utils/nav_dosen.dart';
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -20,7 +18,7 @@ class _PengajuanMahasiswa {
   final String semester;
   final String tanggal;
   final int jam;
-  final String status; // 'menunggu' | 'disetujui' | 'ditolak'
+  final String status; // 'menunggu' | 'disetujui' 
 
   const _PengajuanMahasiswa({
     required this.namaMahasiswa,
@@ -60,7 +58,7 @@ final _dummyList = [
     semester: 'Semester 4',
     tanggal: '4 Apr 2024',
     jam: 4,
-    status: 'ditolak',
+    status: 'menunggu',
   ),
   const _PengajuanMahasiswa(
     namaMahasiswa: 'Budi Prasetyo',
@@ -69,7 +67,7 @@ final _dummyList = [
     semester: 'Semester 2',
     tanggal: '2 Apr 2024',
     jam: 2,
-    status: 'menunggu',
+    status: 'disetujui',
   ),
 ];
 
@@ -82,31 +80,45 @@ class DosenPengajuanScreen extends StatefulWidget {
 }
 
 class _DosenPengajuanScreenState extends State {
-  String _selectedSemester = 'Semester ini';
+  String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
 
-  final List _semesterOptions = [
-    'Semester ini',
-    'Semester 4',
-    'Semester 2',
+    final List _semesterOptions = [
+  'Semua Semester',
+  'Semester 1',
+  'Semester 2',
+  'Semester 3',
+  'Semester 4',
+  'Semester 5',
+  'Semester 6',
+  'Semester 7',
+  'Semester 8',
   ];
 
   final List _statusOptions = [
     'Semua Status',
     'Menunggu',
     'Disetujui',
-    'Ditolak',
   ];
 
   List<_PengajuanMahasiswa> get _filteredList {
-    return _dummyList.where((p) {
-      final matchSemester = _selectedSemester == 'Semester ini' ||
-          p.semester == _selectedSemester;
-      final matchStatus = _selectedStatus == 'Semua Status' ||
-          p.status == _selectedStatus.toLowerCase();
-      return matchSemester && matchStatus;
-    }).toList();
-  }
+  final filtered = _dummyList.where((p) {
+    final matchSemester = _selectedSemester == 'Semua Semester' ||
+        p.semester == _selectedSemester;
+    final matchStatus = _selectedStatus == 'Semua Status' ||
+        p.status == _selectedStatus.toLowerCase();
+    return matchSemester && matchStatus;
+  }).toList();
+
+    // Menunggu di atas, Disetujui di bawah
+  filtered.sort((a, b) {
+    if (a.status == 'menunggu' && b.status != 'menunggu') return -1;
+    if (a.status != 'menunggu' && b.status == 'menunggu') return 1;
+    return 0;
+  });
+
+  return filtered;
+}
 
   @override
   Widget build(BuildContext context) {
@@ -184,32 +196,10 @@ class _DosenPengajuanScreenState extends State {
               ),
             ),
           ),
-                              AppBottomNavDosen(
+          AppBottomNavDosen(
             activeTab: NavTabDosen.pengajuan,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTabDosen.home:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DosenHomeScreen()),
-                  );
-                  break;
-                case NavTabDosen.verifikasi:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => DosenVerifikasiScreen()),
-                  );
-                  break;
-                case NavTabDosen.profil:
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileDosenScreen()),
-                  );
-                  break;
-                case NavTabDosen.pengajuan:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavDosen.handleBottomNav(context, tab, NavTabDosen.pengajuan),
           ),
         ],
       ),
@@ -383,6 +373,7 @@ class _DosenPengajuanScreenState extends State {
   }
 
   // ── Status badge
+    // ── Status badge
   Widget _buildStatusBadge(String status) {
     Color bg;
     Color textColor;
@@ -393,11 +384,6 @@ class _DosenPengajuanScreenState extends State {
         bg = const Color(0xFFD1FAE5);
         textColor = const Color(0xFF065F46);
         label = 'Disetujui';
-        break;
-      case 'ditolak':
-        bg = const Color(0xFFFEE2E2);
-        textColor = const Color(0xFF991B1B);
-        label = 'Ditolak';
         break;
       default:
         bg = const Color(0xFFFFF3CD);

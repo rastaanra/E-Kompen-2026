@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
-import 'pengajuan_screen.dart'; 
-import 'verifikasi_screen.dart'; 
-import 'profile_screen.dart';
+import '../../utils/nav_dosen.dart';
 
 class DosenHomeScreen extends StatelessWidget {
   const DosenHomeScreen({super.key});
@@ -50,12 +48,7 @@ class DosenHomeScreen extends StatelessWidget {
                             label: 'Konfirmasi Pengajuan',
                             count: jumlahPengajuan,
                             emptyText: 'Tidak ada pengajuan',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => DosenPengajuanScreen()),
-                              );
-                            },
+                            onTap: () => NavDosen.toPengajuan(context),
                           ),
                           const SizedBox(height: 12),
                           _buildActionCard(
@@ -64,12 +57,7 @@ class DosenHomeScreen extends StatelessWidget {
                             label: 'Tanda Tangan Penyelesaian',
                             count: jumlahVerifikasi,
                             emptyText: 'Tidak ada form',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => DosenVerifikasiScreen()),
-                              );
-                            },
+                            onTap: () => NavDosen.toVerifikasi(context),
                           ),
                           const SizedBox(height: 20),
                           _buildSectionTitle('REKAPITULASI'),
@@ -86,30 +74,8 @@ class DosenHomeScreen extends StatelessWidget {
           ),
           AppBottomNavDosen(
             activeTab: NavTabDosen.home,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTabDosen.pengajuan:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => DosenPengajuanScreen()),
-                  );
-                  break;
-                case NavTabDosen.verifikasi:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => DosenVerifikasiScreen()),
-                );
-                break;
-                case NavTabDosen.profil:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ProfileDosenScreen()),
-                  );
-                  break;
-                case NavTabDosen.home:
-                  break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavDosen.handleBottomNav(context, tab, NavTabDosen.home),
           ),
         ],
       ),
@@ -297,7 +263,7 @@ class DosenHomeScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Ditolak', value: '2 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Menunggu', value: '2 Pengajuan')),
             const SizedBox(width: 12),
             Expanded(child: _buildRekapCard(label: 'Selesai', value: '4 Pengajuan')),
           ],

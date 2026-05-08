@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
-import '../../widgets/dosen/app_bottom_nav_dosen.dart';
-import '../../utils/nav_dosen.dart';
+import '../../widgets/kaprodi/app_bottom_nav_kaprodi.dart';
+import '../../utils/nav_kaprodi.dart';
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -68,14 +68,14 @@ final _dummyVerifikasi = [
 ];
 
 // ────────────────────────────────────────────
-class DosenVerifikasiScreen extends StatefulWidget {
-  const DosenVerifikasiScreen({super.key});
+class KaprodiVerifikasiScreen extends StatefulWidget {
+  const KaprodiVerifikasiScreen({super.key});
 
   @override
-  State<DosenVerifikasiScreen> createState() => _DosenVerifikasiScreenState();
+  State<KaprodiVerifikasiScreen> createState() => _KaprodiVerifikasiScreenState();
 }
 
-class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
+class _KaprodiVerifikasiScreenState extends State<KaprodiVerifikasiScreen> {
   String _selectedSemester = 'Semester ini';
   String _selectedStatus = 'Semua Status';
 
@@ -175,10 +175,10 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
               ),
             ),
           ),
-          AppBottomNavDosen(
-            activeTab: NavTabDosen.verifikasi,
+          AppBottomNavKaprodi(
+            activeTab: NavTabKaprodi.verifikasi,
             onTabSelected: (tab) =>
-                NavDosen.handleBottomNav(context, tab, NavTabDosen.verifikasi),
+                NavKaprodi.handleBottomNav(context, tab, NavTabKaprodi.verifikasi),
           ),
         ],
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../widgets/primary_button.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/primary_button.dart';
 
 class KompenFormScreen extends StatefulWidget {
   const KompenFormScreen({super.key});
