@@ -96,6 +96,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "tugas4_pm.exe" "\0"
             VALUE "ProductName", "tugas4_pm" "\0"
+
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

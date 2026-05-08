@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:tugas4_pm/screens/login/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
+import 'screens/login/login_screen.dart';
+import 'screens/dosen/home_screen.dart';
 import 'screens/splash_screen.dart';
 
 void main() {
@@ -11,12 +16,10 @@ class KompenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'E-Kompen JTI',
+      title: 'Kompen App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
-      ),
-      home: const SplashScreen(), // ← ganti dari LoginScreen ke SplashScreen
+      theme: AppTheme.theme,
+      home: const SplashScreen(),
     );
   }
 }
