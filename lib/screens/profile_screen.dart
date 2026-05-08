@@ -154,12 +154,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: 'sally.savista@student.jti.ac.id',
                         valueColor: _primaryRed,
                       ),
-                      _InfoItem(
-                        icon: Icons.phone_outlined,
-                        label: 'No. Telepon',
-                        value: '+62 812-3456-7890',
-                        isLast: true,
-                      ),
                     ]),
                     const SizedBox(height: 20),
                     _buildSectionLabel('Pengaturan'),

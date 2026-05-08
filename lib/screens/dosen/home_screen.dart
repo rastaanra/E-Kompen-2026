@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
-import 'pengajuan_screen.dart';
-import 'verifikasi_screen.dart';
 
 class DosenHomeScreen extends StatelessWidget {
   const DosenHomeScreen({super.key});
@@ -265,7 +263,7 @@ class DosenHomeScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Ditolak', value: '2 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Menunggu', value: '2 Pengajuan')),
             const SizedBox(width: 12),
             Expanded(child: _buildRekapCard(label: 'Selesai', value: '4 Pengajuan')),
           ],

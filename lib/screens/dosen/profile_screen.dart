@@ -48,12 +48,6 @@ class ProfileDosenScreen extends StatelessWidget {
                           value: 'luqman.affandi@dosen.jti.ac.id',
                           valueColor: _primaryRed,
                         ),
-                        _InfoItem(
-                          icon: Icons.phone_outlined,
-                          label: 'No. Telepon',
-                          value: '+62 811-2233-4455',
-                          isLast: true,
-                        ),
                       ]),
                       const SizedBox(height: 20),
                       _buildSectionLabel('Pengaturan'),
