@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import '../utils/nav_mahasiswa.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/app_bottom_nav.dart';
+import '../../utils/nav_mahasiswa.dart';
 
 
 const _red = Color(0xFFB71C1C);

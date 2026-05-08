@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'login/login_screen.dart';
-import '../widgets/app_header.dart';
-import '../widgets/app_bottom_nav.dart';
-import '../utils/nav_mahasiswa.dart';
+import '../login/login_screen.dart';
+import '../../widgets/app_header.dart';
+import '../../widgets/app_bottom_nav.dart';
+import '../../utils/nav_mahasiswa.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
