@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import '../models/pengajuan_kompen.dart';
+import '../models/riwayat_kompen.dart';
+import '../services/pengajuan_service.dart';
+
+class PengajuanProvider extends ChangeNotifier {
+  final PengajuanService _service = PengajuanService();
+
+  List<PengajuanKompen> _listPengajuan = [];
+  PengajuanKompen? _detailPengajuan;
+  List<RiwayatKompen> _riwayat = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<PengajuanKompen> get listPengajuan => _listPengajuan;
+  PengajuanKompen? get detailPengajuan => _detailPengajuan;
+  List<RiwayatKompen> get riwayat => _riwayat;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  // Ambil semua pengajuan mahasiswa
+  Future<void> getAllPengajuan(int idMahasiswa) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _listPengajuan = await _service.getAllPengajuan(idMahasiswa);
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Ambil detail pengajuan
+  Future<void> getPengajuan(int idPengajuan) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _detailPengajuan = await _service.getPengajuan(idPengajuan);
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Kirim pengajuan baru
+  Future<bool> simpanPengajuan(Map<String, dynamic> data) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _service.simpanPengajuan(data);
+
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
+  // Update lokasi pengerjaan
+  Future<bool> updateLokasi(int idPengajuan, double lat, double long, String namaLokasi) async {
+    return await _service.updateLokasi(idPengajuan, lat, long, namaLokasi);
+  }
+
+  // Ambil riwayat tracking
+  Future<void> getRiwayat(int idPengajuan) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _riwayat = await _service.getRiwayat(idPengajuan);
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}
