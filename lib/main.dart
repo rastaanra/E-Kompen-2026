@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tugas4_pm/screens/login/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/mahasiswa/home_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/login/login_screen.dart';
 import 'screens/dosen/home_screen.dart';

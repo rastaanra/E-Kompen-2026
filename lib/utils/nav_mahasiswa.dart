@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
-import '../screens/pengajuan_screen.dart';
-import '../screens/tracking_screen.dart';
-import '../screens/profile_screen.dart';
-import '../widgets/app_bottom_nav.dart';
+import '../screens/mahasiswa/home_screen.dart';
+import '../screens/mahasiswa/pengajuan_screen.dart';
+import '../screens/mahasiswa/tracking_screen.dart';
+import '../screens/mahasiswa/profile_screen.dart';
+import '../widgets/mahasiswa/app_bottom_nav.dart';
 
 class NavMahasiswa {
   static void toHome(BuildContext context) {

@@ -76,13 +76,19 @@ class DosenVerifikasiScreen extends StatefulWidget {
 }
 
 class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
-  String _selectedSemester = 'Semester ini';
+  String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
 
   final List<String> _semesterOptions = [
-    'Semester ini',
-    'Semester 4',
+    'Semua Semester',
+    'Semester 1',
     'Semester 2',
+    'Semester 3',
+    'Semester 4',
+    'Semester 5',
+    'Semester 6',
+    'Semester 7',
+    'Semester 8',
   ];
 
   final List<String> _statusOptions = [
@@ -93,7 +99,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
 
   List<_FormPenyelesaian> get _filteredList {
     return _dummyVerifikasi.where((p) {
-      final matchSemester = _selectedSemester == 'Semester ini' ||
+      final matchSemester = _selectedSemester == 'Semua Semester' ||
           p.semester == _selectedSemester;
       final matchStatus = _selectedStatus == 'Semua Status' ||
           (_selectedStatus == 'Menunggu TTD' && p.status == 'menunggu_ttd') ||

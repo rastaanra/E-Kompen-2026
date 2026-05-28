@@ -76,13 +76,19 @@ class KaprodiVerifikasiScreen extends StatefulWidget {
 }
 
 class _KaprodiVerifikasiScreenState extends State<KaprodiVerifikasiScreen> {
-  String _selectedSemester = 'Semester ini';
+  String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
 
   final List<String> _semesterOptions = [
-    'Semester ini',
-    'Semester 4',
+    'Semua Semester',
+    'Semester 1',
     'Semester 2',
+    'Semester 3',
+    'Semester 4',
+    'Semester 5',
+    'Semester 6',
+    'Semester 7',
+    'Semester 8',
   ];
 
   final List<String> _statusOptions = [
