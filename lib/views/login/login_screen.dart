@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../home_screen.dart';
+import '../mahasiswa/home_screen.dart';
 import '../dosen/home_screen.dart';
 import '../kaprodi/home_screen.dart';
 import '../admin/home_screen.dart';
