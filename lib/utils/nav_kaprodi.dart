@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../screens/kaprodi/home_screen.dart';
-import '../screens/kaprodi/verifikasi_screen.dart';
-import '../screens/kaprodi/profile_screen.dart';
-import '../screens/login/login_screen.dart';
+import '../views/kaprodi/home_screen.dart';
+import '../views/kaprodi/verifikasi_screen.dart';
+import '../views/kaprodi/profile_screen.dart';
+import '../views/login/login_screen.dart';
 import '../widgets/kaprodi/app_bottom_nav_kaprodi.dart';
 
 class NavKaprodi {

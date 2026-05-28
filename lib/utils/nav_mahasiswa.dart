@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
-import '../screens/pengajuan_screen.dart';
-import '../screens/tracking_screen.dart';
-import '../screens/profile_screen.dart';
+import '../views/home_screen.dart';
+import '../views/pengajuan_screen.dart';
+import '../views/tracking_screen.dart';
+import '../views/profile_screen.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class NavMahasiswa {

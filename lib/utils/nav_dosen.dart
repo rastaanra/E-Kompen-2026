@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../screens/dosen/home_screen.dart';
-import '../screens/dosen/pengajuan_screen.dart';
-import '../screens/dosen/verifikasi_screen.dart';
-import '../screens/dosen/profile_screen.dart';
+import '../views/dosen/home_screen.dart';
+import '../views/dosen/pengajuan_screen.dart';
+import '../views/dosen/verifikasi_screen.dart';
+import '../views/dosen/profile_screen.dart';
 import '../widgets/dosen/app_bottom_nav_dosen.dart';
 
 class NavDosen {
