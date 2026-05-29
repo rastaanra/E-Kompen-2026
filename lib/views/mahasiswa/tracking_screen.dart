@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../widgets/app_header.dart';
-import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
 import '../../utils/location_helper.dart';
 

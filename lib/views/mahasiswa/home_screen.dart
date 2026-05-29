@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
-import '../../widgets/app_bottom_nav.dart';
+import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
 
 class HomeScreen extends StatelessWidget {
