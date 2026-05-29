@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:tugas4_pm/screens/login/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'package:tugas4_pm/views/login/login_screen.dart';
+import 'views/mahasiswa/home_screen.dart';
 import 'theme/app_theme.dart';
-import 'screens/login/login_screen.dart';
-import 'screens/dosen/home_screen.dart';
-import 'screens/splash_screen.dart';
+import 'views/login/login_screen.dart';
+import 'views/dosen/home_screen.dart';
+import 'views/splash/splash_screen.dart';
 
 void main() {
   runApp(const KompenApp());
