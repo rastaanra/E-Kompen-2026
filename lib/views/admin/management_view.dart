@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/admin_mahasiswa_provider.dart';
+import '../../../widgets/admin/app_bottom_nav_admin.dart';
+import '../../../utils/nav_admin.dart';
 import 'mahasiswa/list_mahasiswa_view.dart';
 
 // TODO: import ini kalau udah dibuat
@@ -25,6 +27,10 @@ class _ManagementViewState extends State<ManagementView> {
     return Scaffold(
       backgroundColor: _bgColor,
       appBar: _buildAppBar(),
+      bottomNavigationBar: AppBottomNavAdmin(
+        activeTab: NavTabAdmin.management,
+        onTabSelected: (tab) => NavAdmin.handleBottomNav(context, tab, NavTabAdmin.management),
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
