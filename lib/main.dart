@@ -8,6 +8,7 @@ import 'providers/dosen_provider.dart';
 import 'providers/admin_provider.dart';
 import 'providers/absensi_provider.dart';
 import 'providers/notifikasi_provider.dart';
+import 'providers/admin_mahasiswa_provider';
 import 'theme/app_theme.dart';
 
 // TODO: ganti Placeholder dengan view yang sesuai setelah dibuat
@@ -41,6 +42,7 @@ class KompenApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AdminProvider()),
         ChangeNotifierProvider(create: (_) => AbsensiProvider()),
         ChangeNotifierProvider(create: (_) => NotifikasiProvider()),
+        ChangeNotifierProvider(create: (_) => AdminMahasiswaProvider()),
       ],
       child: MaterialApp(
         title: 'E-Kompen JTI',
