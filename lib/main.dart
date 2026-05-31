@@ -8,7 +8,7 @@ import 'providers/dosen_provider.dart';
 import 'providers/admin_provider.dart';
 import 'providers/absensi_provider.dart';
 import 'providers/notifikasi_provider.dart';
-import 'providers/admin_mahasiswa_provider';
+import 'providers/admin_mahasiswa_provider.dart';
 import 'theme/app_theme.dart';
 
 // TODO: ganti Placeholder dengan view yang sesuai setelah dibuat
