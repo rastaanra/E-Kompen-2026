@@ -16,15 +16,15 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _pengguna != null;
   Map<String, dynamic> get lastResponse => _lastResponse;
 
-  // Login
+  // Login — service return Map
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _service.login(email, password);
+    final Map<String, dynamic> result = await _service.login(email, password);
 
-    if (result['success']) {
+    if (result['success'] == true) {
       _pengguna = Pengguna.fromJson(result['data']);
       _lastResponse = result;
       _isLoading = false;
@@ -38,24 +38,22 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
-  // Register
+  // Register — service return bool
   Future<bool> register(Map<String, dynamic> data) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _service.register(data);
+    final bool success = await _service.register(data);
 
     _isLoading = false;
 
-    if (result['success'] == true) {
-      notifyListeners();
-      return true;
+    if (!success) {
+      _errorMessage = 'Registrasi gagal';
     }
 
-    _errorMessage = result['message'] ?? 'Registrasi gagal';
     notifyListeners();
-    return false;
+    return success;
   }
 
   // Logout
@@ -66,7 +64,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Update profil
+  // Update profil — service return bool
   // Foto profil hanya bisa dipasang sekali, tidak bisa diganti
   Future<bool> updateProfile(Map<String, dynamic> data) async {
     if (_pengguna?.fotoProfil != null && _pengguna!.fotoProfil!.isNotEmpty) {
@@ -76,14 +74,10 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _service.updateProfile(data);
-
-    if (result['success']) {
-      _pengguna = Pengguna.fromJson(result['data']);
-    }
+    final bool success = await _service.updateProfile(data);
 
     _isLoading = false;
     notifyListeners();
-    return result;
+    return success;
   }
 }
