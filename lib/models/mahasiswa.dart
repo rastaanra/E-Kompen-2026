@@ -10,7 +10,7 @@ class Mahasiswa {
     required this.idMahasiswa,
     this.idPengguna,
     required this.nim,
-    required this.nama_lengkap,
+    required this.nama,
     required this.programStudi,
     required this.isRegistered,
   });
@@ -20,8 +20,9 @@ class Mahasiswa {
       idMahasiswa: json['id_mahasiswa'],
       idPengguna: json['id_pengguna'],
       nim: json['nim'],
-      nama: json['nama_lengkap'],
-      programStudi: json['program_studi'],
+      // coba 'nama' dulu, fallback ke 'nama_lengkap'
+      nama: json['nama'] ?? json['nama_lengkap'] ?? '',
+      programStudi: json['program_studi'] ?? '',
       isRegistered: json['is_registered'] == 1 || json['is_registered'] == true,
     );
   }
@@ -31,7 +32,7 @@ class Mahasiswa {
       'id_mahasiswa': idMahasiswa,
       'id_pengguna': idPengguna,
       'nim': nim,
-      'nama': nama_lengkap,
+      'nama': nama,
       'program_studi': programStudi,
       'is_registered': isRegistered,
     };
