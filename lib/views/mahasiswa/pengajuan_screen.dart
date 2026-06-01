@@ -5,6 +5,7 @@ import '../../widgets/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
 import '../../providers/pengajuan_provider.dart';
 import '../../models/pengajuan_kompen.dart';
+import 'map_picker_view.dart';
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -30,6 +31,9 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   final _dosenCtrl = TextEditingController();
   final _tglCtrl = TextEditingController();
   final _jamCtrl = TextEditingController();
+  double? _selectedLat;
+  double? _selectedLng;
+  String? _selectedNamaLokasi;
 
   // Dummy list pengajuan
   // TODO: ganti dengan data dari PengajuanProvider
@@ -760,15 +764,18 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                   _fieldLabel('Lokasi Pengerjaan'),
                   const SizedBox(height: 6),
                   GestureDetector(
-                    onTap: () {
-                      // TODO: buka peta untuk pilih lokasi
-                      // Navigator.push ke MapPickerView
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fitur peta akan segera tersedia'),
-                          backgroundColor: _red,
-                        ),
+                    onTap: () async {
+                      final result = await Navigator.push<Map<String, dynamic>>(
+                        context,
+                        MaterialPageRoute(builder: (_) => const MapPickerView()),
                       );
+                      if (result != null) {
+                        setState(() {
+                          _selectedLat = result['lat'];
+                          _selectedLng = result['lng'];
+                          _selectedNamaLokasi = result['nama'];
+                        });
+                      }
                     },
                     child: Container(
                       width: double.infinity,
@@ -894,28 +901,42 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     color: _red, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              // TODO: panggil provider.ajukanTTD(p.idPengajuan)
-              // lalu pindahkan ke tracking
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: const Color(0xFF6A1B9A),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  content: const Row(children: [
-                    Icon(Icons.draw_outlined,
-                        color: Colors.white, size: 18),
-                    SizedBox(width: 10),
-                    Text('Pengajuan TTD berhasil dikirim!',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600)),
-                  ]),
-                  duration: const Duration(seconds: 3),
-                ),
-              );
+          
+              final success = await context.read<PengajuanProvider>().ajukanTTD(p.idPengajuan);
+          
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: const Color(0xFF6A1B9A),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      content: const Row(children: [
+                        Icon(Icons.draw_outlined, color: Colors.white, size: 18),
+                        SizedBox(width: 10),
+                        Text(
+                          'Pengajuan TTD berhasil dikirim!',
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ]),
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                  // Pindah ke tracking
+                  NavMahasiswa.handleBottomNav(context, NavTab.tracking, NavTab.pengajuan);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Gagal mengajukan TTD, coba lagi'),
+                      backgroundColor: Color(0xFFB71C1C),
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _red,
@@ -936,27 +957,58 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   }
 
   // ── Handler kirim form baru
-  void _handleKirimForm(BuildContext ctx) {
-    if (!_formKey.currentState!.validate()) return;
-    Navigator.pop(ctx);
-    // TODO: panggil provider.simpanPengajuan(data)
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF2E7D32),
-        behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        content: const Row(children: [
-          Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-          SizedBox(width: 10),
-          Text('Pengajuan berhasil dikirim!',
-              style: TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w600)),
-        ]),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
+  void _handleSimpanLengkapi(
+    BuildContext ctx,
+    PengajuanKompen p,
+    GlobalKey<FormState> key,
+    TextEditingController deskripsiCtrl,
+    TextEditingController lokasiCtrl,
+  ) async {
+      if (!key.currentState!.validate()) return;
+      if (_selectedLat == null || _selectedNamaLokasi == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pilih lokasi pengerjaan dulu'),
+            backgroundColor: Color(0xFFB71C1C),
+          ),
+        );
+        return;
+      }
+  
+      Navigator.pop(ctx);
+  
+      final success = await context.read<PengajuanProvider>().updateDeskripsiLokasi(
+        p.idPengajuan,
+        deskripsi: deskripsiCtrl.text.trim(),
+        namaLokasi: _selectedNamaLokasi!,
+        latitude: _selectedLat!,
+        longitude: _selectedLng!,
+      );
+  
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: success
+                ? const Color(0xFF1565C0)
+                : const Color(0xFFB71C1C),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            content: Text(
+              success
+                  ? 'Form berhasil dilengkapi!'
+                  : 'Gagal menyimpan, coba lagi',
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      }
+  
+      // Refresh list
+      // TODO: ganti 1 dengan idMahasiswa dari session/provider
+      // context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
+    }
 
   // ── Handler simpan lengkapi
   void _handleSimpanLengkapi(
