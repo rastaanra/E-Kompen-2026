@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
@@ -367,58 +369,71 @@ class _TrackingScreenState extends State<TrackingScreen> {
           const SizedBox(height: 12),
 
           // Area peta (placeholder — sambung ke google maps / flutter_map)
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEEEEE),
+          // Peta read-only dengan flutter_map
+          if (widget.latitude != null && widget.longitude != null)
+            ClipRRect(
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: Stack(
-              children: [
-                // TODO: ganti dengan GoogleMap atau FlutterMap widget
-                // GoogleMap(
-                //   initialCameraPosition: CameraPosition(
-                //     target: LatLng(widget.latitude!, widget.longitude!),
-                //     zoom: 16,
-                //   ),
-                //   markers: {
-                //     Marker(
-                //       markerId: const MarkerId('lokasi'),
-                //       position: LatLng(widget.latitude!, widget.longitude!),
-                //     ),
-                //   },
-                //   myLocationEnabled: false,
-                //   zoomControlsEnabled: false,
-                // ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.map_outlined,
-                          size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Peta Lokasi',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      if (widget.latitude != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '${widget.latitude!.toStringAsFixed(4)}, ${widget.longitude!.toStringAsFixed(4)}',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade400),
+              child: SizedBox(
+                height: 180,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(
+                        widget.latitude!, widget.longitude!),
+                    initialZoom: 16,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.none, // read-only, ga bisa drag/zoom
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(
+                              widget.latitude!, widget.longitude!),
+                          width: 40,
+                          height: 40,
+                          child: const Icon(
+                            Icons.location_on,
+                            color: _primaryRed,
+                            size: 40,
+                          ),
                         ),
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEEEEE),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.map_outlined,
+                        size: 48, color: Colors.grey.shade400),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Lokasi belum tersedia',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
           const SizedBox(height: 10),
 
           // Info koordinat
