@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tugas4_pm/views/login/login_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'views/login/login_screen.dart';
 import 'views/mahasiswa/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +14,8 @@ import 'providers/absensi_provider.dart';
 import 'providers/notifikasi_provider.dart';
 import 'providers/admin_mahasiswa_provider.dart';
 import 'theme/app_theme.dart';
+import 'views/dosen/home_screen.dart';
+import 'views/splash/splash_screen.dart';
 
 // TODO: ganti Placeholder dengan view yang sesuai setelah dibuat
 // import 'views/auth/login_view.dart';

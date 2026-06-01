@@ -29,7 +29,7 @@ class _ManagementViewState extends State<ManagementView> {
       appBar: _buildAppBar(),
       bottomNavigationBar: AppBottomNavAdmin(
         activeTab: NavTabAdmin.management,
-        onTabSelected: (tab) => NavAdmin.handleBottomNav(context, tab, NavTabAdmin.management),
+        onTap: (tab) => NavAdmin.handleBottomNav(context, tab, NavTabAdmin.management),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

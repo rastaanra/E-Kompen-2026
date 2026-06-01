@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
+import 'pengajuan_screen.dart';
+import 'verifikasi_screen.dart';
 
 class DosenHomeScreen extends StatelessWidget {
   const DosenHomeScreen({super.key});
