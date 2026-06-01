@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../providers/auth_provider.dart';
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/mahasiswa/app_bottom_nav.dart';
@@ -199,58 +202,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Avatar dengan foto profil
-          GestureDetector(
-            onTap: () => _showPilihFotoDialog(context),
-            child: Stack(
-              children: [
-                Container(
-                  width: 66,
-                  height: 66,
-                  decoration: const BoxDecoration(
-                    color: _primaryRed,
-                    shape: BoxShape.circle,
-                  ),
-                  child: _fotoProfile != null
-                      ? ClipOval(
-                          child: Image.file(
-                            _fotoProfile!,
-                            width: 66,
-                            height: 66,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : const Center(
-                          child: Text(
-                            'SS',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
+          Consumer<AuthProvider>(
+            builder: (context, auth, _) {
+              final sudahAdaFoto = auth.pengguna?.fotoProfil != null &&
+                  auth.pengguna!.fotoProfil!.isNotEmpty;
+              return GestureDetector(
+                onTap: sudahAdaFoto ? null : () => _showPilihFotoDialog(context),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 66,
+                      height: 66,
+                      decoration: const BoxDecoration(
+                        color: _primaryRed,
+                        shape: BoxShape.circle,
+                      ),
+                      child: _fotoProfile != null
+                          ? ClipOval(
+                              child: Image.file(
+                                _fotoProfile!,
+                                width: 66,
+                                height: 66,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : const Center(
+                              child: Text(
+                                'SS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
+                    ),
+                    // Badge kamera kecil di pojok bawah
+                    // Sembunyikan badge kalau foto sudah dipasang
+                    if (!sudahAdaFoto)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: _primaryRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 11,
                           ),
                         ),
+                      ),
+                  ],
                 ),
-                // Badge kamera kecil di pojok bawah
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: _primaryRed,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 11,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(width: 16),
           // Nama + NIM + badge
@@ -258,21 +269,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Sally Savista',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: _textDark,
+                Consumer<AuthProvider>(
+                  builder: (context, auth, _) => Text(
+                    auth.pengguna?.namaLengkap ?? 'Nama',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: _textDark,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  '244107060064',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: _textGrey,
-                  ),
+                FutureBuilder<SharedPreferences>(
+                  future: SharedPreferences.getInstance(),
+                  builder: (context, snap) {
+                    final nim = snap.data?.getString('nim') ?? '-';
+                    return Text(
+                      nim,
+                      style: const TextStyle(fontSize: 13, color: _textGrey),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -609,11 +625,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
           if (confirm == true && context.mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
+            await context.read<AuthProvider>().logout();
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.clear();
+            if (context.mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            }
           }
         },
         icon: const Icon(Icons.logout, color: Colors.white, size: 18),

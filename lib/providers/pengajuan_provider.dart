@@ -67,4 +67,41 @@ class PengajuanProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
+  // Ajukan TTD
+  Future<bool> ajukanTTD(int idPengajuan) async {
+    _isLoading = true;
+    notifyListeners();
+ 
+    final success = await _service.ajukanTTD(idPengajuan);
+ 
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+ 
+  // Update deskripsi + lokasi
+  Future<bool> updateDeskripsiLokasi(
+    int idPengajuan, {
+    required String deskripsi,
+    required String namaLokasi,
+    required double latitude,
+    required double longitude,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+ 
+    final success = await _service.updateDeskripsiLokasi(
+      idPengajuan,
+      deskripsi: deskripsi,
+      namaLokasi: namaLokasi,
+      latitude: latitude,
+      longitude: longitude,
+    );
+ 
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+  
 }

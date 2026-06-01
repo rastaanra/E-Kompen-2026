@@ -22,7 +22,7 @@ class NavMahasiswa {
   static void toTracking(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const TrackingScreen()),
+      MaterialPageRoute(builder: (_) => const TrackingScreen(idPengajuan: 0)),
     );
   }
 

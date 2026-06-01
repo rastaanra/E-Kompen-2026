@@ -70,4 +70,34 @@ class PengajuanService {
     }
     return [];
   }
+
+  // Ajukan TTD — ubah status ke menunggu_ttd_dosen / menunggu_ttd_admin
+  Future<bool> ajukanTTD(int idPengajuan) async {
+    final result = await ApiService.post(
+      'pengajuan/$idPengajuan/ajukan-ttd',
+      {},
+    );
+    return result['success'] == true;
+  }
+ 
+  // Update deskripsi tugas + lokasi setelah pengajuan diterima
+  Future<bool> updateDeskripsiLokasi(
+    int idPengajuan, {
+    required String deskripsi,
+    required String namaLokasi,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final result = await ApiService.put(
+      'pengajuan/$idPengajuan/lengkapi',
+      {
+        'deskripsi_tugas': deskripsi,
+        'nama_lokasi': namaLokasi,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+    );
+    return result['success'] == true;
+  }
+  
 }
