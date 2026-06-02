@@ -2,7 +2,6 @@ class Pengguna {
   final int idPengguna;
   final String namaLengkap;
   final String email;
-  final String password;
   final String role; // 'mahasiswa', 'dosen', 'admin', 'kaprodi'
   final String? fotoProfil;
 
@@ -10,7 +9,6 @@ class Pengguna {
     required this.idPengguna,
     required this.namaLengkap,
     required this.email,
-    required this.password,
     required this.role,
     this.fotoProfil,
   });
@@ -20,7 +18,6 @@ class Pengguna {
       idPengguna: json['id_pengguna'],
       namaLengkap: json['nama_lengkap'],
       email: json['email'],
-      password: json['password'],
       role: json['role'],
       fotoProfil: json['foto_profil'],
     );
@@ -31,7 +28,6 @@ class Pengguna {
       'id_pengguna': idPengguna,
       'nama_lengkap': namaLengkap,
       'email': email,
-      'password': password,
       'role': role,
       'foto_profil': fotoProfil,
     };

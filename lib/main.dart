@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/auth_provider.dart';
-import 'views/login/login_screen.dart';
-import 'views/mahasiswa/home_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'providers/auth_provider.dart';
 import 'providers/mahasiswa_provider.dart';
 import 'providers/pengajuan_provider.dart';
@@ -13,29 +9,24 @@ import 'providers/admin_provider.dart';
 import 'providers/absensi_provider.dart';
 import 'providers/notifikasi_provider.dart';
 import 'providers/admin_mahasiswa_provider.dart';
+
 import 'theme/app_theme.dart';
-import 'views/dosen/home_screen.dart';
+
 import 'views/splash/splash_screen.dart';
+import 'views/login/login_screen.dart';
+import 'views/mahasiswa/home_screen.dart';
+import 'views/dosen/home_screen.dart';
+import 'views/kaprodi/home_screen.dart';
+import 'views/admin/home_screen.dart';
 
-// TODO: ganti Placeholder dengan view yang sesuai setelah dibuat
-// import 'views/auth/login_view.dart';
-// import 'views/mahasiswa/dashboard/dashboard_view.dart';
-// import 'views/dosen/dashboard/dashboard_view.dart';
-// import 'views/kaprodi/dashboard/dashboard_view.dart';
-// import 'views/admin/dashboard/dashboard_view.dart';
-
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final prefs = await SharedPreferences.getInstance();
-  final role = prefs.getString('role');
-
-  runApp(KompenApp(role: role));
+  runApp(const KompenApp());
 }
 
 class KompenApp extends StatelessWidget {
-  final String? role;
-  const KompenApp({super.key, this.role});
+  const KompenApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,24 +42,28 @@ class KompenApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AdminMahasiswaProvider()),
       ],
       child: MaterialApp(
-        title: 'E-Kompen JTI',
         debugShowCheckedModeBanner: false,
+        title: 'E-Kompen JTI',
         theme: AppTheme.theme,
-        home: _getHomePage(),
+
+        home: const SplashScreen(),
+
+        routes: {
+          '/login': (context) => const LoginScreen(),
+
+          '/mahasiswa/dashboard': (context) =>
+              const HomeScreen(),
+
+          '/dosen/dashboard': (context) =>
+              const DosenHomeScreen(),
+
+          '/kaprodi/dashboard': (context) =>
+              const KaprodiHomeScreen(),
+
+          '/admin/dashboard': (context) =>
+              const AdminHomeScreen(),
+        },
       ),
     );
-  }
-
-  Widget _getHomePage() {
-    if (role == 'mahasiswa') {
-      return const Placeholder(); // ganti nanti: DashboardMahasiswaView()
-    } else if (role == 'dosen') {
-      return const Placeholder(); // ganti nanti: DashboardDosenView()
-    } else if (role == 'kaprodi') {
-      return const Placeholder(); // ganti nanti: DashboardKaprodiView()
-    } else if (role == 'admin') {
-      return const Placeholder(); // ganti nanti: DashboardAdminView()
-    }
-    return const Placeholder(); // ganti nanti: LoginView()
   }
 }

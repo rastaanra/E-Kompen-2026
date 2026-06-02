@@ -63,15 +63,35 @@ class _LoginScreenState extends State<LoginScreen> {
         // Redirect sesuai role dari response backend
         final role = provider.pengguna!.role;
 
-        if (role == 'mahasiswa') {
-          Navigator.pushReplacementNamed(context, '/mahasiswa/dashboard');
-        } else if (role == 'dosen') {
-          Navigator.pushReplacementNamed(context, '/dosen/dashboard');
-        } else if (role == 'kaprodi') {
-          Navigator.pushReplacementNamed(context, '/kaprodi/dashboard');
-        } else if (role == 'admin') {
-          Navigator.pushReplacementNamed(context, '/admin/dashboard');
-        }
+              if (role == 'mahasiswa') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      } else if (role == 'dosen') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DosenHomeScreen(),
+          ),
+        );
+      } else if (role == 'kaprodi') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const KaprodiHomeScreen(),
+          ),
+        );
+      } else if (role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AdminHomeScreen(),
+          ),
+        );
+      }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

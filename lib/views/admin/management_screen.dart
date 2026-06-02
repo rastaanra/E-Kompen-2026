@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/admin/app_bottom_nav_admin.dart';
 import '../../utils/nav_admin.dart';
+import 'package:file_picker/file_picker.dart';
+import '../../services/api_service.dart';
+import '../../models/dosen.dart';
+import '../../services/dosen_service.dart';
 
 class AdminManagementScreen extends StatefulWidget {
   final int initialTab;
@@ -18,11 +22,60 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   static const Color _textGrey = Color(0xFF9E9E9E);
 
   late int _activeTab;
+  String? fileName;
+  String? filePath;
+  bool fileTooLarge = false;
+
+  final DosenService _dosenService = DosenService();
+  List<Dosen> _dosenList = [];
+
+  Future<void> _loadDosen() async {
+  try {
+    final data = await _dosenService.getAllDosen();
+      print('JUMLAH DOSEN: ${data.length}');
+      setState(() {
+        _dosenList = data;
+      });
+    } catch (e) {
+      print(e);
+      debugPrint(e.toString());
+    }
+  }
+
+  List<Map<String, dynamic>> _mahasiswa = [];
+
+  Future<void> _loadMahasiswa() async {
+  try {
+    final result = await ApiService.get('mahasiswa');
+
+    if (result['success']) {
+      setState(() {
+        _mahasiswa = List<Map<String, dynamic>>.from(
+          result['data'].map(
+            (e) => {
+              'id': e['id_mahasiswa'],
+              'nama': e['nama_lengkap'],
+              'nim': e['nim'],
+              'prodi': e['program_studi'],
+              'status': e['is_registered'],
+            },
+          ),
+        );
+      });
+    }
+  } catch (e) {
+    print(e);
+  }
+}
 
   @override
   void initState() {
     super.initState();
+
     _activeTab = widget.initialTab;
+
+    _loadDosen();
+    _loadMahasiswa();
   }
 
   final _searchMhsController = TextEditingController();
@@ -40,12 +93,6 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     {'nama': 'Budi Santoso', 'nim': '254107060100', 'prodi': 'SIB', 'status': true},
   ];
 
-  // ── DUMMY DATA DOSEN
-  final List<Map<String, dynamic>> _dummyDosen = [
-    {'nama': 'Dr. Eng. Ir. Supriyono', 'nip': '198503112015041001', 'status': true, 'is_kaprodi': true},
-    {'nama': 'Widyawardana, S.T., M.T.', 'nip': '199001012020121002', 'status': true, 'is_kaprodi': false},
-    {'nama': 'Rinaawati, S.Kom., M.Cs.', 'nip': '199305152023032001', 'status': false, 'is_kaprodi': false},
-  ];
 
   // ── DUMMY DATA ABSENSI
   final List<Map<String, dynamic>> _dummyAbsensi = [
@@ -113,7 +160,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredMahasiswa {
-    final list = _dummyMahasiswa.where((m) {
+    final list = _mahasiswa.where((m) {
       final matchSearch = _searchMhs.isEmpty ||
           m['nama'].toLowerCase().contains(_searchMhs.toLowerCase()) ||
           m['nim'].contains(_searchMhs);
@@ -136,16 +183,35 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredDosen {
-    final filtered = _dummyDosen.where((d) {
-      return _searchDosen.isEmpty ||
-          d['nama'].toLowerCase().contains(_searchDosen.toLowerCase()) ||
-          d['nip'].contains(_searchDosen);
-    }).toList();
+    final filtered = _dosenList
+        .where((d) =>
+            _searchDosen.isEmpty ||
+            d.namaLengkap
+                .toLowerCase()
+                .contains(_searchDosen.toLowerCase()) ||
+            d.nip.contains(_searchDosen))
+        .map((d) => {
+              'id_dosen': d.idDosen,
+              'nama': d.namaLengkap,
+              'nip': d.nip,
+              'status': d.isRegistered,
+              'is_kaprodi': d.isKaprodi,
+            })
+        .toList();
 
-    filtered.sort((a, b) {
-      if (a['is_kaprodi'] && !b['is_kaprodi']) return -1;
-      if (!a['is_kaprodi'] && b['is_kaprodi']) return 1;
-      return (a['nama'] as String).compareTo(b['nama'] as String);
+        filtered.sort((a, b) {
+      if ((a['is_kaprodi'] as bool) &&
+          !(b['is_kaprodi'] as bool)) {
+        return -1;
+      }
+
+      if (!(a['is_kaprodi'] as bool) &&
+          (b['is_kaprodi'] as bool)) {
+        return 1;
+      }
+
+      return (a['nama'] as String)
+          .compareTo(b['nama'] as String);
     });
 
     return filtered;
@@ -184,8 +250,6 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) {
-          String? fileName;
-          bool fileTooLarge = false;
 
           return Padding(
             padding: EdgeInsets.only(
@@ -211,20 +275,43 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                 const Text('Pilih file Excel atau CSV untuk diimpor', style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E))),
                 const SizedBox(height: 20),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                  final result =
+                      await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: [
+                      'xlsx',
+                      'xls',
+                      'csv',
+                    ],
+                  );
+
+                  if (result != null) {
+
+                    final file = result.files.single;
+
+                    print('FILE DIPILIH');
+                    print(file.name);
+                    print(file.path);
+
                     setLocal(() {
-                      if (fileName == null) {
-                        fileName = 'data_mahasiswa_2024.xlsx';
-                        fileTooLarge = false;
-                      } else if (!fileTooLarge) {
-                        fileTooLarge = true;
-                        fileName = 'data_besar.xlsx';
-                      } else {
-                        fileName = null;
-                        fileTooLarge = false;
-                      }
+
+                      fileName = file.name;
+                      filePath = file.path;
+
+                      final sizeInMB =
+                          file.size / (1024 * 1024);
+
+                      fileTooLarge =
+                          sizeInMB > 10;
+
                     });
-                  },
+                    } else {
+
+                      print('TIDAK ADA FILE DIPILIH');
+
+                    }
+                },
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 32),
@@ -325,7 +412,78 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: (fileName != null && !fileTooLarge) ? () => Navigator.pop(ctx) : null,
+                        onPressed: (filePath != null && !fileTooLarge)
+                        ? () async {
+                          print('TOMBOL UNGGAH DIKLIK');
+                          print(filePath);
+                          print('SEBELUM UPLOAD');
+                            try {
+                              // nanti upload ke endpoint import di sini
+                              String endpoint = '';
+                                switch (_activeTab) {
+                                  case 0:
+                                    endpoint = 'mahasiswa/import';
+                                    break;
+
+                                  case 1:
+                                    endpoint = 'dosen/import';
+                                    break;
+
+                                  case 2:
+                                    endpoint = 'absensi/import';
+                                    break;
+                                }
+                                print('_activeTab = $_activeTab');
+                                print('endpoint = $endpoint');
+                                print('filePath = $filePath');
+
+                                final result =
+                                    await ApiService.uploadFile(
+                                  endpoint,
+                                  filePath!,
+                                );
+                                print('HASIL API: $result');
+
+                                if (result == 200) {
+                                  await _loadDosen();
+
+                                  Navigator.pop(ctx);
+
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Import berhasil',
+                                      ),
+                                    ),
+                                  );
+
+                                } else {
+
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Import gagal ($result)',
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                            } catch (e) {
+
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    e.toString(),
+                                  ),
+                                ),
+                              );
+                            }
+
+                          }
+                        : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryRed,
                           disabledBackgroundColor: _primaryRed.withOpacity(0.4),
@@ -333,6 +491,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: const Text('Unggah Sekarang', style: TextStyle(color: Colors.white)),
+                        
                       ),
                     ),
                   ],
@@ -619,7 +778,42 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             const SizedBox(height: 8),
             _buildTextField(namaCtrl, 'Masukkan nama lengkap dosen'),
             const SizedBox(height: 28),
-            _buildSheetButtons(() => Navigator.pop(ctx), () => Navigator.pop(ctx)),
+            _buildSheetButtons(
+            () => Navigator.pop(ctx),
+            () async {
+              final result = await ApiService.post(
+                'dosen',
+                {
+                  'nip': nipCtrl.text,
+                  'nama_lengkap': namaCtrl.text,
+                },
+              );
+
+              if (result['success'] == true) {
+
+                await _loadDosen();
+
+                Navigator.pop(ctx);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Dosen berhasil ditambahkan'),
+                  ),
+                );
+
+              } else {
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      result['message'] ?? 'Gagal menambah dosen',
+                    ),
+                  ),
+                );
+
+              }
+            },
+          ),
           ],
         ),
       ),
@@ -659,7 +853,44 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             const SizedBox(height: 8),
             _buildTextField(namaCtrl, 'Masukkan nama lengkap dosen'),
             const SizedBox(height: 28),
-            _buildSheetButtons(() => Navigator.pop(ctx), () => Navigator.pop(ctx), isEdit: true),
+            _buildSheetButtons(
+            () => Navigator.pop(ctx),
+            () async {
+
+              final result = await ApiService.put(
+                'dosen/${item['id_dosen']}',
+                {
+                  'nama_lengkap': namaCtrl.text,
+                },
+              );
+
+              if (result['success'] == true) {
+
+                await _loadDosen();
+
+                Navigator.pop(ctx);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Data dosen berhasil diubah'),
+                  ),
+                );
+
+              } else {
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      result['message'] ?? 'Gagal mengubah data',
+                    ),
+                  ),
+                );
+
+              }
+
+            },
+            isEdit: true,
+          ),
           ],
         ),
       ),
@@ -907,7 +1138,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     );
   }
 
-  void _showHapusDialog() {
+  void _showHapusDialog(Map<String, dynamic> item) { 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -927,7 +1158,36 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             child: const Text('Tidak'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () async {
+
+            final result = await ApiService.delete(
+              'dosen/${item['id_dosen']}',
+            );
+
+            if (result['success'] == true) {
+
+              await _loadDosen();
+
+              Navigator.pop(ctx);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Dosen berhasil dihapus'),
+                ),
+              );
+
+            } else {
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result['message'] ?? 'Gagal menghapus dosen',
+                  ),
+                ),
+              );
+
+            }
+          },
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryRed,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -973,15 +1233,23 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          for (var d in _dummyDosen) {
-                            d['is_kaprodi'] = false;
-                          }
-                          dosen['is_kaprodi'] = true;
-                        });
-                        Navigator.pop(ctx);
-                      },
+                      onPressed: () async {
+                      final success = await _dosenService.setKaprodi(
+                        dosen['id_dosen'],
+                      );
+
+                      Navigator.pop(ctx);
+
+                      if (success) {
+                        await _loadDosen();
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Kaprodi berhasil diperbarui'),
+                          ),
+                        );
+                      }
+                    },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryRed,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -1188,7 +1456,11 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
           const SizedBox(width: 8),
           _buildActionBtn(Icons.edit_outlined, _primaryRed, () => _showEditMahasiswaSheet(item)),
           const SizedBox(width: 6),
-          _buildActionBtn(Icons.delete_outline, Colors.red, _showHapusDialog),
+          _buildActionBtn(
+            Icons.delete_outline,
+            Colors.red,
+            () => _showHapusDialog(item),
+          ),
         ],
       ),
     );
@@ -1271,7 +1543,11 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
               ),
               _buildActionBtn(Icons.edit_outlined, _primaryRed, () => _showEditDosenSheet(item)),
               const SizedBox(width: 6),
-              _buildActionBtn(Icons.delete_outline, Colors.red, _showHapusDialog),
+             _buildActionBtn(
+              Icons.delete_outline,
+              Colors.red,
+              () => _showHapusDialog(item),
+            ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1421,7 +1697,11 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
           ),
           _buildActionBtn(Icons.search, _primaryRed, () => _showDetailAbsensiSheet(item)),
           const SizedBox(width: 6),
-          _buildActionBtn(Icons.delete_outline, Colors.red, _showHapusDialog),
+         _buildActionBtn(
+          Icons.delete_outline,
+          Colors.red,
+          () => _showHapusDialog(item),
+        ),
         ],
       ),
     );

@@ -40,4 +40,35 @@ class ApiService {
     );
     return jsonDecode(response.body);
   }
+
+  // File upload
+  static Future<dynamic> uploadFile(
+  String endpoint,
+  String filePath,
+) async {
+
+  var request = http.MultipartRequest(
+    'POST',
+    Uri.parse(
+      '${ApiConstant.baseUrl}/$endpoint',
+    ),
+  );
+
+  request.files.add(
+    await http.MultipartFile.fromPath(
+      'file',
+      filePath,
+    ),
+  );
+
+  var response = await request.send();
+
+  final responseBody =
+      await response.stream.bytesToString();
+
+  print('STATUS: ${response.statusCode}');
+  print('BODY: $responseBody');
+
+  return response.statusCode;
+}
 }

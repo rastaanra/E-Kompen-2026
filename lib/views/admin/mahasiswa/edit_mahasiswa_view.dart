@@ -27,7 +27,7 @@ class _EditMahasiswaViewState extends State<EditMahasiswaView> {
   @override
   void initState() {
     super.initState();
-    _namaController = TextEditingController(text: widget.mahasiswa.nama_lengkap);
+    _namaController = TextEditingController(text: widget.mahasiswa.nama);
     // Cek apakah prodi mahasiswa ada di list, kalau tidak set null
     _selectedProdi = _prodiList.contains(widget.mahasiswa.programStudi)
         ? widget.mahasiswa.programStudi

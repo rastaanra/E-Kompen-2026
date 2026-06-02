@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../views/login/login_screen.dart';
+import '../../utils/session_manager.dart';
+
+import '../login/login_screen.dart';
+import '../mahasiswa/home_screen.dart';
+import '../dosen/home_screen.dart';
+import '../kaprodi/home_screen.dart';
+import '../admin/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,50 +18,133 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
+    _checkSession();
   }
 
-  Future<void> _navigateToLogin() async {
+  Future<void> _checkSession() async {
+    // Splash tampil 3 detik
     await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
+
+    final isLoggedIn = await SessionManager.isLoggedIn();
+
+    if (!mounted) return;
+
+    // Belum login
+    if (!isLoggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
       );
+      return;
+    }
+
+    // Sudah login → cek role
+    final role = await SessionManager.getRole();
+
+    if (!mounted) return;
+
+    switch (role) {
+      case 'mahasiswa':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+        break;
+
+      case 'dosen':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DosenHomeScreen(),
+          ),
+        );
+        break;
+
+      case 'kaprodi':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const KaprodiHomeScreen(),
+          ),
+        );
+        break;
+
+      case 'admin':
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AdminHomeScreen(),
+          ),
+        );
+        break;
+
+      default:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const LoginScreen(),
+          ),
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFB71C1C),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo merah
+            // Logo
             Container(
-              width: 120,
-              height: 120,
+              width: 130,
+              height: 130,
               decoration: BoxDecoration(
-                color: const Color(0xFFB71C1C), 
-                borderRadius: BorderRadius.circular(24),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
               ),
               child: const Icon(
                 Icons.school,
-                color: Colors.white,
-                size: 70,
+                size: 80,
+                color: Color(0xFFB71C1C),
               ),
             ),
+
             const SizedBox(height: 24),
-            // Tulisan E-Kompen JTI
+
             const Text(
               'E-Kompen JTI',
               style: TextStyle(
-                color: Color(0xFFB71C1C),
-                fontSize: 24,
+                color: Colors.white,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+                letterSpacing: 1,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Jurusan Teknologi Informasi',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: Colors.white,
               ),
             ),
           ],
