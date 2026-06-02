@@ -29,7 +29,10 @@ environment:
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
+
 dependencies:
+  shared_preferences: ^2.2.2
+  http: ^1.2.1
   flutter:
     sdk: flutter
 
