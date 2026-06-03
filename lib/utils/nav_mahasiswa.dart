@@ -1,40 +1,41 @@
 import 'package:flutter/material.dart';
-import '../views/home_screen.dart';
-import '../views/pengajuan_screen.dart';
-import '../views/tracking_screen.dart';
-import '../views/profile_screen.dart';
+import '../views/mahasiswa/home_screen.dart';
+import '../views/mahasiswa/pengajuan_screen.dart';
+import '../views/mahasiswa/tracking_list_screen.dart';
+import '../views/mahasiswa/profile_screen.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class NavMahasiswa {
   static void toHome(BuildContext context) {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
   static void toPengajuan(BuildContext context) {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
     );
   }
 
   static void toTracking(BuildContext context) {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const TrackingScreen()),
+      MaterialPageRoute(builder: (_) => const TrackingListScreen()),
     );
   }
 
   static void toProfil(BuildContext context) {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const ProfileScreen()),
     );
   }
 
-  static void handleBottomNav(BuildContext context, NavTab tab, NavTab activeTab) {
+  static void handleBottomNav(
+      BuildContext context, NavTab tab, NavTab activeTab) {
     if (tab == activeTab) return;
     switch (tab) {
       case NavTab.home:
