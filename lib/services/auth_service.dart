@@ -34,8 +34,8 @@ class AuthService {
 
   // Register akun baru
   // Sesuai class diagram: register(data: Map): bool
-  Future<bool> register(Map<String, dynamic> data) async {
-    final result = await ApiService.post('auth/register', data);
-    return result['success'] ?? false;
-  }
+      // SESUDAH
+    Future<Map<String, dynamic>> register(Map<String, dynamic> data) async {
+      return await ApiService.post('auth/register', data);
+    }
 }
