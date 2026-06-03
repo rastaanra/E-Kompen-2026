@@ -348,51 +348,34 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Stack(
-                  alignment: Alignment.centerRight,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: (sudahLengkap && !sudahAjukan)
-                          ? () => _showAjukanTTDDialog(p, matkul, namaDosen)
-                          : null,
-                      icon: Icon(Icons.draw_outlined,
-                          size: 15,
-                          color: (sudahLengkap && !sudahAjukan)
-                              ? Colors.white
-                              : _grey),
-                      label: Text(
-                        'Ajukan TTD',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: (sudahLengkap && !sudahAjukan)
-                              ? Colors.white
-                              : _grey,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: (sudahLengkap && !sudahAjukan)
-                            ? _red
-                            : const Color(0xFFE0E0E0),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        elevation: 0,
-                      ),
+                child: ElevatedButton.icon(
+                  onPressed: (sudahLengkap && !sudahAjukan)
+                      ? () => _showAjukanTTDDialog(p, matkul, namaDosen)
+                      : null,
+                  icon: Icon(
+                    (!sudahLengkap && !sudahAjukan)
+                        ? Icons.lock_outline
+                        : Icons.draw_outlined,
+                    size: 15,
+                    color: (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
+                  ),
+                  label: Text(
+                    'Ajukan TTD',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
                     ),
-                    if (!sudahLengkap && !sudahAjukan)
-                      Positioned(
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.lock, size: 12, color: _grey),
-                        ),
-                      ),
-                  ],
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: (sudahLengkap && !sudahAjukan)
+                        ? _red
+                        : const Color(0xFFE0E0E0),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    elevation: 0,
+                  ),
                 ),
               ),
             ],
