@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import '../../services/api_service.dart';
 import '../../models/dosen.dart';
 import '../../services/dosen_service.dart';
+import '../../utils/session_manager.dart';
+import '../../utils/session_manager.dart';
 
 class AdminManagementScreen extends StatefulWidget {
   final int initialTab;
@@ -57,7 +59,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
               'nama': e['nama_lengkap'],
               'nim': e['nim'],
               'prodi': e['program_studi'],
-              'status': e['is_registered'],
+              'status': e['is_registered'] == 1,
             },
           ),
         );
@@ -68,6 +70,33 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   }
 }
 
+  List<Map<String, dynamic>> _absensi = [];
+
+  Future<void> _loadAbsensi() async {
+    try {
+      final result = await ApiService.get('absensi');
+
+      if (result['success']) {
+        setState(() {
+          _absensi = List<Map<String, dynamic>>.from(
+            result['data'].map(
+              (e) => {
+                'id': e['id_mahasiswa'],
+                'nama': e['nama_lengkap'],
+                'nim': e['nim'],
+                'prodi': e['program_studi'],
+                'alpha': e['total_alpha'],
+                'izin': e['total_izin'],
+                'sakit': e['total_sakit'],
+              },
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -76,6 +105,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
 
     _loadDosen();
     _loadMahasiswa();
+    _loadAbsensi();
   }
 
   final _searchMhsController = TextEditingController();
@@ -93,50 +123,6 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     {'nama': 'Budi Santoso', 'nim': '254107060100', 'prodi': 'SIB', 'status': true},
   ];
 
-
-  // ── DUMMY DATA ABSENSI
-  final List<Map<String, dynamic>> _dummyAbsensi = [
-    {
-      'nama': 'Sally Savista',
-      'nim': '244107060064',
-      'prodi': 'TI',
-      'detail': [
-        {'matkul': 'Basis Data', 'tanggal': '2026-05-12', 'alpha': 2, 'izin': 0, 'sakit': 1},
-        {'matkul': 'Pemrograman Mobile', 'tanggal': '2026-05-15', 'alpha': 3, 'izin': 1, 'sakit': 0},
-        {'matkul': 'Jaringan Komputer', 'tanggal': '2026-05-18', 'alpha': 1, 'izin': 0, 'sakit': 2},
-      ],
-    },
-    {
-      'nama': 'Michael Jordan',
-      'nim': '244107060065',
-      'prodi': 'TI',
-      'detail': [
-        {'matkul': 'Basis Data', 'tanggal': '2026-05-12', 'alpha': 0, 'izin': 1, 'sakit': 0},
-        {'matkul': 'Pemrograman Mobile', 'tanggal': '2026-05-15', 'alpha': 2, 'izin': 0, 'sakit': 1},
-        {'matkul': 'Workshop Mobile', 'tanggal': '2026-05-20', 'alpha': 1, 'izin': 2, 'sakit': 0},
-      ],
-    },
-    {
-      'nama': 'Asep Maulana',
-      'nim': '254107060099',
-      'prodi': 'SIB',
-      'detail': [
-        {'matkul': 'Manajemen Proyek', 'tanggal': '2026-05-11', 'alpha': 4, 'izin': 0, 'sakit': 0},
-        {'matkul': 'Analisis Bisnis', 'tanggal': '2026-05-14', 'alpha': 1, 'izin': 1, 'sakit': 1},
-        {'matkul': 'Data Warehouse', 'tanggal': '2026-05-16', 'alpha': 0, 'izin': 2, 'sakit': 0},
-      ],
-    },
-    {
-      'nama': 'Budi Santoso',
-      'nim': '254107060100',
-      'prodi': 'SIB',
-      'detail': [
-        {'matkul': 'Business Intelligence', 'tanggal': '2026-05-10', 'alpha': 0, 'izin': 0, 'sakit': 3},
-        {'matkul': 'ERP', 'tanggal': '2026-05-13', 'alpha': 2, 'izin': 1, 'sakit': 0},
-        {'matkul': 'Data Mining', 'tanggal': '2026-05-17', 'alpha': 1, 'izin': 0, 'sakit': 1},
-      ],
-    },
-  ];
 
   String _selectedProdi = 'Semua Prodi';
   String _selectedAngkatan = 'Semua Angkatan';
@@ -218,7 +204,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredAbsensi {
-    final list = _dummyAbsensi.where((m) {
+    final list = _absensi.where((m) {
       final matchSearch = _searchAbsensi.isEmpty ||
           m['nama'].toLowerCase().contains(_searchAbsensi.toLowerCase()) ||
           m['nim'].contains(_searchAbsensi);
@@ -437,28 +423,48 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                                 print('endpoint = $endpoint');
                                 print('filePath = $filePath');
 
-                                final result =
-                                    await ApiService.uploadFile(
+                                var result;
+                                if (_activeTab == 2) {
+                                final idAdmin = await SessionManager.getIdAdmin();
+
+                                result = await ApiService.uploadFile(
+                                  endpoint,
+                                  filePath!,
+                                  fields: {
+                                    'id_admin': idAdmin.toString(),
+                                  },
+                                );
+                              } else {
+                                result = await ApiService.uploadFile(
                                   endpoint,
                                   filePath!,
                                 );
+                              }
                                 print('HASIL API: $result');
 
                                 if (result == 200) {
-                                  await _loadDosen();
+                                  switch (_activeTab) {
+                                    case 0:
+                                      await _loadMahasiswa();
+                                      break;
+
+                                    case 1:
+                                      await _loadDosen();
+                                      break;
+
+                                    case 2:
+                                      await _loadAbsensi();
+                                      break;
+                                  }
 
                                   Navigator.pop(ctx);
 
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
-                                        'Import berhasil',
-                                      ),
+                                      content: Text('Import berhasil'),
                                     ),
                                   );
-
-                                } else {
+                                }
 
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(
@@ -470,8 +476,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                                   );
                                 }
 
-                            } catch (e) {
-
+                              catch (e) {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(
                                 SnackBar(
@@ -480,9 +485,8 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                                   ),
                                 ),
                               );
-                            }
-
-                          }
+                              }
+                            } 
                         : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primaryRed,
@@ -648,9 +652,9 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                   final prodi = selectedProdi.isEmpty ? 'TI' : (selectedProdi == 'D-IV Teknik Informatika' ? 'TI' : selectedProdi == 'D-IV Sistem Informasi Bisnis' ? 'SIB' : 'PPL');
                   if (nim.isNotEmpty) {
                     setState(() {
-                      final existing = _dummyAbsensi.indexWhere((e) => e['nim'] == nim);
+                      final existing = _absensi.indexWhere((e) => e['nim'] == nim);
                       if (existing != -1) {
-                        _dummyAbsensi[existing]['detail'].add({
+                        _absensi[existing]['detail'].add({
                           'matkul': matkulCtrl.text,
                           'tanggal': '2026-06-01',
                           'alpha': int.tryParse(alphaCtrl.text) ?? 0,
@@ -658,7 +662,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                           'sakit': int.tryParse(sakitCtrl.text) ?? 0,
                         });
                       } else {
-                        _dummyAbsensi.add({
+                        _absensi.add({
                           'nama': nama,
                           'nim': nim,
                           'prodi': prodi,
@@ -1662,17 +1666,21 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   }
 
   Widget _buildAbsensiCard(Map<String, dynamic> item) {
-    final List<Map<String, dynamic>> detail = item['detail'];
-    final int totalAlpha = detail.fold(0, (sum, e) => sum + (e['alpha'] as int));
-    final int totalIzin = detail.fold(0, (sum, e) => sum + (e['izin'] as int));
-    final int totalSakit = detail.fold(0, (sum, e) => sum + (e['sakit'] as int));
+    final int totalAlpha = item['alpha'] ?? 0;
+    final int totalIzin = item['izin'] ?? 0;
+    final int totalSakit = item['sakit'] ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+          )
+        ],
       ),
       child: Row(
         children: [
@@ -1680,8 +1688,21 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item['nama'], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textDark)),
-                Text('NIM: ${item['nim']} • ${item['prodi']}', style: const TextStyle(fontSize: 12, color: _textGrey)),
+                Text(
+                  item['nama'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: _textDark,
+                  ),
+                ),
+                Text(
+                  'NIM: ${item['nim']} • ${item['prodi']}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: _textGrey,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -1695,13 +1716,17 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
               ],
             ),
           ),
-          _buildActionBtn(Icons.search, _primaryRed, () => _showDetailAbsensiSheet(item)),
+          _buildActionBtn(
+            Icons.search,
+            _primaryRed,
+            () => _showDetailAbsensiSheet(item),
+          ),
           const SizedBox(width: 6),
-         _buildActionBtn(
-          Icons.delete_outline,
-          Colors.red,
-          () => _showHapusDialog(item),
-        ),
+          _buildActionBtn(
+            Icons.delete_outline,
+            Colors.red,
+            () => _showHapusDialog(item),
+          ),
         ],
       ),
     );

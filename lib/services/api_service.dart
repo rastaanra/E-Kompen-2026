@@ -44,8 +44,9 @@ class ApiService {
   // File upload
   static Future<dynamic> uploadFile(
   String endpoint,
-  String filePath,
-) async {
+  String filePath, {
+  Map<String, String>? fields,
+}) async {
 
   var request = http.MultipartRequest(
     'POST',
@@ -60,6 +61,10 @@ class ApiService {
       filePath,
     ),
   );
+
+  if (fields != null) {
+  request.fields.addAll(fields);
+}
 
   var response = await request.send();
 
