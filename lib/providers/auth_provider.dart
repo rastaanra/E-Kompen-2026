@@ -38,22 +38,22 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
-  // Register — service return bool
+  // Register — service return Map
   Future<bool> register(Map<String, dynamic> data) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final bool success = await _service.register(data);
+    final Map<String, dynamic> result = await _service.register(data); // ✅ Map
 
     _isLoading = false;
 
-    if (!success) {
-      _errorMessage = 'Registrasi gagal';
+    if (result['success'] != true) {
+      _errorMessage = result['message'] ?? 'Registrasi gagal';
     }
 
     notifyListeners();
-    return success;
+    return result['success'] == true;
   }
 
   // Logout
