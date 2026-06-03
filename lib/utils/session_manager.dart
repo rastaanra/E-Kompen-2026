@@ -54,4 +54,9 @@ class SessionManager {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getInt('id_admin');
 }
+
+static Future<int?> getIdMahasiswa() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('id_mahasiswa');
+}
 }

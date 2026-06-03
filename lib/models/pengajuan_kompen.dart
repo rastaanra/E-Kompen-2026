@@ -4,6 +4,7 @@ class PengajuanKompen {
   final int idAbsensi;
   final int? idDosen;
   final int? idAdmin;
+  final int idMataKuliah;
   final String tujuan;    // 'dosen' | 'admin'
   final String status;
   // Status yang valid:
@@ -29,6 +30,7 @@ class PengajuanKompen {
     required this.idAbsensi,
     this.idDosen,
     this.idAdmin,
+    required this.idMataKuliah,
     required this.tujuan,
     required this.status,
     required this.semester,
@@ -47,6 +49,7 @@ class PengajuanKompen {
       idAbsensi:        json['id_absensi'],
       idDosen:          json['id_dosen'],
       idAdmin:          json['id_admin'],
+      idMataKuliah:     json['id_mata_kuliah'],
       tujuan:           json['tujuan'],
       status:           json['status'],
       semester:         json['semester']?.toString() ?? '1',

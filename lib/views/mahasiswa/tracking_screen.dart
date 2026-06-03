@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
@@ -226,87 +228,138 @@ class _TrackingScreenState extends State<TrackingScreen> {
       );
 
   // Card info pengajuan di atas
-  Widget _buildInfoCard(bool isSelesai) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Ikon dokumen
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isSelesai
-                  ? const Color(0xFFE8F5E9)
-                  : const Color(0xFFFCE8E8),
-              borderRadius: BorderRadius.circular(10),
+    Widget _buildInfoCard(bool isSelesai) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(
-              Icons.description_outlined,
-              color:
-                  isSelesai ? const Color(0xFF2E7D32) : _primaryRed,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        child: Column(                          // ← ganti Row jadi Column
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  '${widget.matkul} — ${widget.jamAlpha} Jam Alpha',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: _dark,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isSelesai
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFCE8E8),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.description_outlined,
+                    color: isSelesai ? const Color(0xFF2E7D32) : _primaryRed,
+                    size: 22,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  widget.namaDosen,
-                  style:
-                      const TextStyle(fontSize: 12, color: _grey),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${widget.matkul} — ${widget.jamAlpha} Jam Alpha',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: _dark,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.namaDosen,
+                        style: const TextStyle(fontSize: 12, color: _grey),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isSelesai
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isSelesai ? 'Selesai' : 'Berjalan',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isSelesai
+                          ? const Color(0xFF2E7D32)
+                          : const Color(0xFFF57F17),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          // Badge status
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isSelesai
-                  ? const Color(0xFFE8F5E9)
-                  : const Color(0xFFFFF8E1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              isSelesai ? 'Selesai' : 'Berjalan',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isSelesai
-                    ? const Color(0xFF2E7D32)
-                    : const Color(0xFFF57F17),
+
+            // ── Tombol Download (hanya muncul kalau selesai) ──
+            if (isSelesai) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0)),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: sambungkan ke fungsi download PDF dari provider
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color(0xFF1565C0),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        content: const Row(
+                          children: [
+                            Icon(Icons.download_outlined,
+                                color: Colors.white, size: 18),
+                            SizedBox(width: 10),
+                            Text('Mengunduh form kompen...',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.download_outlined,
+                      color: Colors.white, size: 18),
+                  label: const Text(
+                    'Download Form Kompen',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1565C0),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+            ],
+          ],
+        ),
+      );
+    }
 
   // Lokasi read-only
   Widget _buildLokasiCard() {
@@ -367,58 +420,71 @@ class _TrackingScreenState extends State<TrackingScreen> {
           const SizedBox(height: 12),
 
           // Area peta (placeholder — sambung ke google maps / flutter_map)
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEEEEE),
+          // Peta read-only dengan flutter_map
+          if (widget.latitude != null && widget.longitude != null)
+            ClipRRect(
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: Stack(
-              children: [
-                // TODO: ganti dengan GoogleMap atau FlutterMap widget
-                // GoogleMap(
-                //   initialCameraPosition: CameraPosition(
-                //     target: LatLng(widget.latitude!, widget.longitude!),
-                //     zoom: 16,
-                //   ),
-                //   markers: {
-                //     Marker(
-                //       markerId: const MarkerId('lokasi'),
-                //       position: LatLng(widget.latitude!, widget.longitude!),
-                //     ),
-                //   },
-                //   myLocationEnabled: false,
-                //   zoomControlsEnabled: false,
-                // ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.map_outlined,
-                          size: 48, color: Colors.grey.shade400),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Peta Lokasi',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      if (widget.latitude != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '${widget.latitude!.toStringAsFixed(4)}, ${widget.longitude!.toStringAsFixed(4)}',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade400),
+              child: SizedBox(
+                height: 180,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(
+                        widget.latitude!, widget.longitude!),
+                    initialZoom: 16,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.none, // read-only, ga bisa drag/zoom
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(
+                              widget.latitude!, widget.longitude!),
+                          width: 40,
+                          height: 40,
+                          child: const Icon(
+                            Icons.location_on,
+                            color: _primaryRed,
+                            size: 40,
+                          ),
                         ),
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEEEEE),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.map_outlined,
+                        size: 48, color: Colors.grey.shade400),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Lokasi belum tersedia',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
           const SizedBox(height: 10),
 
           // Info koordinat

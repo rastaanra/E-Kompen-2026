@@ -4,6 +4,7 @@ import '../../widgets/app_header.dart';
 import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
 import '../../providers/mahasiswa_provider.dart';
+import '../../utils/session_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,43 +20,20 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
 
-  // ── Dummy data tagihan kompen per matkul
-  // TODO: ganti dengan data dari API kalau endpoint sudah tersedia
-  static const _tagihanList = [
-    {
-      'matkul': 'Basis Data',
-      'dosen': 'Dr. Ahmad Fauzi, M.Kom',
-      'sisaJam': 6,
-      'totalJam': 12,
-      'status': 'proses', // 'proses' | 'belum' | 'selesai'
-    },
-    {
-      'matkul': 'Jaringan Komputer',
-      'dosen': 'Ir. Budi Santoso, M.T',
-      'sisaJam': 6,
-      'totalJam': 6,
-      'status': 'belum',
-    },
-    {
-      'matkul': 'Pemrograman Web',
-      'dosen': 'Siti Rahayu, S.Kom, M.T',
-      'sisaJam': 0,
-      'totalJam': 8,
-      'status': 'selesai',
-    },
-  ];
 
-  // TODO: ganti dengan data dari provider/API
-  static const int _totalSisaKompen = 19;
-  static const int _telahDiselesaikan = 5;
 
-  @override
+ @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // TODO: uncomment kalau endpoint sudah ada
-      // final provider = context.read<MahasiswaProvider>();
-      // provider.getData(idPengguna);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<MahasiswaProvider>();
+
+      final idMahasiswa = await SessionManager.getIdMahasiswa();
+
+      if (idMahasiswa != null) {
+        await provider.getHomeData(idMahasiswa);
+      }
     });
   }
 
@@ -107,10 +85,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 12),
 
                           // List tagihan per matkul
-                          ..._tagihanList.map((t) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _buildTagihanCard(t),
-                              )),
+                          Consumer<MahasiswaProvider>(
+                          builder: (context, provider, _) {
+
+                            return Column(
+                              children: provider.homeData.map((t) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildTagihanCard(t),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
                         ],
                       ),
                     ),
@@ -246,22 +233,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Kartu ringkasan: Total Sisa + Telah Diselesaikan
   Widget _buildSummaryCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSummaryCard(
-            label: 'Total Sisa Kompen',
-            value: _totalSisaKompen,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSummaryCard(
-            label: 'Telah diselesaikan',
-            value: _telahDiselesaikan,
-          ),
-        ),
-      ],
+    return Consumer<MahasiswaProvider>(
+      builder: (context, provider, _) {
+
+        int totalSisa = 0;
+        int totalSelesai = 0;
+
+        for (var item in provider.homeData) {
+          totalSisa += (item['sisa_jam'] as int);
+          totalSelesai += (item['jam_selesai'] as int);
+        }
+
+        return Row(
+          children: [
+            Expanded(
+              child: _buildSummaryCard(
+                label: 'Total Sisa Kompen',
+                value: totalSisa,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSummaryCard(
+                label: 'Telah Diselesaikan',
+                value: totalSelesai,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -331,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Tagihan yang tidak diselesaikan semester ini akan dikali 2 di semester depan.',
+              'Tagihan ini telah dikalikan 2.',
               style: TextStyle(
                 fontSize: 11,
                 color: Color(0xFF92400E),
@@ -346,8 +346,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Card tagihan per mata kuliah
   Widget _buildTagihanCard(Map<String, dynamic> t) {
-    final int sisaJam = t['sisaJam'];
-    final int totalJam = t['totalJam'];
+    final int sisaJam = t['sisa_jam'];
+    final int totalJam = t['total_jam'];
     final String status = t['status'];
     final double progress = totalJam > 0
         ? ((totalJam - sisaJam) / totalJam).clamp(0.0, 1.0)
@@ -379,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      t['matkul'],
+                      t['nama_matkul'],
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -392,14 +392,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Icon(Icons.school_outlined,
                             size: 12, color: _textGrey),
                         const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            t['dosen'],
-                            style: const TextStyle(
-                                fontSize: 12, color: _textGrey),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
                       ],
                     ),
                   ],
@@ -450,9 +442,15 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 10),
 
           // Link ajukan kompen
+          if (status == 'belum')
           GestureDetector(
-            onTap: () =>
-                NavMahasiswa.handleBottomNav(context, NavTab.pengajuan, NavTab.home),
+            onTap: () {
+              NavMahasiswa.handleBottomNav(
+                context,
+                NavTab.pengajuan,
+                NavTab.home,
+              );
+            },
             child: const Text(
               'Ketuk untuk ajukan kompen',
               style: TextStyle(
@@ -460,7 +458,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: _primaryRed,
                 fontWeight: FontWeight.w500,
                 decoration: TextDecoration.underline,
-                decorationColor: _primaryRed,
               ),
             ),
           ),

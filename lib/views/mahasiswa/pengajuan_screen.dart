@@ -5,6 +5,7 @@ import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
 import '../../providers/pengajuan_provider.dart';
 import '../../models/pengajuan_kompen.dart';
+import '../../utils/session_manager.dart';
 import 'map_picker_view.dart';
 
 const _red = Color(0xFFB71C1C);
@@ -24,7 +25,6 @@ class PengajuanKompenScreen extends StatefulWidget {
 class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers form awal
   String? _selectedMK;
   String? _selectedTujuan;
   String? _selectedSemester;
@@ -38,52 +38,9 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   // Dummy list pengajuan
   // TODO: ganti dengan data dari PengajuanProvider
   final List<PengajuanKompen> _dummyList = [
-    PengajuanKompen(
-      idPengajuan: 1,
-      idMahasiswa: 1,
-      idAbsensi: 1,
-      idDosen: 1,
-      tujuan: 'dosen',
-      status: 'siap_diajukan',
-      semester: '4',
-      tanggalPertemuan: DateTime(2026, 4, 8),
-      totalJamKompen: 12,
-      deskripsiTugas: 'Menyiapkan modul praktikum Basis Data semester depan',
-      namaLokasi: 'Lab Komputer A',
-      latitude: -7.9402,
-      longitude: 112.6178,
-    ),
-    PengajuanKompen(
-      idPengajuan: 2,
-      idMahasiswa: 1,
-      idAbsensi: 2,
-      idDosen: 2,
-      tujuan: 'dosen',
-      status: 'sedang_dikerjakan',
-      semester: '4',
-      tanggalPertemuan: DateTime(2026, 5, 12),
-      totalJamKompen: null,
-      deskripsiTugas: null,
-      namaLokasi: null,
-    ),
-    PengajuanKompen(
-      idPengajuan: 3,
-      idMahasiswa: 1,
-      idAbsensi: 3,
-      idDosen: 3,
-      tujuan: 'dosen',
-      status: 'siap_diajukan',
-      semester: '4',
-      tanggalPertemuan: DateTime(2026, 4, 20),
-      totalJamKompen: 8,
-      deskripsiTugas: 'Menyiapkan modul Pemrograman Web semester depan',
-      namaLokasi: 'Lab Komputer B',
-      latitude: -7.9402,
-      longitude: 112.6178,
-    ),
+    
   ];
 
-  // Nama matkul dummy per idAbsensi — nanti dari API
   String _getMatkul(int idAbsensi) {
     switch (idAbsensi) {
       case 1: return 'Basis Data';
@@ -112,10 +69,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter: hanya tampilkan yang belum ajukan TTD
-    final listTampil = _dummyList
-        .where((p) => !p.sudahAjukanTTD)
-        .toList();
+    final listTampil = _dummyList.where((p) => !p.sudahAjukanTTD).toList();
 
     return Scaffold(
       backgroundColor: _red,
@@ -150,12 +104,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                         style: TextStyle(fontSize: 13, color: _grey),
                       ),
                       const SizedBox(height: 16),
-
-                      // Tombol + Ajukan Kompen
                       _buildAjukanButton(),
                       const SizedBox(height: 24),
-
-                      // Daftar Pengajuan
                       if (listTampil.isNotEmpty) ...[
                         const Text(
                           'Daftar Pengajuan Saya',
@@ -187,7 +137,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     );
   }
 
-  // ── Tombol Ajukan Kompen
   Widget _buildAjukanButton() {
     return SizedBox(
       width: double.infinity,
@@ -202,28 +151,23 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: _red,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
       ),
     );
   }
 
-  // ── Card pengajuan per item
   Widget _buildPengajuanCard(PengajuanKompen p) {
     final matkul = _getMatkul(p.idAbsensi);
     final namaDosen = _getNamaDosen(p);
     final sudahLengkap = p.isLengkap;
     final sudahAjukan = p.sudahAjukanTTD;
 
-    // Field yang belum diisi
     final List<String> fieldKurang = [];
     if (p.totalJamKompen == null) fieldKurang.add('Durasi jam');
-    if (p.deskripsiTugas == null || p.deskripsiTugas!.isEmpty)
-      fieldKurang.add('Deskripsi');
-    if (p.namaLokasi == null || p.namaLokasi!.isEmpty)
-      fieldKurang.add('Lokasi');
+    if (p.deskripsiTugas == null || p.deskripsiTugas!.isEmpty) fieldKurang.add('Deskripsi');
+    if (p.namaLokasi == null || p.namaLokasi!.isEmpty) fieldKurang.add('Lokasi');
 
     return Container(
       decoration: BoxDecoration(
@@ -240,7 +184,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: matkul + badge status
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -248,17 +191,14 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      matkul,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: _dark),
-                    ),
+                    Text(matkul,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _dark)),
                     const SizedBox(height: 2),
                     Text(namaDosen,
-                        style:
-                            const TextStyle(fontSize: 12, color: _grey)),
+                        style: const TextStyle(fontSize: 12, color: _grey)),
                   ],
                 ),
               ),
@@ -266,8 +206,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
             ],
           ),
           const SizedBox(height: 10),
-
-          // Field kurang (chip merah kecil)
           if (fieldKurang.isNotEmpty) ...[
             Wrap(
               spacing: 6,
@@ -278,14 +216,12 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFEBEE),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: const Color(0xFFFFCDD2)),
+                          border: Border.all(color: const Color(0xFFFFCDD2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.close,
-                                size: 10, color: _red),
+                            const Icon(Icons.close, size: 10, color: _red),
                             const SizedBox(width: 3),
                             Text(f,
                                 style: const TextStyle(
@@ -297,26 +233,20 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
             ),
             const SizedBox(height: 8),
           ],
-
-          // Info tanggal + jam
           Row(
             children: [
-              _chip(Icons.calendar_today_outlined,
-                  _formatTanggal(p.tanggalPertemuan)),
+              _chip(Icons.calendar_today_outlined, _formatTanggal(p.tanggalPertemuan)),
               const SizedBox(width: 12),
               _chip(Icons.access_time_outlined,
                   p.totalJamKompen != null ? '${p.totalJamKompen} Jam' : '- Jam'),
             ],
           ),
           const SizedBox(height: 6),
-
-          // Deskripsi singkat
           if (p.deskripsiTugas != null && p.deskripsiTugas!.isNotEmpty)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.description_outlined,
-                    size: 13, color: _grey),
+                const Icon(Icons.description_outlined, size: 13, color: _grey),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -332,28 +262,42 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
           const SizedBox(height: 12),
           const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0)),
           const SizedBox(height: 12),
-
-          // Tombol Lengkapi + Ajukan TTD
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: sudahAjukan
-                      ? null
-                      : () => _showLengkapiBottomSheet(p),
+                  // Bisa dilengkapi kalau: sudah dikonfirmasi (sedang_dikerjakan
+                  // atau siap_diajukan) DAN belum ajukan TTD
+                  onPressed: (!sudahAjukan &&
+                          (p.status == 'sedang_dikerjakan' ||
+                              p.status == 'siap_diajukan'))
+                      ? () => _showLengkapiBottomSheet(p)
+                      : null,
                   icon: Icon(Icons.edit_outlined,
                       size: 15,
-                      color: sudahAjukan ? _grey : _red),
+                      color: (!sudahAjukan &&
+                              (p.status == 'sedang_dikerjakan' ||
+                                  p.status == 'siap_diajukan'))
+                          ? _red
+                          : _grey),
                   label: Text(
                     'Lengkapi',
                     style: TextStyle(
                         fontSize: 13,
-                        color: sudahAjukan ? _grey : _red,
+                        color: (!sudahAjukan &&
+                                (p.status == 'sedang_dikerjakan' ||
+                                    p.status == 'siap_diajukan'))
+                            ? _red
+                            : _grey,
                         fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
-                        color: sudahAjukan ? Colors.grey.shade300 : _red),
+                        color: (!sudahAjukan &&
+                                (p.status == 'sedang_dikerjakan' ||
+                                    p.status == 'siap_diajukan'))
+                            ? _red
+                            : Colors.grey.shade300),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -362,66 +306,43 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Stack(
-                  alignment: Alignment.centerRight,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: (sudahLengkap && !sudahAjukan)
-                          ? () => _showAjukanTTDDialog(p, matkul, namaDosen)
-                          : null,
-                      icon: Icon(
-                        Icons.draw_outlined,
-                        size: 15,
-                        color: (sudahLengkap && !sudahAjukan)
-                            ? Colors.white
-                            : _grey,
-                      ),
-                      label: Text(
-                        'Ajukan TTD',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: (sudahLengkap && !sudahAjukan)
-                              ? Colors.white
-                              : _grey,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: (sudahLengkap && !sudahAjukan)
-                            ? _red
-                            : const Color(0xFFE0E0E0),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        elevation: 0,
-                      ),
+                child: ElevatedButton.icon(
+                  onPressed: (sudahLengkap && !sudahAjukan)
+                      ? () => _showAjukanTTDDialog(p, matkul, namaDosen)
+                      : null,
+                  icon: Icon(
+                    (!sudahLengkap && !sudahAjukan)
+                        ? Icons.lock_outline
+                        : Icons.draw_outlined,
+                    size: 15,
+                    color: (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
+                  ),
+                  label: Text(
+                    'Ajukan TTD',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
                     ),
-                    // Icon gembok kalau belum lengkap
-                    if (!sudahLengkap && !sudahAjukan)
-                      Positioned(
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.lock,
-                              size: 12, color: _grey),
-                        ),
-                      ),
-                  ],
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: (sudahLengkap && !sudahAjukan)
+                        ? _red
+                        : const Color(0xFFE0E0E0),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    elevation: 0,
+                  ),
                 ),
               ),
             ],
           ),
-
-          // Warning belum lengkap
-          if (!sudahLengkap && !sudahAjukan) ...[
+          // Info/warning sesuai status
+          if (p.status == 'pending') ...[
             const SizedBox(height: 8),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFF8E1),
                 borderRadius: BorderRadius.circular(8),
@@ -429,14 +350,34 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline,
-                      size: 13, color: Color(0xFFF59E0B)),
+                  Icon(Icons.hourglass_empty, size: 13, color: Color(0xFFF59E0B)),
+                  SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Menunggu konfirmasi dosen/admin sebelum bisa dilengkapi',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (!sudahLengkap && !sudahAjukan) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFFCC02)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, size: 13, color: Color(0xFFF59E0B)),
                   SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Lengkapi form dulu sebelum bisa mengajukan TTD',
-                      style: TextStyle(
-                          fontSize: 11, color: Color(0xFF92400E)),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                     ),
                   ),
                 ],
@@ -448,15 +389,13 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     );
   }
 
-  // ── Bottom sheet form ajukan kompen baru
   void _showFormAjukanBottomSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -470,11 +409,9 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle bar
                   Center(
                     child: Container(
-                      width: 40,
-                      height: 4,
+                      width: 40, height: 4,
                       decoration: BoxDecoration(
                         color: const Color(0xFFE0E0E0),
                         borderRadius: BorderRadius.circular(2),
@@ -482,20 +419,14 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Form Pengajuan Kompen',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: _dark),
-                  ),
-                  const Text(
-                    'Edit pengajuan form kompensasi kehadiran kamu',
-                    style: TextStyle(fontSize: 12, color: _grey),
-                  ),
+                  const Text('Form Pengajuan Kompen',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _dark)),
+                  const Text('Edit pengajuan form kompensasi kehadiran kamu',
+                      style: TextStyle(fontSize: 12, color: _grey)),
                   const SizedBox(height: 16),
-
-                  // Mata Kuliah
                   _fieldLabel('Mata Kuliah'),
                   const SizedBox(height: 6),
                   _buildDropdown(
@@ -503,17 +434,13 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     icon: Icons.search,
                     value: _selectedMK,
                     items: const [
-                      'Basis Data',
-                      'Pemrograman Web',
-                      'Jaringan Komputer',
-                      'Analisis Sistem'
+                      'Basis Data', 'Pemrograman Web',
+                      'Jaringan Komputer', 'Analisis Sistem'
                     ],
                     onChanged: (v) => setState(() => _selectedMK = v),
                     errorMsg: 'Mata kuliah wajib dipilih',
                   ),
                   const SizedBox(height: 14),
-
-                  // Tujuan Pengajuan
                   _fieldLabel('Tujuan Pengajuan'),
                   const SizedBox(height: 6),
                   _buildDropdown(
@@ -525,8 +452,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     errorMsg: 'Tujuan pengajuan wajib dipilih',
                   ),
                   const SizedBox(height: 14),
-
-                  // Nama Dosen
                   _fieldLabel('Nama Dosen yang Dituju'),
                   const SizedBox(height: 6),
                   _buildTextField(
@@ -536,8 +461,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     errorMsg: 'Nama dosen wajib diisi',
                   ),
                   const SizedBox(height: 14),
-
-                  // Semester
                   _fieldLabel('Semester'),
                   const SizedBox(height: 6),
                   _buildDropdown(
@@ -545,19 +468,14 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     icon: Icons.school_outlined,
                     value: _selectedSemester,
                     items: const ['1', '2', '3', '4', '5', '6', '7', '8'],
-                    onChanged: (v) =>
-                        setState(() => _selectedSemester = v),
+                    onChanged: (v) => setState(() => _selectedSemester = v),
                     errorMsg: 'Semester wajib dipilih',
                   ),
                   const SizedBox(height: 14),
-
-                  // Tanggal Pertemuan
                   _fieldLabel('Tanggal Pertemuan'),
                   const SizedBox(height: 6),
                   _buildDateField(),
                   const SizedBox(height: 14),
-
-                  // Total Jam
                   _fieldLabel('Total Jam'),
                   const SizedBox(height: 6),
                   _buildTextField(
@@ -568,8 +486,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     errorMsg: 'Total jam wajib diisi',
                   ),
                   const SizedBox(height: 14),
-
-                  // Info: deskripsi & lokasi diisi setelah diterima
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -596,37 +512,28 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                  // Deskripsi & Lokasi — disabled
-                  _fieldLabel('Deskripsi Tugas Kompen',
-                      disabled: true),
+                  _fieldLabel('Deskripsi Tugas Kompen', disabled: true),
                   const SizedBox(height: 6),
                   _buildDisabledField('Tersedia nanti.'),
                   const SizedBox(height: 14),
-
                   _fieldLabel('Lokasi Pengerjaan', disabled: true),
                   const SizedBox(height: 6),
                   _buildDisabledField('Tersedia nanti.'),
                   const SizedBox(height: 20),
-
-                  // Tombol Kirim Form
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => _handleKirimForm(),
+                      onPressed: () => _handleKirimForm(ctx),
                       icon: const Icon(Icons.upload_outlined,
                           color: Colors.white, size: 18),
-                      label: const Text(
-                        'Kirim Form',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600),
-                      ),
+                      label: const Text('Kirim Form',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _red,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
@@ -642,13 +549,10 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     );
   }
 
-  // ── Bottom sheet Lengkapi (deskripsi + lokasi)
   void _showLengkapiBottomSheet(PengajuanKompen p) {
     final matkul = _getMatkul(p.idAbsensi);
-    final deskripsiCtrl =
-        TextEditingController(text: p.deskripsiTugas ?? '');
-    final lokasiCtrl =
-        TextEditingController(text: p.namaLokasi ?? '');
+    final deskripsiCtrl = TextEditingController(text: p.deskripsiTugas ?? '');
+    final lokasiCtrl = TextEditingController(text: p.namaLokasi ?? '');
     final editKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
@@ -656,8 +560,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -671,11 +574,9 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle bar
                   Center(
                     child: Container(
-                      width: 40,
-                      height: 4,
+                      width: 40, height: 4,
                       decoration: BoxDecoration(
                         color: const Color(0xFFE0E0E0),
                         borderRadius: BorderRadius.circular(2),
@@ -683,20 +584,15 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Lengkapi Form — $matkul',
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _dark),
-                  ),
+                  Text('Lengkapi Form — $matkul',
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: _dark)),
                   const Text(
-                    'Isi detail pekerjaan setelah kompen selesai dikerjakan',
-                    style: TextStyle(fontSize: 12, color: _grey),
-                  ),
+                      'Isi detail pekerjaan setelah kompen selesai dikerjakan',
+                      style: TextStyle(fontSize: 12, color: _grey)),
                   const SizedBox(height: 6),
-
-                  // Badge "Sekarang sudah bisa diisi"
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
@@ -704,17 +600,13 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Sekarang sudah bisa diisi',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF2E7D32),
-                          fontWeight: FontWeight.w500),
-                    ),
+                    child: const Text('Sekarang sudah bisa diisi',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.w500)),
                   ),
                   const SizedBox(height: 16),
-
-                  // Deskripsi Tugas
                   _fieldLabel('Deskripsi Tugas Kompen'),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -722,18 +614,17 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     maxLength: 255,
                     maxLines: 3,
                     style: const TextStyle(fontSize: 13, color: _dark),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Deskripsi wajib diisi'
-                        : null,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Deskripsi wajib diisi';
+                      if (v.trim().length < 10) return 'Deskripsi minimal 10 karakter';
+                      return null;
+                    },
                     decoration: InputDecoration(
-                      hintText:
-                          'Contoh: Menyiapkan modul praktikum...',
-                      hintStyle:
-                          const TextStyle(fontSize: 13, color: _grey),
+                      hintText: 'Contoh: Menyiapkan modul praktikum...',
+                      hintStyle: const TextStyle(fontSize: 13, color: _grey),
                       prefixIcon: const Padding(
                         padding: EdgeInsets.only(bottom: 40),
-                        child: Icon(Icons.edit_outlined,
-                            size: 18, color: _grey),
+                        child: Icon(Icons.edit_outlined, size: 18, color: _grey),
                       ),
                       filled: true,
                       fillColor: _fieldBg,
@@ -742,116 +633,109 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                           vertical: 14, horizontal: 14),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: _fieldBorder)),
+                          borderSide: const BorderSide(color: _fieldBorder)),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: _fieldBorder)),
+                          borderSide: const BorderSide(color: _fieldBorder)),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
                               const BorderSide(color: _red, width: 1.5)),
                       errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: Colors.redAccent)),
+                          borderSide:
+                              const BorderSide(color: Colors.redAccent)),
                     ),
                   ),
                   const SizedBox(height: 14),
-
-                  // Lokasi Pengerjaan
                   _fieldLabel('Lokasi Pengerjaan'),
                   const SizedBox(height: 6),
-                  GestureDetector(
-                    onTap: () async {
-                      final result = await Navigator.push<Map<String, dynamic>>(
-                        context,
-                        MaterialPageRoute(builder: (_) => const MapPickerView()),
-                      );
-                      if (result != null) {
-                        setState(() {
-                          _selectedLat = result['lat'];
-                          _selectedLng = result['lng'];
-                          _selectedNamaLokasi = result['nama'];
-                        });
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEE),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _red,
-                          style: BorderStyle.solid,
+                  // Tampilkan lokasi yang sudah dipilih kalau ada
+                  StatefulBuilder(
+                    builder: (ctx, setLocal) => GestureDetector(
+                      onTap: () async {
+                        final result =
+                            await Navigator.push<Map<String, dynamic>>(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MapPickerView()),
+                        );
+                        if (result != null) {
+                          setState(() {
+                            _selectedLat = result['lat'];
+                            _selectedLng = result['lng'];
+                            _selectedNamaLokasi = result['nama'];
+                          });
+                          setLocal(() {});
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFEBEE),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _red),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on_outlined,
-                              color: _red, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  p.namaLokasi != null &&
-                                          p.namaLokasi!.isNotEmpty
-                                      ? p.namaLokasi!
-                                      : 'Tandai Lokasi Pengerjaan',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: p.namaLokasi != null &&
-                                            p.namaLokasi!.isNotEmpty
-                                        ? _dark
-                                        : _red,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                color: _red, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _selectedNamaLokasi ??
+                                        (p.namaLokasi != null &&
+                                                p.namaLokasi!.isNotEmpty
+                                            ? p.namaLokasi!
+                                            : 'Tandai Lokasi Pengerjaan'),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: (_selectedNamaLokasi != null ||
+                                              (p.namaLokasi != null &&
+                                                  p.namaLokasi!.isNotEmpty))
+                                          ? _dark
+                                          : _red,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  p.namaLokasi != null &&
-                                          p.namaLokasi!.isNotEmpty
-                                      ? '${p.latitude?.toStringAsFixed(4)}, ${p.longitude?.toStringAsFixed(4)}'
-                                      : 'Tap untuk membuka peta & memilih lokasi',
-                                  style: const TextStyle(
-                                      fontSize: 11, color: _grey),
-                                ),
-                              ],
+                                  Text(
+                                    _selectedLat != null
+                                        ? '${_selectedLat!.toStringAsFixed(4)}, ${_selectedLng!.toStringAsFixed(4)}'
+                                        : 'Tap untuk membuka peta & memilih lokasi',
+                                    style: const TextStyle(
+                                        fontSize: 11, color: _grey),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios,
-                              size: 14, color: _red),
-                        ],
+                            const Icon(Icons.arrow_forward_ios,
+                                size: 14, color: _red),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Tombol Simpan Perubahan
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () =>
-                          _handleSimpanLengkapi(ctx, p, editKey,
-                              deskripsiCtrl, lokasiCtrl),
+                      onPressed: () => _handleSimpanLengkapi(
+                          ctx, p, editKey, deskripsiCtrl, lokasiCtrl),
                       icon: const Icon(Icons.upload_outlined,
                           color: Colors.white, size: 18),
-                      label: const Text(
-                        'Simpan Perubahan',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600),
-                      ),
+                      label: const Text('Simpan Perubahan',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _red,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
@@ -867,25 +751,20 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     );
   }
 
-  // ── Dialog Ajukan TTD
   void _showAjukanTTDDialog(
       PengajuanKompen p, String matkul, String namaDosen) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Ajukan Tanda Tangan Digital',
-          style: TextStyle(
-              fontWeight: FontWeight.w700, fontSize: 16, color: _dark),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Ajukan Tanda Tangan Digital',
+            style: TextStyle(
+                fontWeight: FontWeight.w700, fontSize: 16, color: _dark)),
         content: Text(
           'Form kompen $matkul akan dikirim ke $namaDosen untuk ditandatangani secara digital.',
           style: const TextStyle(fontSize: 13, color: _grey, height: 1.5),
         ),
-        actionsPadding:
-            const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         actions: [
           OutlinedButton(
             onPressed: () => Navigator.pop(ctx),
@@ -893,48 +772,44 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               side: const BorderSide(color: _red),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             ),
             child: const Text('Batal',
-                style: TextStyle(
-                    color: _red, fontWeight: FontWeight.w600)),
+                style:
+                    TextStyle(color: _red, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-          
-              final success = await context.read<PengajuanProvider>().ajukanTTD(p.idPengajuan);
-          
+              final success = await context
+                  .read<PengajuanProvider>()
+                  .ajukanTTD(p.idPengajuan);
               if (mounted) {
                 if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: const Color(0xFF6A1B9A),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      content: const Row(children: [
-                        Icon(Icons.draw_outlined, color: Colors.white, size: 18),
-                        SizedBox(width: 10),
-                        Text(
-                          'Pengajuan TTD berhasil dikirim!',
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    backgroundColor: const Color(0xFF6A1B9A),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    content: const Row(children: [
+                      Icon(Icons.draw_outlined,
+                          color: Colors.white, size: 18),
+                      SizedBox(width: 10),
+                      Text('Pengajuan TTD berhasil dikirim!',
                           style: TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w600),
-                        ),
-                      ]),
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                  // Pindah ke tracking
-                  NavMahasiswa.handleBottomNav(context, NavTab.tracking, NavTab.pengajuan);
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                    ]),
+                    duration: const Duration(seconds: 3),
+                  ));
+                  NavMahasiswa.handleBottomNav(
+                      context, NavTab.tracking, NavTab.pengajuan);
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Gagal mengajukan TTD, coba lagi'),
-                      backgroundColor: Color(0xFFB71C1C),
-                    ),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Gagal mengajukan TTD, coba lagi'),
+                    backgroundColor: _red,
+                  ));
                 }
               }
             },
@@ -942,45 +817,70 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               backgroundColor: _red,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               elevation: 0,
             ),
             child: const Text('Kirim',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600)),
+                    color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _handleKirimForm() async {
-  final success = await context.read<PengajuanProvider>().simpanPengajuan({
-    'id_mahasiswa': 1,
-    'id_absensi': 1,
-    'id_dosen': 1,
-    'tujuan': 'dosen',
-    'semester': '4',
-    'tanggal_pertemuan': '2026-06-01',
-    'total_jam_kompen': 2,
-  });
+  // ── Kirim form pengajuan baru
+  void _handleKirimForm(BuildContext ctx) async {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.pop(ctx);
 
-  if (!mounted) return;
+    final success = await context.read<PengajuanProvider>().simpanPengajuan({
+      'tujuan': _selectedTujuan!.toLowerCase(),
+      'semester': _selectedSemester!,
+      'tanggal_pertemuan': _tglCtrl.text,
+      'total_jam_kompen': int.tryParse(_jamCtrl.text) ?? 0,
+      // TODO: id_absensi & id_dosen dari pencarian matkul/dosen
+    });
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        success
-            ? 'Pengajuan berhasil dikirim'
-            : 'Pengajuan gagal dikirim',
-      ),
-    ),
-  );
-}
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor:
+            success ? const Color(0xFF2E7D32) : _red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+        content: Row(children: [
+          Icon(
+            success
+                ? Icons.check_circle_outline
+                : Icons.error_outline,
+            color: Colors.white,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            success
+                ? 'Pengajuan berhasil dikirim!'
+                : 'Gagal mengirim pengajuan, coba lagi',
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+        ]),
+        duration: const Duration(seconds: 3),
+      ));
 
-  // ── Handler Simpan Lengkapi
+      if (success) {
+        // Refresh list pakai idMahasiswa dari session
+        final idMahasiswa = await SessionManager.getIdMahasiswa();
+        if (idMahasiswa != null && mounted) {
+          context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
+        }
+      }
+    }
+  }
+
+  // ── Simpan lengkapi (deskripsi + lokasi)
   void _handleSimpanLengkapi(
     BuildContext ctx,
     PengajuanKompen p,
@@ -988,52 +888,52 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     TextEditingController deskripsiCtrl,
     TextEditingController lokasiCtrl,
   ) async {
-      if (!key.currentState!.validate()) return;
-      if (_selectedLat == null || _selectedNamaLokasi == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pilih lokasi pengerjaan dulu'),
-            backgroundColor: Color(0xFFB71C1C),
-          ),
-        );
-        return;
-      }
-  
-      Navigator.pop(ctx);
-  
-      final success = await context.read<PengajuanProvider>().updateDeskripsiLokasi(
-        p.idPengajuan,
-        deskripsi: deskripsiCtrl.text.trim(),
-        namaLokasi: _selectedNamaLokasi!,
-        latitude: _selectedLat!,
-        longitude: _selectedLng!,
-      );
-  
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: success
-                ? const Color(0xFF1565C0)
-                : const Color(0xFFB71C1C),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            content: Text(
-              success
-                  ? 'Form berhasil dilengkapi!'
-                  : 'Gagal menyimpan, coba lagi',
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
-        );
-      }
-  
-      // Refresh list
-      // TODO: ganti 1 dengan idMahasiswa dari session/provider
-      // context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
+    if (!key.currentState!.validate()) return;
+    if (_selectedLat == null || _selectedNamaLokasi == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Pilih lokasi pengerjaan dulu'),
+        backgroundColor: _red,
+      ));
+      return;
     }
 
+    Navigator.pop(ctx);
+
+    final success = await context
+        .read<PengajuanProvider>()
+        .updateDeskripsiLokasi(
+          p.idPengajuan,
+          deskripsi: deskripsiCtrl.text.trim(),
+          namaLokasi: _selectedNamaLokasi!,
+          latitude: _selectedLat!,
+          longitude: _selectedLng!,
+        );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor:
+            success ? const Color(0xFF1565C0) : _red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+        content: Text(
+          success
+              ? 'Form berhasil dilengkapi!'
+              : 'Gagal menyimpan, coba lagi',
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+      ));
+
+      if (success) {
+        // Refresh list pakai idMahasiswa dari session
+        final idMahasiswa = await SessionManager.getIdMahasiswa();
+        if (idMahasiswa != null && mounted) {
+          context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
+        }
+      }
+    }
+  }
 
   // ── Helpers UI
   Widget _fieldLabel(String t, {bool disabled = false}) => Text(
@@ -1075,14 +975,12 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.redAccent)),
         ),
-        hint: Text(hint,
-            style: const TextStyle(fontSize: 13, color: _grey)),
+        hint: Text(hint, style: const TextStyle(fontSize: 13, color: _grey)),
         items: items
             .map((e) => DropdownMenuItem(
                   value: e,
                   child: Text(e,
-                      style:
-                          const TextStyle(fontSize: 13, color: _dark)),
+                      style: const TextStyle(fontSize: 13, color: _dark)),
                 ))
             .toList(),
         icon: const Icon(Icons.keyboard_arrow_down, color: _grey),
@@ -1097,11 +995,17 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   }) =>
       TextFormField(
         controller: controller,
-        keyboardType:
-            isNumber ? TextInputType.number : TextInputType.text,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         style: const TextStyle(fontSize: 13, color: _dark),
-        validator: (v) =>
-            (v == null || v.trim().isEmpty) ? errorMsg : null,
+        validator: (v) {
+          if (v == null || v.trim().isEmpty) return errorMsg;
+          if (isNumber) {
+            final jam = int.tryParse(v.trim());
+            if (jam == null) return 'Harus berupa angka';
+            if (jam <= 0) return 'Harus lebih dari 0';
+          }
+          return null;
+        },
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13, color: _grey),
@@ -1138,8 +1042,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
             lastDate: DateTime.now(),
             builder: (ctx, child) => Theme(
               data: Theme.of(ctx).copyWith(
-                colorScheme:
-                    const ColorScheme.light(primary: _red),
+                colorScheme: const ColorScheme.light(primary: _red),
               ),
               child: child!,
             ),
@@ -1157,8 +1060,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
           hintStyle: const TextStyle(fontSize: 13, color: _grey),
           prefixIcon: const Icon(Icons.calendar_today_outlined,
               size: 18, color: _grey),
-          suffixIcon:
-              const Icon(Icons.keyboard_arrow_down, color: _grey),
+          suffixIcon: const Icon(Icons.keyboard_arrow_down, color: _grey),
           filled: true,
           fillColor: _fieldBg,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -1170,12 +1072,10 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               borderSide: const BorderSide(color: _fieldBorder)),
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: _red, width: 1.5)),
+              borderSide: const BorderSide(color: _red, width: 1.5)),
           errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Colors.redAccent)),
+              borderSide: const BorderSide(color: Colors.redAccent)),
         ),
       );
 
@@ -1184,12 +1084,11 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13, color: _grey),
-          suffixIcon:
-              const Icon(Icons.lock_outline, size: 18, color: _grey),
+          suffixIcon: const Icon(Icons.lock_outline, size: 18, color: _grey),
           filled: true,
           fillColor: const Color(0xFFF0EBE3),
-          contentPadding: const EdgeInsets.symmetric(
-              vertical: 14, horizontal: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: _fieldBorder)),
@@ -1225,10 +1124,9 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
         label = status;
     }
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(label,
           style: TextStyle(
               fontSize: 10,
@@ -1252,18 +1150,14 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               Icon(Icons.inbox_outlined,
                   size: 56, color: Colors.grey.shade300),
               const SizedBox(height: 12),
-              const Text(
-                'Belum ada pengajuan',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _grey),
-              ),
+              const Text('Belum ada pengajuan',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _grey)),
               const SizedBox(height: 4),
-              const Text(
-                'Tap tombol di atas untuk mengajukan kompen',
-                style: TextStyle(fontSize: 12, color: _grey),
-              ),
+              const Text('Tap tombol di atas untuk mengajukan kompen',
+                  style: TextStyle(fontSize: 12, color: _grey)),
             ],
           ),
         ),
@@ -1272,8 +1166,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   String _formatTanggal(DateTime? dt) {
     if (dt == null) return '-';
     const bulan = [
-      'Jan','Feb','Mar','Apr','Mei','Jun',
-      'Jul','Agu','Sep','Okt','Nov','Des'
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
     ];
     return '${dt.day.toString().padLeft(2, '0')} ${bulan[dt.month - 1]} ${dt.year}';
   }

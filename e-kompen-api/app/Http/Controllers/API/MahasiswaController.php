@@ -7,6 +7,8 @@ use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\MahasiswaImport;
+use App\Models\Absensi;
+use App\Models\PengajuanKompen;
 
 class MahasiswaController extends Controller
 {
@@ -203,5 +205,63 @@ class MahasiswaController extends Controller
                 'message' => 'Gagal import: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // ==========================================
+    // HOME MAHASISWA - TAGIHAN KOMPEN 
+    
+    public function home($id_mahasiswa)
+    {
+        $absensi = Absensi::with('mataKuliah')
+            ->where('id_mahasiswa', $id_mahasiswa)
+            ->where('status', 'alpha')
+            ->get();
+
+        $grouped = $absensi->groupBy('id_mata_kuliah');
+
+        $tagihan = [];
+
+        foreach ($grouped as $idMatkul => $items) {
+
+            $namaMatkul = $items->first()->mataKuliah->nama_matkul ?? '-';
+
+            // total alpha x 2
+            $totalJam = $items->sum('jml_jam') * 2;
+
+            // total kompen selesai pada matkul tersebut
+            $jamSelesai = PengajuanKompen::where('id_mahasiswa', $id_mahasiswa)
+                ->where('id_mata_kuliah', $idMatkul)
+                ->where('status', 'selesai')
+                ->sum('total_jam_kompen');
+
+            $sisaJam = max($totalJam - $jamSelesai, 0);
+
+            $adaProses = PengajuanKompen::where('id_mahasiswa', $id_mahasiswa)
+                ->where('id_mata_kuliah', $idMatkul)
+                ->where('status', '!=', 'selesai')
+                ->exists();
+
+            if ($sisaJam <= 0) {
+                $status = 'selesai';
+            } elseif ($adaProses) {
+                $status = 'proses';
+            } else {
+                $status = 'belum';
+            }
+
+            $tagihan[] = [
+                'id_mata_kuliah' => $idMatkul,
+                'nama_matkul' => $namaMatkul,
+                'total_jam' => $totalJam,
+                'jam_selesai' => $jamSelesai,
+                'sisa_jam' => $sisaJam,
+                'status' => $status,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $tagihan
+        ]);
     }
 }

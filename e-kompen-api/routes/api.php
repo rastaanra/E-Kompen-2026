@@ -36,6 +36,7 @@ Route::post('/mahasiswa',                [MahasiswaController::class, 'store']);
 Route::post('/mahasiswa/import',         [MahasiswaController::class, 'import']);
 Route::put('/mahasiswa/{id}',            [MahasiswaController::class, 'update']);
 Route::delete('/mahasiswa/{id}',         [MahasiswaController::class, 'destroy']);
+Route::get('/mahasiswa/{id}/home',       [MahasiswaController::class, 'home']);
 
 
 // DOSEN

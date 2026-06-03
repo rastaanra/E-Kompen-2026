@@ -19,6 +19,7 @@ class PengajuanKompenController extends Controller
     {
         $data = PengajuanKompen::create([
             'id_mahasiswa'      => $request->id_mahasiswa,
+            'id_mata_kuliah' => $request->id_mata_kuliah,
             'id_absensi'        => $request->id_absensi,
             'id_dosen'          => $request->tujuan === 'dosen' ? $request->id_dosen : null,
             'id_admin'          => $request->tujuan === 'admin' ? $request->id_admin : null,

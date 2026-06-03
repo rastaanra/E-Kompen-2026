@@ -7,13 +7,17 @@ class PengajuanKompen extends Model {
     protected $primaryKey = 'id_pengajuan';
     public $timestamps    = false;
     protected $fillable   = [
-        'id_mahasiswa', 'id_absensi', 'id_dosen', 'id_admin',
+        'id_mahasiswa','id_mata_kuliah', 'id_absensi', 'id_dosen', 'id_admin',
         'tujuan', 'status', 'semester', 'tanggal_pertemuan',
         'total_jam_kompen', 'nama_lokasi', 'latitude', 'longitude'
     ];
 
     public function mahasiswa() {
         return $this->belongsTo(Mahasiswa::class, 'id_mahasiswa', 'id_mahasiswa');
+    }
+
+    public function mataKuliah() {
+        return $this->belongsTo(MataKuliah::class, 'id_mata_kuliah', 'id_mata_kuliah');
     }
 
     public function absensi() {

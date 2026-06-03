@@ -15,9 +15,11 @@ class MahasiswaService {
     return null;
   }
 
-  // Cek total jam alpha mahasiswa
-  Future<List<dynamic>> cekJamAlpha(int idMahasiswa) async {
-    final data = await ApiService.get('mahasiswa/$idMahasiswa/jam-alpha');
+  Future<List<dynamic>> getHomeData(int idMahasiswa) async {
+    final data = await ApiService.get(
+      'mahasiswa/$idMahasiswa/home',
+    );
+
     return data['data'] ?? [];
   }
 
