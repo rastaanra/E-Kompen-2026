@@ -7,6 +7,7 @@ use App\Http\Controllers\API\DosenController;
 use App\Http\Controllers\API\AbsensiController;
 use App\Http\Controllers\API\PengajuanKompenController;
 use App\Http\Controllers\API\TtdDigitalController;
+use App\Http\Controllers\API\MataKuliahController;
 // ==========================================
 // TEST KONEKSI
 // ==========================================
@@ -76,3 +77,6 @@ Route::put('/pengajuan-kompen/{id}/konfirmasi',         [PengajuanKompenControll
 Route::post('/ttd/{id_pengajuan}/ttd',          [TtdDigitalController::class, 'ttdDosenAdmin']);
 Route::post('/ttd/{id_pengajuan}/ttd-kaprodi',  [TtdDigitalController::class, 'ttdKaprodi']);
 Route::get('/ttd/{id_pengajuan}',               [TtdDigitalController::class, 'getByPengajuan']);
+
+// MATA KULIAH
+Route::get('/mata-kuliah/{idMahasiswa}',        [MataKuliahController::class, 'index']);

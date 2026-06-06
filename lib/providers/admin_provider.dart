@@ -17,11 +17,12 @@ class AdminProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // Ambil semua pengajuan
-  Future<void> getAllPengajuan() async {
+  Future<void> getAllPengajuan(int idAdmin) async {
     _isLoading = true;
     notifyListeners();
 
-    _listPengajuan = await _service.getAllPengajuan();
+    _listPengajuan =
+        await _service.getAllPengajuan(idAdmin);
 
     _isLoading = false;
     notifyListeners();

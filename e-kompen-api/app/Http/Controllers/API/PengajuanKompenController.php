@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PengajuanKompen;
 use App\Models\Admin;
 use Illuminate\Http\Request;
+use App\Models\Absensi;
 
 class PengajuanKompenController extends Controller
 {
@@ -17,10 +18,92 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function store(Request $request)
     {
+        $absensi = Absensi::where('id_mahasiswa', $request->id_mahasiswa)
+            ->where('id_mata_kuliah', $request->id_mata_kuliah)
+            ->where('status', 'alpha')
+            ->get();
+
+        $totalTagihan = $absensi->sum('jml_jam') * 2;
+
+        $jamTerpakai = PengajuanKompen::where(
+            'id_mahasiswa',
+            $request->id_mahasiswa
+        )
+        ->where(
+            'id_mata_kuliah',
+            $request->id_mata_kuliah
+        )
+        ->sum('total_jam_kompen');
+
+        $sisaJam = max($totalTagihan - $jamTerpakai, 0);
+
+        if ($absensi->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mata kuliah tidak memiliki tagihan kompen'
+            ], 400);
+        }
+
+        if ($request->total_jam_kompen > $sisaJam) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jumlah jam melebihi sisa tagihan kompen'
+            ], 400);
+        }
+
+        if ($sisaJam <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tagihan kompen mata kuliah ini sudah selesai'
+            ], 400);
+        }
+
+        if (!in_array($request->tujuan, ['dosen', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tujuan tidak valid'
+            ], 400);
+        }
+
+        if ($request->tujuan === 'dosen' && !$request->id_dosen) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dosen harus dipilih'
+            ], 400);
+        }
+
+        if ($request->tujuan === 'admin' && !$request->id_admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin tidak ditemukan'
+            ], 400);
+        }
+
+        if ($request->total_jam_kompen <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jumlah jam tidak valid'
+            ], 400);
+        }
+
+        if (!$request->semester) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Semester wajib diisi'
+            ], 400);
+        }
+
+        if (!$request->tanggal_pertemuan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal pertemuan wajib diisi'
+            ], 400);
+        }
+
         $data = PengajuanKompen::create([
             'id_mahasiswa'      => $request->id_mahasiswa,
             'id_mata_kuliah' => $request->id_mata_kuliah,
-            'id_absensi'        => $request->id_absensi,
+            'id_absensi'        => null,
             'id_dosen'          => $request->tujuan === 'dosen' ? $request->id_dosen : null,
             'id_admin'          => $request->tujuan === 'admin' ? $request->id_admin : null,
             'tujuan'            => $request->tujuan,
@@ -68,22 +151,35 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByMahasiswa($id_mahasiswa)
     {
-        $data = PengajuanKompen::with(['absensi.mataKuliah', 'dosen', 'admin'])
+        $data = PengajuanKompen::with(['mataKuliah', 'dosen', 'admin'])
             ->where('id_mahasiswa', $id_mahasiswa)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
-                return [
-                    'id_pengajuan'      => $item->id_pengajuan,
-                    'nama_matkul'       => $item->absensi->mataKuliah->nama_matkul ?? null,
-                    'nama_dosen'        => $item->dosen->nama_lengkap ?? $item->admin->nama ?? null,
-                    'tujuan'            => $item->tujuan,
-                    'semester'          => $item->semester,
-                    'tanggal_pertemuan' => $item->tanggal_pertemuan,
-                    'total_jam_kompen'  => $item->total_jam_kompen,
-                    'deskripsi_tugas'   => $item->deskripsi_tugas,
-                    'status'            => $item->status,
-                ];
+            return [
+                'id_pengajuan'      => $item->id_pengajuan,
+
+                'id_mahasiswa'      => $item->id_mahasiswa,
+                'id_absensi'        => $item->id_absensi,
+                'id_dosen'          => $item->id_dosen,
+                'id_admin'          => $item->id_admin,
+                'id_mata_kuliah'    => $item->id_mata_kuliah,
+
+                'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
+                'nama_tujuan'       => $item->dosen->nama_lengkap ?? $item->admin->nama ?? null,
+
+                'tujuan'            => $item->tujuan,
+                'semester'          => $item->semester,
+                'tanggal_pertemuan' => $item->tanggal_pertemuan,
+                'total_jam_kompen'  => $item->total_jam_kompen,
+                'deskripsi_tugas'   => $item->deskripsi_tugas,
+
+                'nama_lokasi'       => $item->nama_lokasi,
+                'latitude'          => $item->latitude,
+                'longitude'         => $item->longitude,
+
+                'status'            => $item->status,
+            ];
             });
 
         return response()->json([
@@ -99,7 +195,7 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByDosen($id_dosen)
     {
-        $data = PengajuanKompen::with(['absensi.mataKuliah', 'mahasiswa'])
+        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa'])
             ->where('id_dosen', $id_dosen)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -108,7 +204,7 @@ class PengajuanKompenController extends Controller
                     'id_pengajuan'      => $item->id_pengajuan,
                     'nama_mahasiswa'    => $item->mahasiswa->nama_lengkap ?? null,
                     'nim'               => $item->mahasiswa->nim ?? null,
-                    'nama_matkul'       => $item->absensi->mataKuliah->nama_matkul ?? null,
+                    'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
                     'semester'          => $item->semester,
                     'tanggal_pertemuan' => $item->tanggal_pertemuan,
                     'total_jam_kompen'  => $item->total_jam_kompen,
@@ -129,7 +225,7 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByAdmin($id_admin)
     {
-        $data = PengajuanKompen::with(['absensi.mataKuliah', 'mahasiswa'])
+        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa'])
             ->where('id_admin', $id_admin)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -138,7 +234,7 @@ class PengajuanKompenController extends Controller
                     'id_pengajuan'      => $item->id_pengajuan,
                     'nama_mahasiswa'    => $item->mahasiswa->nama_lengkap ?? null,
                     'nim'               => $item->mahasiswa->nim ?? null,
-                    'nama_matkul'       => $item->absensi->mataKuliah->nama_matkul ?? null,
+                    'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
                     'semester'          => $item->semester,
                     'tanggal_pertemuan' => $item->tanggal_pertemuan,
                     'total_jam_kompen'  => $item->total_jam_kompen,
@@ -160,7 +256,7 @@ class PengajuanKompenController extends Controller
     public function show($id)
     {
         $item = PengajuanKompen::with([
-            'absensi.mataKuliah',
+            'mataKuliah',
             'mahasiswa',
             'dosen',
             'admin'
@@ -187,7 +283,7 @@ class PengajuanKompenController extends Controller
                 // Data Pengajuan
                 'tujuan'            => $item->tujuan,
                 'semester'          => $item->semester,
-                'nama_matkul'       => $item->absensi->mataKuliah->nama_matkul ?? null,
+                'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
                 'tanggal_pertemuan' => $item->tanggal_pertemuan,
                 'total_jam_kompen'  => $item->total_jam_kompen,
                 'deskripsi_tugas'   => $item->deskripsi_tugas,

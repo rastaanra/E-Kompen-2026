@@ -16,7 +16,7 @@ class NavMahasiswa {
   static void toPengajuan(BuildContext context) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const PengajuanKompenScreen()),
+      MaterialPageRoute(builder: (_) => const PengajuanScreen()),
     );
   }
 

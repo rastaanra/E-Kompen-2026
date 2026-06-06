@@ -13,12 +13,26 @@ class ApiService {
   }
 
   // POST request
-  static Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
-    final response = await http.post(
+  static Future<dynamic> post(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    print('POST URL: ${ApiConstant.baseUrl}/$endpoint');
+    print('POST DATA: $data');
+
+   final response = await http
+    .post(
       Uri.parse('${ApiConstant.baseUrl}/$endpoint'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
+    )
+    .timeout(
+      const Duration(seconds: 10),
     );
+
+    print('STATUS: ${response.statusCode}');
+    print('BODY: ${response.body}');
+
     return jsonDecode(response.body);
   }
 

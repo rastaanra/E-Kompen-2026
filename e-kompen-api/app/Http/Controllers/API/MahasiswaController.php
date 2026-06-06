@@ -209,7 +209,6 @@ class MahasiswaController extends Controller
 
     // ==========================================
     // HOME MAHASISWA - TAGIHAN KOMPEN 
-    
     public function home($id_mahasiswa)
     {
         $absensi = Absensi::with('mataKuliah')

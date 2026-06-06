@@ -98,8 +98,8 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
           p.semester == _selectedSemester;
       final matchStatus = _selectedStatus == 'Semua Status' ||
           (_selectedStatus == 'Menunggu Persetujuan' &&
-              p.status == 'menunggu_persetujuan') ||
-          (_selectedStatus == 'Disetujui' && p.status == 'disetujui');
+              p.status == 'pending') ||
+          (_selectedStatus == 'Disetujui' && p.status == 'sedang_dikerjakan');
       return matchSemester && matchStatus;
     }).toList();
 
@@ -556,37 +556,41 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
   );
 }
 
-  Widget _buildStatusBadge(String status) {
-    Color bg;
-    Color textColor;
-    String label;
+Widget _buildStatusBadge(String status) {
+  Color bg;
+  Color textColor;
+  String label;
 
-    switch (status) {
-      case 'disetujui':
-        bg = const Color(0xFFD1FAE5);
-        textColor = const Color(0xFF065F46);
-        label = 'Disetujui';
-        break;
-      default:
-        bg = const Color(0xFFFFF3CD);
-        textColor = const Color(0xFF856404);
-        label = 'Menunggu Persetujuan';
-    }
+  switch (status) {
+    case 'sedang_dikerjakan':
+      bg = const Color(0xFFD1FAE5);
+      textColor = const Color(0xFF065F46);
+      label = 'Disetujui';
+      break;
 
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: textColor)),
-    );
+    case 'pending':
+    default:
+      bg = const Color(0xFFFFF3CD);
+      textColor = const Color(0xFF856404);
+      label = 'Menunggu Persetujuan';
   }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+    ),
+  );
+}
 
   Widget _buildEmptyState() {
     return Center(

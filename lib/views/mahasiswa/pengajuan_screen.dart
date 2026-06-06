@@ -15,19 +15,20 @@ const _grey = Color(0xFF9E9E9E);
 const _fieldBg = Color(0xFFF8F4EE);
 const _fieldBorder = Color(0xFFE8E0D5);
 
-class PengajuanKompenScreen extends StatefulWidget {
-  const PengajuanKompenScreen({super.key});
+class PengajuanScreen extends StatefulWidget {
+  const PengajuanScreen({super.key});
 
   @override
-  State<PengajuanKompenScreen> createState() => _PengajuanKompenScreenState();
+  State<PengajuanScreen> createState() => _PengajuanScreenState();
 }
 
-class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
+class _PengajuanScreenState extends State<PengajuanScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String? _selectedMK;
   String? _selectedTujuan;
   String? _selectedSemester;
+  String? _selectedDosen;
   final _dosenCtrl = TextEditingController();
   final _tglCtrl = TextEditingController();
   final _jamCtrl = TextEditingController();
@@ -35,27 +36,63 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   double? _selectedLng;
   String? _selectedNamaLokasi;
 
-  // Dummy list pengajuan
-  // TODO: ganti dengan data dari PengajuanProvider
-  final List<PengajuanKompen> _dummyList = [
-    
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPengajuan();
+    _loadMataKuliah();
+    _loadDosen();
+    _loadAdmin();
+  }
 
-  String _getMatkul(int idAbsensi) {
-    switch (idAbsensi) {
-      case 1: return 'Basis Data';
-      case 2: return 'Jaringan Komputer';
-      case 3: return 'Pemrograman Web';
-      default: return 'Mata Kuliah';
+  Future<void> _loadPengajuan() async {
+    final idMahasiswa = await SessionManager.getIdMahasiswa();
+    if (idMahasiswa != null && mounted) {
+      context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
     }
   }
 
-  String _getNamaDosen(PengajuanKompen p) {
-    switch (p.idDosen) {
-      case 1: return 'Dr. Ahmad Fauzi, M.Kom';
-      case 2: return 'Ir. Budi Santoso, M. T.';
-      case 3: return 'Siti Rahayu, S. Kom, M. T.';
-      default: return 'Dosen';
+  Future<void> _loadMataKuliah() async {
+    final idMahasiswa = await SessionManager.getIdMahasiswa();
+    if (idMahasiswa != null && mounted) {
+      context.read<PengajuanProvider>().getMataKuliah(idMahasiswa);
+    }
+  }
+
+  Future<void> _loadDosen() async {
+    await context.read<PengajuanProvider>().getDosen();
+    print(context.read<PengajuanProvider>().dosen.length);
+  }
+
+Future<void> _loadAdmin() async {
+  try {
+    print('LOAD ADMIN START');
+    await context.read<PengajuanProvider>().getAdmin();
+    print('LOAD ADMIN DONE: ${context.read<PengajuanProvider>().admin?.idAdmin}');
+  } catch (e) {
+    print('LOAD ADMIN ERROR: $e');
+  }
+}
+
+  String _getMatkul(int? idMataKuliah) {
+    final provider = context.read<PengajuanProvider>();
+    try {
+      return provider.mataKuliah
+          .firstWhere((e) => e.idMataKuliah == idMataKuliah)
+          .namaMk;
+    } catch (_) {
+      return 'Mata Kuliah';
+    }
+  }
+
+  String _getNamaDosen(int? idDosen) {
+    final provider = context.read<PengajuanProvider>();
+    try {
+      return provider.dosen
+          .firstWhere((e) => e.idDosen == idDosen)
+          .namaLengkap;
+    } catch (_) {
+      return 'Dosen';
     }
   }
 
@@ -69,7 +106,15 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final listTampil = _dummyList.where((p) => !p.sudahAjukanTTD).toList();
+    final provider = context.watch<PengajuanProvider>();
+    if (provider.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final listTampil =
+        provider.listPengajuan.where((p) => !p.sudahAjukanTTD).toList();
 
     return Scaffold(
       backgroundColor: _red,
@@ -151,7 +196,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: _red,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
       ),
@@ -159,15 +205,17 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   }
 
   Widget _buildPengajuanCard(PengajuanKompen p) {
-    final matkul = _getMatkul(p.idAbsensi);
-    final namaDosen = _getNamaDosen(p);
+    final matkul = _getMatkul(p.idMataKuliah);
+    final namaDosen = p.namaTujuan ?? '-';
     final sudahLengkap = p.isLengkap;
     final sudahAjukan = p.sudahAjukanTTD;
 
     final List<String> fieldKurang = [];
     if (p.totalJamKompen == null) fieldKurang.add('Durasi jam');
-    if (p.deskripsiTugas == null || p.deskripsiTugas!.isEmpty) fieldKurang.add('Deskripsi');
-    if (p.namaLokasi == null || p.namaLokasi!.isEmpty) fieldKurang.add('Lokasi');
+    if (p.deskripsiTugas == null || p.deskripsiTugas!.isEmpty)
+      fieldKurang.add('Deskripsi');
+    if (p.namaLokasi == null || p.namaLokasi!.isEmpty)
+      fieldKurang.add('Lokasi');
 
     return Container(
       decoration: BoxDecoration(
@@ -235,7 +283,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
           ],
           Row(
             children: [
-              _chip(Icons.calendar_today_outlined, _formatTanggal(p.tanggalPertemuan)),
+              _chip(Icons.calendar_today_outlined,
+                  _formatTanggal(p.tanggalPertemuan)),
               const SizedBox(width: 12),
               _chip(Icons.access_time_outlined,
                   p.totalJamKompen != null ? '${p.totalJamKompen} Jam' : '- Jam'),
@@ -253,8 +302,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     p.deskripsiTugas!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 11, color: _grey, height: 1.4),
+                    style:
+                        const TextStyle(fontSize: 11, color: _grey, height: 1.4),
                   ),
                 ),
               ],
@@ -266,8 +315,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  // Bisa dilengkapi kalau: sudah dikonfirmasi (sedang_dikerjakan
-                  // atau siap_diajukan) DAN belum ajukan TTD
                   onPressed: (!sudahAjukan &&
                           (p.status == 'sedang_dikerjakan' ||
                               p.status == 'siap_diajukan'))
@@ -315,14 +362,17 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                         ? Icons.lock_outline
                         : Icons.draw_outlined,
                     size: 15,
-                    color: (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
+                    color:
+                        (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
                   ),
                   label: Text(
                     'Ajukan TTD',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: (sudahLengkap && !sudahAjukan) ? Colors.white : _grey,
+                      color: (sudahLengkap && !sudahAjukan)
+                          ? Colors.white
+                          : _grey,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -338,11 +388,11 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               ),
             ],
           ),
-          // Info/warning sesuai status
           if (p.status == 'pending') ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFF8E1),
                 borderRadius: BorderRadius.circular(8),
@@ -350,12 +400,14 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.hourglass_empty, size: 13, color: Color(0xFFF59E0B)),
+                  Icon(Icons.hourglass_empty,
+                      size: 13, color: Color(0xFFF59E0B)),
                   SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Menunggu konfirmasi dosen/admin sebelum bisa dilengkapi',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                      style:
+                          TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                     ),
                   ),
                 ],
@@ -364,7 +416,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
           ] else if (!sudahLengkap && !sudahAjukan) ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFF8E1),
                 borderRadius: BorderRadius.circular(8),
@@ -372,12 +425,14 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline, size: 13, color: Color(0xFFF59E0B)),
+                  Icon(Icons.info_outline,
+                      size: 13, color: Color(0xFFF59E0B)),
                   SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Lengkapi form dulu sebelum bisa mengajukan TTD',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                      style:
+                          TextStyle(fontSize: 11, color: Color(0xFF92400E)),
                     ),
                   ),
                 ],
@@ -390,157 +445,249 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   }
 
   void _showFormAjukanBottomSheet() {
+    // Reset state form setiap kali buka
+    _selectedMK = null;
+    _selectedTujuan = null;
+    _selectedSemester = null;
+    _selectedDosen = null;
+    _tglCtrl.clear();
+    _jamCtrl.clear();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40, height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0E0E0),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Form Pengajuan Kompen',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: _dark)),
-                  const Text('Edit pengajuan form kompensasi kehadiran kamu',
-                      style: TextStyle(fontSize: 12, color: _grey)),
-                  const SizedBox(height: 16),
-                  _fieldLabel('Mata Kuliah'),
-                  const SizedBox(height: 6),
-                  _buildDropdown(
-                    hint: 'Cari mata kuliah...',
-                    icon: Icons.search,
-                    value: _selectedMK,
-                    items: const [
-                      'Basis Data', 'Pemrograman Web',
-                      'Jaringan Komputer', 'Analisis Sistem'
-                    ],
-                    onChanged: (v) => setState(() => _selectedMK = v),
-                    errorMsg: 'Mata kuliah wajib dipilih',
-                  ),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Tujuan Pengajuan'),
-                  const SizedBox(height: 6),
-                  _buildDropdown(
-                    hint: 'Pilih tujuan pengajuan',
-                    icon: Icons.send_outlined,
-                    value: _selectedTujuan,
-                    items: const ['Dosen', 'Admin'],
-                    onChanged: (v) => setState(() => _selectedTujuan = v),
-                    errorMsg: 'Tujuan pengajuan wajib dipilih',
-                  ),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Nama Dosen yang Dituju'),
-                  const SizedBox(height: 6),
-                  _buildTextField(
-                    hint: 'Cari dosen yang dituju...',
-                    icon: Icons.search,
-                    controller: _dosenCtrl,
-                    errorMsg: 'Nama dosen wajib diisi',
-                  ),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Semester'),
-                  const SizedBox(height: 6),
-                  _buildDropdown(
-                    hint: 'Pilih semester',
-                    icon: Icons.school_outlined,
-                    value: _selectedSemester,
-                    items: const ['1', '2', '3', '4', '5', '6', '7', '8'],
-                    onChanged: (v) => setState(() => _selectedSemester = v),
-                    errorMsg: 'Semester wajib dipilih',
-                  ),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Tanggal Pertemuan'),
-                  const SizedBox(height: 6),
-                  _buildDateField(),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Total Jam'),
-                  const SizedBox(height: 6),
-                  _buildTextField(
-                    hint: 'Masukkan total jam...',
-                    icon: Icons.access_time_outlined,
-                    controller: _jamCtrl,
-                    isNumber: true,
-                    errorMsg: 'Total jam wajib diisi',
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFFCC02)),
-                    ),
-                    child: const Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.info_outline,
-                            color: Color(0xFFF59E0B), size: 16),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Belum bisa diisi sekarang\nSilahkan kirim form pengajuan kompen terlebih dahulu. Deskripsi tugas & lokasi bisa dilengkapi setelah pengajuan diterima.',
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF92400E),
-                                height: 1.5),
-                          ),
+      // ── KUNCI: StatefulBuilder agar if/else _selectedTujuan bisa rebuild
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0E0E0),
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Deskripsi Tugas Kompen', disabled: true),
-                  const SizedBox(height: 6),
-                  _buildDisabledField('Tersedia nanti.'),
-                  const SizedBox(height: 14),
-                  _fieldLabel('Lokasi Pengerjaan', disabled: true),
-                  const SizedBox(height: 6),
-                  _buildDisabledField('Tersedia nanti.'),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleKirimForm(ctx),
-                      icon: const Icon(Icons.upload_outlined,
-                          color: Colors.white, size: 18),
-                      label: const Text('Kirim Form',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _red,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    const Text('Form Pengajuan Kompen',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: _dark)),
+                    const Text('Edit pengajuan form kompensasi kehadiran kamu',
+                        style: TextStyle(fontSize: 12, color: _grey)),
+                    const SizedBox(height: 16),
+
+                    // ── Mata Kuliah
+                    _fieldLabel('Mata Kuliah'),
+                    const SizedBox(height: 6),
+                    Consumer<PengajuanProvider>(
+                      builder: (context, provider, child) {
+                        return _buildDropdown(
+                          hint: 'Cari mata kuliah...',
+                          icon: Icons.search,
+                          value: _selectedMK,
+                          items: provider.mataKuliah
+                              .map((mk) => mk.namaMk)
+                              .toList(),
+                          onChanged: (v) =>
+                              setSheetState(() => _selectedMK = v),
+                          errorMsg: 'Mata kuliah wajib dipilih',
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Tujuan Pengajuan
+                    _fieldLabel('Tujuan Pengajuan'),
+                    const SizedBox(height: 6),
+                    _buildDropdown(
+                      hint: 'Pilih tujuan pengajuan',
+                      icon: Icons.send_outlined,
+                      value: _selectedTujuan,
+                      items: const ['Dosen', 'Admin'],
+                      onChanged: (v) {
+                        setSheetState(() {
+                          _selectedTujuan = v;
+                          _selectedDosen = null; // reset saat ganti tujuan
+                        });
+                      },
+                      errorMsg: 'Tujuan pengajuan wajib dipilih',
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Kondisional: Dosen atau Admin
+                    if (_selectedTujuan == 'Dosen') ...[
+                      _fieldLabel('Nama Dosen yang Dituju'),
+                      const SizedBox(height: 6),
+                      Consumer<PengajuanProvider>(
+                        builder: (context, provider, child) {
+                          return _buildDropdown(
+                            hint: 'Pilih dosen...',
+                            icon: Icons.person_outline,
+                            value: _selectedDosen,
+                            items: provider.dosen
+                                .map((d) => d.namaLengkap)
+                                .toList(),
+                            onChanged: (v) =>
+                                setSheetState(() => _selectedDosen = v),
+                            errorMsg: 'Dosen wajib dipilih',
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                    ] else if (_selectedTujuan == 'Admin') ...[
+                      _fieldLabel('Admin Tujuan'),
+                      const SizedBox(height: 6),
+                      Consumer<PengajuanProvider>(
+                        builder: (context, provider, child) {
+                          return TextFormField(
+                            initialValue: provider.admin?.nama ?? '',
+                            readOnly: true,
+                            style:
+                                const TextStyle(fontSize: 13, color: _dark),
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(
+                                Icons.admin_panel_settings_outlined,
+                                size: 18,
+                                color: _grey,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF0EBE3),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    const BorderSide(color: _fieldBorder),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    const BorderSide(color: _fieldBorder),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    const BorderSide(color: _fieldBorder),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // ── Semester
+                    _fieldLabel('Semester'),
+                    const SizedBox(height: 6),
+                    _buildDropdown(
+                      hint: 'Pilih semester',
+                      icon: Icons.school_outlined,
+                      value: _selectedSemester,
+                      items: const ['1', '2', '3', '4', '5', '6', '7', '8'],
+                      onChanged: (v) =>
+                          setSheetState(() => _selectedSemester = v),
+                      errorMsg: 'Semester wajib dipilih',
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Tanggal Pertemuan
+                    _fieldLabel('Tanggal Pertemuan'),
+                    const SizedBox(height: 6),
+                    _buildDateField(onChanged: () => setSheetState(() {})),
+                    const SizedBox(height: 14),
+
+                    // ── Total Jam
+                    _fieldLabel('Total Jam'),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      hint: 'Masukkan total jam...',
+                      icon: Icons.access_time_outlined,
+                      controller: _jamCtrl,
+                      isNumber: true,
+                      errorMsg: 'Total jam wajib diisi',
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Info belum bisa diisi
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF8E1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFFCC02)),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline,
+                              color: Color(0xFFF59E0B), size: 16),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Belum bisa diisi sekarang\nSilahkan kirim form pengajuan kompen terlebih dahulu. Deskripsi tugas & lokasi bisa dilengkapi setelah pengajuan diterima.',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF92400E),
+                                  height: 1.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // ── Deskripsi & Lokasi (disabled)
+                    _fieldLabel('Deskripsi Tugas Kompen', disabled: true),
+                    const SizedBox(height: 6),
+                    _buildDisabledField('Tersedia nanti.'),
+                    const SizedBox(height: 14),
+                    _fieldLabel('Lokasi Pengerjaan', disabled: true),
+                    const SizedBox(height: 6),
+                    _buildDisabledField('Tersedia nanti.'),
+                    const SizedBox(height: 20),
+
+                    // ── Tombol Kirim
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _handleKirimForm(ctx),
+                        icon: const Icon(Icons.upload_outlined,
+                            color: Colors.white, size: 18),
+                        label: const Text('Kirim Form',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _red,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -550,7 +697,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
   }
 
   void _showLengkapiBottomSheet(PengajuanKompen p) {
-    final matkul = _getMatkul(p.idAbsensi);
+    final matkul = _getMatkul(p.idMataKuliah);
     final deskripsiCtrl = TextEditingController(text: p.deskripsiTugas ?? '');
     final lokasiCtrl = TextEditingController(text: p.namaLokasi ?? '');
     final editKey = GlobalKey<FormState>();
@@ -576,7 +723,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                 children: [
                   Center(
                     child: Container(
-                      width: 40, height: 4,
+                      width: 40,
+                      height: 4,
                       decoration: BoxDecoration(
                         color: const Color(0xFFE0E0E0),
                         borderRadius: BorderRadius.circular(2),
@@ -615,16 +763,20 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     maxLines: 3,
                     style: const TextStyle(fontSize: 13, color: _dark),
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Deskripsi wajib diisi';
-                      if (v.trim().length < 10) return 'Deskripsi minimal 10 karakter';
+                      if (v == null || v.trim().isEmpty)
+                        return 'Deskripsi wajib diisi';
+                      if (v.trim().length < 10)
+                        return 'Deskripsi minimal 10 karakter';
                       return null;
                     },
                     decoration: InputDecoration(
                       hintText: 'Contoh: Menyiapkan modul praktikum...',
-                      hintStyle: const TextStyle(fontSize: 13, color: _grey),
+                      hintStyle:
+                          const TextStyle(fontSize: 13, color: _grey),
                       prefixIcon: const Padding(
                         padding: EdgeInsets.only(bottom: 40),
-                        child: Icon(Icons.edit_outlined, size: 18, color: _grey),
+                        child: Icon(Icons.edit_outlined,
+                            size: 18, color: _grey),
                       ),
                       filled: true,
                       fillColor: _fieldBg,
@@ -633,24 +785,25 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                           vertical: 14, horizontal: 14),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _fieldBorder)),
+                          borderSide:
+                              const BorderSide(color: _fieldBorder)),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _fieldBorder)),
+                          borderSide:
+                              const BorderSide(color: _fieldBorder)),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
                               const BorderSide(color: _red, width: 1.5)),
                       errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: Colors.redAccent)),
+                          borderSide: const BorderSide(
+                              color: Colors.redAccent)),
                     ),
                   ),
                   const SizedBox(height: 14),
                   _fieldLabel('Lokasi Pengerjaan'),
                   const SizedBox(height: 6),
-                  // Tampilkan lokasi yang sudah dipilih kalau ada
                   StatefulBuilder(
                     builder: (ctx, setLocal) => GestureDetector(
                       onTap: () async {
@@ -685,7 +838,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     _selectedNamaLokasi ??
@@ -696,7 +850,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: (_selectedNamaLokasi != null ||
+                                      color: (_selectedNamaLokasi !=
+                                                  null ||
                                               (p.namaLokasi != null &&
                                                   p.namaLokasi!.isNotEmpty))
                                           ? _dark
@@ -756,7 +911,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Ajukan Tanda Tangan Digital',
             style: TextStyle(
                 fontWeight: FontWeight.w700, fontSize: 16, color: _dark)),
@@ -776,8 +932,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                   const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             ),
             child: const Text('Batal',
-                style:
-                    TextStyle(color: _red, fontWeight: FontWeight.w600)),
+                style: TextStyle(color: _red, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -793,8 +948,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     content: const Row(children: [
-                      Icon(Icons.draw_outlined,
-                          color: Colors.white, size: 18),
+                      Icon(Icons.draw_outlined, color: Colors.white, size: 18),
                       SizedBox(width: 10),
                       Text('Pengajuan TTD berhasil dikirim!',
                           style: TextStyle(
@@ -835,26 +989,63 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
     if (!_formKey.currentState!.validate()) return;
     Navigator.pop(ctx);
 
-    final success = await context.read<PengajuanProvider>().simpanPengajuan({
+    print(_selectedMK);
+    final idMahasiswa = await SessionManager.getIdMahasiswa();
+
+    final provider = context.read<PengajuanProvider>();
+
+    final mataKuliah = provider.mataKuliah.firstWhere(
+      (mk) => mk.namaMk == _selectedMK,
+    );
+    print(idMahasiswa);
+    print(_selectedMK);
+    print(await SessionManager.getIdMahasiswa());
+    print(_selectedMK);
+    print(_selectedTujuan);
+    print(_selectedSemester);
+    print(_tglCtrl.text);
+    print(_jamCtrl.text);
+
+    final mataKuliahDipilih = provider.mataKuliah.firstWhere(
+      (mk) => mk.namaMk == _selectedMK,
+    );
+
+    print(mataKuliahDipilih.idMataKuliah);
+
+    int? idDosen;
+    int? idAdmin;
+
+    if (_selectedTujuan == 'Dosen') {
+      final dosenDipilih = provider.dosen.firstWhere(
+        (d) => d.namaLengkap == _selectedDosen,
+      );
+      idDosen = dosenDipilih.idDosen;
+    }
+
+    if (_selectedTujuan == 'Admin') {
+      idAdmin = provider.admin?.idAdmin;
+    }
+
+    final success =
+        await context.read<PengajuanProvider>().simpanPengajuan({
+      'id_mahasiswa': idMahasiswa,
+      'id_mata_kuliah': mataKuliah.idMataKuliah,
+      'id_dosen': idDosen,
+      'id_admin': idAdmin,
       'tujuan': _selectedTujuan!.toLowerCase(),
       'semester': _selectedSemester!,
       'tanggal_pertemuan': _tglCtrl.text,
       'total_jam_kompen': int.tryParse(_jamCtrl.text) ?? 0,
-      // TODO: id_absensi & id_dosen dari pencarian matkul/dosen
     });
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor:
-            success ? const Color(0xFF2E7D32) : _red,
+        backgroundColor: success ? const Color(0xFF2E7D32) : _red,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Row(children: [
           Icon(
-            success
-                ? Icons.check_circle_outline
-                : Icons.error_outline,
+            success ? Icons.check_circle_outline : Icons.error_outline,
             color: Colors.white,
             size: 18,
           ),
@@ -871,7 +1062,6 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
       ));
 
       if (success) {
-        // Refresh list pakai idMahasiswa dari session
         final idMahasiswa = await SessionManager.getIdMahasiswa();
         if (idMahasiswa != null && mounted) {
           context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
@@ -899,34 +1089,28 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
 
     Navigator.pop(ctx);
 
-    final success = await context
-        .read<PengajuanProvider>()
-        .updateDeskripsiLokasi(
-          p.idPengajuan,
-          deskripsi: deskripsiCtrl.text.trim(),
-          namaLokasi: _selectedNamaLokasi!,
-          latitude: _selectedLat!,
-          longitude: _selectedLng!,
-        );
+    final success =
+        await context.read<PengajuanProvider>().updateDeskripsiLokasi(
+              p.idPengajuan,
+              deskripsi: deskripsiCtrl.text.trim(),
+              namaLokasi: _selectedNamaLokasi!,
+              latitude: _selectedLat!,
+              longitude: _selectedLng!,
+            );
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor:
-            success ? const Color(0xFF1565C0) : _red,
+        backgroundColor: success ? const Color(0xFF1565C0) : _red,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Text(
-          success
-              ? 'Form berhasil dilengkapi!'
-              : 'Gagal menyimpan, coba lagi',
+          success ? 'Form berhasil dilengkapi!' : 'Gagal menyimpan, coba lagi',
           style: const TextStyle(
               color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ));
 
       if (success) {
-        // Refresh list pakai idMahasiswa dari session
         final idMahasiswa = await SessionManager.getIdMahasiswa();
         if (idMahasiswa != null && mounted) {
           context.read<PengajuanProvider>().getAllPengajuan(idMahasiswa);
@@ -1028,7 +1212,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
         ),
       );
 
-  Widget _buildDateField() => TextFormField(
+  // onChanged ditambah agar StatefulBuilder di sheet bisa trigger rebuild saat tanggal dipilih
+  Widget _buildDateField({VoidCallback? onChanged}) => TextFormField(
         controller: _tglCtrl,
         readOnly: true,
         validator: (v) => (v == null || v.trim().isEmpty)
@@ -1048,10 +1233,9 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
             ),
           );
           if (picked != null) {
-            setState(() {
-              _tglCtrl.text =
-                  '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-            });
+            _tglCtrl.text =
+                '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+            onChanged?.call();
           }
         },
         style: const TextStyle(fontSize: 13, color: _dark),
@@ -1084,7 +1268,8 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13, color: _grey),
-          suffixIcon: const Icon(Icons.lock_outline, size: 18, color: _grey),
+          suffixIcon:
+              const Icon(Icons.lock_outline, size: 18, color: _grey),
           filled: true,
           fillColor: const Color(0xFFF0EBE3),
           contentPadding:
@@ -1129,9 +1314,7 @@ class _PengajuanKompenScreenState extends State<PengajuanKompenScreen> {
           BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(label,
           style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: text)),
+              fontSize: 10, fontWeight: FontWeight.w600, color: text)),
     );
   }
 

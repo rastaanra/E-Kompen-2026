@@ -1,7 +1,7 @@
 class PengajuanKompen {
   final int idPengajuan;
   final int idMahasiswa;
-  final int idAbsensi;
+  final int? idAbsensi;
   final int? idDosen;
   final int? idAdmin;
   final int idMataKuliah;
@@ -23,6 +23,7 @@ class PengajuanKompen {
   final String? namaLokasi;
   final double? latitude;
   final double? longitude;
+  final String? namaTujuan;
 
   PengajuanKompen({
     required this.idPengajuan,
@@ -40,31 +41,33 @@ class PengajuanKompen {
     this.namaLokasi,
     this.latitude,
     this.longitude,
+    this.namaTujuan,
   });
 
   factory PengajuanKompen.fromJson(Map<String, dynamic> json) {
     return PengajuanKompen(
-      idPengajuan:      json['id_pengajuan'],
-      idMahasiswa:      json['id_mahasiswa'],
-      idAbsensi:        json['id_absensi'],
-      idDosen:          json['id_dosen'],
-      idAdmin:          json['id_admin'],
-      idMataKuliah:     json['id_mata_kuliah'],
-      tujuan:           json['tujuan'],
-      status:           json['status'],
-      semester:         json['semester']?.toString() ?? '1',
+      idPengajuan: json['id_pengajuan'],
+      idMahasiswa: json['id_mahasiswa'],
+      idAbsensi: json['id_absensi'],
+      idDosen: json['id_dosen'],
+      idAdmin: json['id_admin'],
+      idMataKuliah: json['id_mata_kuliah'],
+      tujuan: json['tujuan'],
+      status: json['status'],
+      semester: json['semester']?.toString() ?? '1',
       tanggalPertemuan: json['tanggal_pertemuan'] != null
           ? DateTime.parse(json['tanggal_pertemuan'])
           : null,
-      totalJamKompen:   json['total_jam_kompen'],
-      deskripsiTugas:   json['deskripsi_tugas'],
-      namaLokasi:       json['nama_lokasi'],
-      latitude:         json['latitude'] != null
+      totalJamKompen: json['total_jam_kompen'],
+      deskripsiTugas: json['deskripsi_tugas'],
+      namaLokasi: json['nama_lokasi'],
+      latitude: json['latitude'] != null
           ? double.parse(json['latitude'].toString())
           : null,
-      longitude:        json['longitude'] != null
+      longitude: json['longitude'] != null
           ? double.parse(json['longitude'].toString())
           : null,
+      namaTujuan: json['nama_tujuan'],
     );
   }
 
