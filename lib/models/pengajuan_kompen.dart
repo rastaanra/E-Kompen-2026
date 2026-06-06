@@ -24,6 +24,9 @@ class PengajuanKompen {
   final double? latitude;
   final double? longitude;
   final String? namaTujuan;
+  final String? namaMahasiswa;
+  final String? nim;
+  final String? namaMatkul;
 
   PengajuanKompen({
     required this.idPengajuan,
@@ -42,6 +45,9 @@ class PengajuanKompen {
     this.latitude,
     this.longitude,
     this.namaTujuan,
+    this.namaMahasiswa,
+    this.nim,
+    this.namaMatkul,
   });
 
   factory PengajuanKompen.fromJson(Map<String, dynamic> json) {
@@ -68,6 +74,9 @@ class PengajuanKompen {
           ? double.parse(json['longitude'].toString())
           : null,
       namaTujuan: json['nama_tujuan'],
+      namaMahasiswa: json['nama_mahasiswa'],
+      nim: json['nim'],
+      namaMatkul: json['nama_matkul'],
     );
   }
 
