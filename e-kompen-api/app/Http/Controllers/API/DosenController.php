@@ -203,4 +203,26 @@ class DosenController extends Controller
             ], 500);
         }
     }
+
+    //Kaprodi
+    public function getKaprodi()
+    {
+        $kaprodi = Dosen::where('is_kaprodi', true)->first();
+
+        if (!$kaprodi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kaprodi tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id_dosen' => $kaprodi->id_dosen,
+                'nama' => $kaprodi->nama_lengkap,
+                'nip' => $kaprodi->nip,
+            ]
+        ]);
+    }
 }

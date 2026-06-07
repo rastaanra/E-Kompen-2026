@@ -8,16 +8,17 @@ use App\Models\PengajuanKompen;
 use App\Models\Absensi;
 use App\Models\BuktiKompen;
 use Illuminate\Http\Request;
+use App\Models\Mahasiswa;
 
 class TtdDigitalController extends Controller
 {
     // ==========================================
     // GENERATE KODE TTD
     // ==========================================
-    private function generateKodeTTD($id_pengajuan, $role)
-    {
-        return 'EKOMPEN-' . $id_pengajuan . '-' . strtoupper($role) . '-' . now()->format('YmdHis');
-    }
+    private function generateKodeTTD($id_pengajuan, $role, $nim)
+        {
+            return strtoupper(substr($role, 0, 3)) . '-' . $nim . '-' . $id_pengajuan;
+        }
 
     // ==========================================
     // TTD DOSEN / ADMIN
@@ -45,8 +46,21 @@ class TtdDigitalController extends Controller
         // Tentukan role TTD
         $role = $pengajuan->tujuan === 'dosen' ? 'dosen' : 'admin';
 
-        // Generate kode TTD
-        $kode = $this->generateKodeTTD($id_pengajuan, $role);
+        // Generate kode TTD Admin
+        $mahasiswa = Mahasiswa::find($pengajuan->id_mahasiswa);
+
+        if (!$mahasiswa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mahasiswa tidak ditemukan'
+            ], 404);
+        }
+
+        $kode = $this->generateKodeTTD(
+            $id_pengajuan,
+            $role,
+            $mahasiswa->nim
+        );
 
         // Simpan TTD
         $ttd = TtdDigital::create([
@@ -99,7 +113,20 @@ class TtdDigitalController extends Controller
         }
 
         // Generate kode TTD kaprodi
-        $kode = $this->generateKodeTTD($id_pengajuan, 'kaprodi');
+        $mahasiswa = Mahasiswa::find($pengajuan->id_mahasiswa);
+
+        if (!$mahasiswa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mahasiswa tidak ditemukan'
+            ], 404);
+        }
+
+        $kode = $this->generateKodeTTD(
+            $id_pengajuan,
+            'kaprodi',
+            $mahasiswa->nim
+        );
 
         // Simpan TTD kaprodi
         $ttd = TtdDigital::create([
@@ -141,6 +168,23 @@ class TtdDigitalController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $data
+        ]);
+    }
+
+    public function verifikasi($kode)
+    {
+        $ttd = TtdDigital::where('kode_ttd', $kode)->first();
+
+        if (!$ttd) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode TTD tidak valid'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $ttd
         ]);
     }
 }

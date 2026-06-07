@@ -183,4 +183,21 @@ Future<List<PengajuanKompen>> getPengajuanAdmin(int idAdmin) async {
 
     return result['success'] == true;
   }
+    Future<List<dynamic>> getTtdByPengajuan(int idPengajuan) async {
+    final result = await ApiService.get(
+      'ttd/$idPengajuan',
+    );
+
+    return result['data'] ?? [];
+  }
+
+  Future<Map<String, dynamic>?> getKaprodi() async {
+    final data = await ApiService.get('kaprodi');
+
+    if (data['success']) {
+      return data['data'];
+    }
+
+    return null;
+  }
 }

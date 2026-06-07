@@ -27,6 +27,8 @@ class PengajuanKompen {
   final String? namaMahasiswa;
   final String? nim;
   final String? namaMatkul;
+  String? kodeTtd;
+
 
   PengajuanKompen({
     required this.idPengajuan,
@@ -48,6 +50,7 @@ class PengajuanKompen {
     this.namaMahasiswa,
     this.nim,
     this.namaMatkul,
+    this.kodeTtd,
   });
 
   factory PengajuanKompen.fromJson(Map<String, dynamic> json) {
@@ -77,6 +80,10 @@ class PengajuanKompen {
       namaMahasiswa: json['nama_mahasiswa'],
       nim: json['nim'],
       namaMatkul: json['nama_matkul'],
+      kodeTtd: json['ttd_digital'] != null &&
+          (json['ttd_digital'] as List).isNotEmpty
+      ? json['ttd_digital'][0]['kode_ttd']
+      : null,
     );
   }
 

@@ -7,6 +7,8 @@ use App\Models\PengajuanKompen;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
+use App\Models\TtdDigital;
+use App\Models\Mahasiswa;
 
 class PengajuanKompenController extends Controller
 {
@@ -151,7 +153,7 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByMahasiswa($id_mahasiswa)
     {
-        $data = PengajuanKompen::with(['mataKuliah', 'dosen', 'admin'])
+        $data = PengajuanKompen::with(['mataKuliah', 'dosen', 'admin', 'ttdDigital'])
             ->where('id_mahasiswa', $id_mahasiswa)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -179,6 +181,13 @@ class PengajuanKompenController extends Controller
                 'longitude'         => $item->longitude,
 
                 'status'            => $item->status,
+                'ttd_digital'       => $item->ttdDigital->map(function ($ttd) {
+                    return [
+                        'id_ttd'     => $ttd->id_ttd,
+                        'kode_ttd'   => $ttd->kode_ttd,
+                        'status_ttd' => $ttd->status_ttd,
+                    ];
+                }),
             ];
             });
 
@@ -195,7 +204,7 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByDosen($id_dosen)
     {
-        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa'])
+        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa', 'ttdDigital'])
             ->where('id_dosen', $id_dosen)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -209,6 +218,13 @@ class PengajuanKompenController extends Controller
                     'tanggal_pertemuan' => $item->tanggal_pertemuan,
                     'total_jam_kompen'  => $item->total_jam_kompen,
                     'status'            => $item->status,
+                    'ttd_digital'       => $item->ttdDigital->map(function ($ttd) {
+                        return [
+                            'id_ttd'     => $ttd->id_ttd,
+                            'kode_ttd'   => $ttd->kode_ttd,
+                            'status_ttd' => $ttd->status_ttd,
+                        ];
+                    }),
                 ];
             });
 
@@ -225,7 +241,7 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByAdmin($id_admin)
     {
-        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa'])
+        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa', 'ttdDigital'])
             ->where('id_admin', $id_admin)
             ->orderBy('created_at', 'desc')
             ->get()
@@ -244,6 +260,7 @@ class PengajuanKompenController extends Controller
                     'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
 
                     'tujuan'            => $item->tujuan,
+                    'nama_tujuan'       => $item->dosen->nama_lengkap ?? $item->admin->nama ?? null,
                     'semester'          => $item->semester,
                     'tanggal_pertemuan' => $item->tanggal_pertemuan,
                     'total_jam_kompen'  => $item->total_jam_kompen,
@@ -254,6 +271,13 @@ class PengajuanKompenController extends Controller
                     'longitude'         => $item->longitude,
 
                     'status'            => $item->status,
+                    'ttd_digital'       => $item->ttdDigital->map(function ($ttd) {
+                        return [
+                            'id_ttd'     => $ttd->id_ttd,
+                            'kode_ttd'   => $ttd->kode_ttd,
+                            'status_ttd' => $ttd->status_ttd,
+                        ];
+                    }),
                 ];
             });
 
@@ -274,7 +298,8 @@ class PengajuanKompenController extends Controller
             'mataKuliah',
             'mahasiswa',
             'dosen',
-            'admin'
+            'admin',
+            'ttdDigital'
         ])->find($id);
 
         if (!$item) {
@@ -308,6 +333,14 @@ class PengajuanKompenController extends Controller
                 'longitude'         => $item->longitude,
                 // Status
                 'status'            => $item->status,
+                // TTD Digital
+                'ttd_digital'       => $item->ttdDigital->map(function ($ttd) {
+                    return [
+                        'id_ttd'     => $ttd->id_ttd,
+                        'kode_ttd'   => $ttd->kode_ttd,
+                        'status_ttd' => $ttd->status_ttd,
+                    ];
+                }),
             ]
         ]);
     }
@@ -426,32 +459,57 @@ class PengajuanKompenController extends Controller
         ]);
     }
 
-        public function ttdAdmin($id)
-    {
-        $item = PengajuanKompen::find($id);
+public function ttdAdmin($id)
+{
+    $item = PengajuanKompen::find($id);
 
-        if (!$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pengajuan tidak ditemukan'
-            ], 404);
-        }
-
-        if ($item->status !== 'menunggu_ttd_admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Status tidak valid'
-            ], 400);
-        }
-
-        $item->update([
-            'status' => 'menunggu_ttd_kaprodi'
-        ]);
-
+    if (!$item) {
         return response()->json([
-            'success' => true,
-            'message' => 'TTD Admin berhasil',
-            'data' => $item
-        ]);
+            'success' => false,
+            'message' => 'Pengajuan tidak ditemukan'
+        ], 404);
     }
+
+    if ($item->status !== 'menunggu_ttd_admin') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Status tidak valid'
+        ], 400);
+    }
+
+    // Ambil mahasiswa
+    $mahasiswa = Mahasiswa::find($item->id_mahasiswa);
+
+    if (!$mahasiswa) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Mahasiswa tidak ditemukan'
+        ], 404);
+    }
+
+    // Generate kode TTD
+    $kode = 'ADM-' . $mahasiswa->nim . '-' . $item->id_pengajuan;
+
+    // Simpan TTD Digital
+    $ttd = TtdDigital::create([
+        'id_pengajuan' => $item->id_pengajuan,
+        'role_ttd'     => 'admin',
+        'kode_ttd'     => $kode,
+        'waktu_ttd'    => now(),
+        'status_ttd'   => 'sudah',
+    ]);
+
+    // Update status pengajuan
+    $item->update([
+        'status' => 'menunggu_ttd_kaprodi'
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'TTD Admin berhasil',
+        'kode_ttd' => $kode,
+        'ttd' => $ttd,
+        'data' => $item
+    ]);
+}
 }

@@ -49,6 +49,7 @@ Route::post('/dosen/import',          [DosenController::class, 'import']);
 Route::put('/dosen/{id}',             [DosenController::class, 'update']);
 Route::put('/dosen/{id}/set-kaprodi', [DosenController::class, 'setKaprodi']);
 Route::delete('/dosen/{id}',          [DosenController::class, 'destroy']);
+Route::get('/kaprodi',                [DosenController::class, 'getKaprodi']);
 
 
 // ABSENSI
@@ -79,6 +80,10 @@ Route::put('/pengajuan-kompen/{id}/ttd-admin',          [PengajuanKompenControll
 Route::post('/ttd/{id_pengajuan}/ttd',          [TtdDigitalController::class, 'ttdDosenAdmin']);
 Route::post('/ttd/{id_pengajuan}/ttd-kaprodi',  [TtdDigitalController::class, 'ttdKaprodi']);
 Route::get('/ttd/{id_pengajuan}',               [TtdDigitalController::class, 'getByPengajuan']);
+Route::get(
+    '/ttd/verifikasi/{kode}',
+    [TtdDigitalController::class, 'verifikasi']
+);
 
 // MATA KULIAH
 Route::get('/mata-kuliah/{idMahasiswa}',        [MataKuliahController::class, 'index']);

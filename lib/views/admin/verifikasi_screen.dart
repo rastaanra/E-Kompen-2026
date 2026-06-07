@@ -7,6 +7,7 @@ import '../../providers/pengajuan_provider.dart';
 import '../../utils/session_manager.dart';
 import '../../models/pengajuan_kompen.dart';
 import '../../services/pengajuan_service.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 const _redV = Color(0xFFB71C1C);
 const _creamV = Color(0xFFF5EFE6);
@@ -45,6 +46,8 @@ class AdminVerifikasiScreen extends StatefulWidget {
 }
 
 class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
+  String namaKaprodi = '';
+  String nipKaprodi = '';
 
 bool _isInitialized = false;
   @override
@@ -55,21 +58,28 @@ bool _isInitialized = false;
   final PengajuanService _pengajuanService = PengajuanService();
 List<PengajuanKompen> _pengajuanList = [];
 
-  Future<void> _loadData() async {
-    final idAdmin = await SessionManager.getIdAdmin();
+Future<void> _loadData() async {
+  final idAdmin = await SessionManager.getIdAdmin();
 
-    print("ID ADMIN = $idAdmin");
+  print("ID ADMIN = $idAdmin");
 
-    if (idAdmin == null) return;
+  if (idAdmin == null) return;
 
-    final data = await _pengajuanService.getPengajuanAdmin(idAdmin);
+  final data = await _pengajuanService.getPengajuanAdmin(idAdmin);
 
-    print("JUMLAH DATA = ${data.length}");
+  final kaprodi = await _pengajuanService.getKaprodi();
 
-    setState(() {
-      _pengajuanList = data;
-    });
-  }
+  print("JUMLAH DATA = ${data.length}");
+
+  setState(() {
+    _pengajuanList = data;
+
+    if (kaprodi != null) {
+      namaKaprodi = kaprodi['nama'];
+      nipKaprodi = kaprodi['nip'];
+    }
+  });
+}
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
 
@@ -101,7 +111,8 @@ List<PengajuanKompen> _pengajuanList = [];
           (_selectedStatus == 'Menunggu TTD' &&
               p.status == 'menunggu_ttd_admin') ||
           (_selectedStatus == 'Sudah TTD' &&
-              p.status == 'selesai');
+              p.status ==  'menunggu_ttd_kaprodi' ||
+                p.status == 'selesai');
 
       return matchSemester && matchStatus;
     }).toList();
@@ -132,7 +143,7 @@ List<PengajuanKompen> _pengajuanList = [];
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        bool sudahTTD = p.status == 'sudah_ttd';
+        bool sudahTTD = p.status == 'menunggu_ttd_kaprodi';
         return StatefulBuilder(
           builder: (ctx, setLocal) => DraggableScrollableSheet(
             expand: false,
@@ -234,8 +245,7 @@ List<PengajuanKompen> _pengajuanList = [];
     ),
 
                         // Info pengajar
-                        _buildFormRow('Nama Pengajar', 'Seli Permata'),
-                        _buildFormRow('NIP',p.nim ?? '-' ),
+                        _buildFormRow('Nama Admin', p.namaTujuan ?? '-'),
                         const SizedBox(height: 12),
                         const Text(
                           'Memberikan rekomendasi kompensasi kepada:',
@@ -272,7 +282,7 @@ List<PengajuanKompen> _pengajuanList = [];
                                       style: TextStyle(fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
-                                    height: 60,
+                                    height: 110,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       border: Border.all(color: Colors.black12),
@@ -280,14 +290,19 @@ List<PengajuanKompen> _pengajuanList = [];
                                     ),
                                     child: Center(
                                       child: sudahTTD
-                                          ? Column(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Icon(Icons.qr_code,
-                                                    size: 32,
-                                                    color: _darkV),
-                                              ],
-                                            )
+                                      
+                                ? Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      QrImageView(
+                                        data: p.kodeTtd ?? '',
+                                        version: QrVersions.auto,
+                                        size: 100,
+                                      ),
+
+                                    ],
+                                  )
+                                            
                                           : Text('Belum\nditandatangani',
                                               textAlign: TextAlign.center,
                                               style: TextStyle(
@@ -296,13 +311,14 @@ List<PengajuanKompen> _pengajuanList = [];
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text('Budi Harjanta, S.T.,M.Kom',
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: _darkV)),
-                                  const Text('NIP. 196305210086041003',
-                                      style: TextStyle(fontSize: 9, color: _greyV)),
+                                  Text(
+                                    p.namaTujuan ?? '-',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: _darkV,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -317,7 +333,7 @@ List<PengajuanKompen> _pengajuanList = [];
                                       style: TextStyle(fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
-                                    height: 60,
+                                    height: 110,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       border: Border.all(color: Colors.black12),
@@ -331,13 +347,20 @@ List<PengajuanKompen> _pengajuanList = [];
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text('Hendra Pradibta, S.E., M.Sc.',
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: _darkV)),
-                                  const Text('NIP. 198305210086041003',
-                                      style: TextStyle(fontSize: 9, color: _greyV)),
+                                  Text(
+                                  namaKaprodi,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: _darkV,
+                                  ),),
+                                 Text(
+                                  'NIP. $nipKaprodi',
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    color: _greyV,
+                                  ),
+                                ),
                                 ],
                               ),
                             ),
@@ -368,15 +391,16 @@ Row(
 onPressed: sudahTTD
     ? null
     : () async {
-        final success = await PengajuanService()
-            .ttdAdmin(p.idPengajuan);
+        final success =
+      await PengajuanService().ttdAdmin(p.idPengajuan);
+      if (success) {
+        await _loadData(); // refresh data terbaru
 
-        if (success) {
-          setState(() {});
-          setLocal(() => sudahTTD = true);
-          Navigator.pop(ctx);
-        }
-      },
+        setLocal(() => sudahTTD = true);
+
+        Navigator.pop(ctx);
+      }
+    },
         icon: Icon(Icons.check,
             size: 16,
             color: sudahTTD ? Colors.grey[500] : Colors.white),
@@ -611,7 +635,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                 const Icon(Icons.menu_book_outlined,
                     size: 13, color: _greyV),
                 const SizedBox(width: 4),
-                Text(p.namaMatkul ?? '-',
+                Text(p.deskripsiTugas ?? '-',
                     style:
                         const TextStyle(fontSize: 12, color: _darkV)),
               ]),
@@ -627,25 +651,25 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           ),
           const SizedBox(height: 6),
 
-          // Jenis pekerjaan
+          // Nama Lokasi
           Row(children: [
-            const Icon(Icons.description_outlined,
+            const Icon(Icons.location_on_outlined ,
                 size: 13, color: _greyV),
             const SizedBox(width: 4),
             Expanded(
-              child: Text(p.deskripsiTugas ?? '-',
+              child: Text(p.namaLokasi ?? '-',
                   style: const TextStyle(fontSize: 12, color: _darkV),
                   overflow: TextOverflow.ellipsis),
             ),
           ]),
           const SizedBox(height: 6),
 
-          // Jam
+          // Titik koordinat
           Row(children: [
-            const Icon(Icons.access_time_outlined,
+            const Icon(Icons.near_me_outlined,
                 size: 13, color: _greyV),
             const SizedBox(width: 4),
-            Text('${p.totalJamKompen ?? 0} Jam',
+            Text('${p.latitude}, ${p.longitude}',
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
