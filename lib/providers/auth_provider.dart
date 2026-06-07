@@ -23,14 +23,19 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final Map<String, dynamic> result = await _service.login(email, password);
+      if (result['success'] == true) {
 
-    if (result['success'] == true) {
-      _pengguna = Pengguna.fromJson(result['data']);
-      _lastResponse = result;
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    }
+        final userData = result['data'];
+
+        userData['role'] = result['role'];
+
+        _pengguna = Pengguna.fromJson(result['data']);
+
+        _lastResponse = result;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
 
     _errorMessage = result['message'] ?? 'Login gagal';
     _isLoading = false;

@@ -57,34 +57,36 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (berhasil && mounted) {
+        print(provider.lastResponse);
         // Simpan session sesuai format dari temenmu
         await SessionManager.simpanLogin(provider.lastResponse);
 
         // Redirect sesuai role dari response backend
-        final role = provider.pengguna!.role;
-
-              if (role == 'mahasiswa') {
+      if (_selectedRole == 'Mahasiswa') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const HomeScreen(),
           ),
         );
-      } else if (role == 'dosen') {
+      }
+      else if (_selectedRole == 'Dosen') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const DosenHomeScreen(),
           ),
         );
-      } else if (role == 'kaprodi') {
+      }
+      else if (_selectedRole == 'Kaprodi') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const KaprodiHomeScreen(),
           ),
         );
-      } else if (role == 'admin') {
+      }
+      else if (_selectedRole == 'Admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

@@ -1,166 +1,263 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../providers/dosen_provider.dart';
+import '../../widgets/app_header.dart';
 
-// Model lokal untuk data yang ditampilkan di detail
-// Nanti diganti dengan data dari API kalau endpoint sudah tersedia
-class DetailVerifikasiData {
-  final int idPengajuan;
-  final String namaMahasiswa;
-  final String nim;
-  final String kelas;
-  final String semester;
-  final String mataKuliah;
-  final String pekerjaan;
-  final int jumlahJam;
-  final String keterangan;
-  final String tanggal;
-  final String namaDosen;
-  final String nipDosen;
-  final String namaKaprodi;
-  final String nipKaprodi;
-  final bool sudahTtdDosen;
-  final bool sudahTtdKaprodi;
+const _red = Color(0xFFB71C1C);
+const _cream = Color(0xFFF5EFE6);
+const _dark = Color(0xFF2D2D2D);
+const _grey = Color(0xFF9E9E9E);
 
-  const DetailVerifikasiData({
-    required this.idPengajuan,
+// ── Enum varian halaman
+enum DetailVerifikasiMode { verifikasi, pengajuan }
+
+// ────────────────────────────────────────────────────────────
+class KaprodiDetailVerifikasiScreen extends StatefulWidget {
+  const KaprodiDetailVerifikasiScreen({
+    super.key,
+    required this.mode,
+    required this.namaPengajar,
+    required this.nip,
     required this.namaMahasiswa,
     required this.nim,
-    required this.kelas,
     required this.semester,
     required this.mataKuliah,
     required this.pekerjaan,
     required this.jumlahJam,
-    required this.keterangan,
     required this.tanggal,
-    required this.namaDosen,
-    required this.nipDosen,
-    required this.namaKaprodi,
-    required this.nipKaprodi,
-    required this.sudahTtdDosen,
-    required this.sudahTtdKaprodi,
+    required this.status,
+    this.kelas,
+    this.keterangan,
+    this.onStatusChanged,
   });
-}
 
-class DetailVerifikasiView extends StatefulWidget {
-  final DetailVerifikasiData data;
+  final DetailVerifikasiMode mode;
+  final String namaPengajar;
+  final String nip;
+  final String namaMahasiswa;
+  final String nim;
+  final String semester;
+  final String mataKuliah;
+  final String pekerjaan;
+  final String jumlahJam;
+  final String tanggal;
+  final String status;
+  final String? kelas;
+  final String? keterangan;
 
-  const DetailVerifikasiView({super.key, required this.data});
+  /// Callback agar halaman sebelumnya bisa update state badge
+  final void Function(String newStatus)? onStatusChanged;
 
   @override
-  State<DetailVerifikasiView> createState() => _DetailVerifikasiViewState();
+  State<KaprodiDetailVerifikasiScreen> createState() =>
+      _KaprodiDetailVerifikasiScreenState();
 }
 
-class _DetailVerifikasiViewState extends State<DetailVerifikasiView> {
-  late bool _sudahTtdKaprodi;
-  bool _isLoading = false;
-
-  static const Color _primaryRed = Color(0xFFB71C1C);
-  static const Color _cream = Color(0xFFF5EFE6);
+class _KaprodiDetailVerifikasiScreenState
+    extends State<KaprodiDetailVerifikasiScreen> {
+  late String _status;
 
   @override
   void initState() {
     super.initState();
-    _sudahTtdKaprodi = widget.data.sudahTtdKaprodi;
+    _status = widget.status;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade200,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: _buildBeritaAcara(),
-              ),
-            ),
-            _buildBottomButtons(context),
-          ],
-        ),
+  bool get _sudahTTD => _status == 'sudah_ttd';
+
+  void _tandatangani() {
+    setState(() => _status = 'sudah_ttd');
+    widget.onStatusChanged?.call('sudah_ttd');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Berhasil ditandatangani'),
+        backgroundColor: Colors.green[700],
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  Widget _buildBeritaAcara() {
+  @override
+  Widget build(BuildContext context) {
+    final String judul = widget.mode == DetailVerifikasiMode.verifikasi
+        ? 'Verifikasi Kompen'
+        : 'Pengajuan Kompen';
+
+    return Scaffold(
+      backgroundColor: _red,
+      body: Column(
+        children: [
+          const AppHeader(),
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: _cream,
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(35)),
+              ),
+              child: Column(
+                children: [
+                  // Judul
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        judul,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: _dark,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Isi form (scrollable)
+                  Expanded(
+                    child: ScrollConfiguration(
+                      behavior: const ScrollBehavior()
+                          .copyWith(overscroll: false),
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics()),
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: _buildFormCard(),
+                      ),
+                    ),
+                  ),
+
+                  // Tombol bawah
+                  _buildBottomButtons(context),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormCard() {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header institusi
-          _buildHeader(),
-          const Divider(thickness: 2, color: Colors.black, height: 0),
-          const SizedBox(height: 2),
-          const Divider(thickness: 0.5, color: Colors.black, height: 0),
-
+          _buildKopSurat(),
+          const Divider(
+              height: 1, thickness: 0.8, color: Color(0xFFE0E0E0)),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Judul
-                const Center(
-                  child: Text(
-                    'BERITA ACARA KOMPENSASI',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Info dosen pengajar
-                _buildRow('Nama Pengajar', widget.data.namaDosen),
-                _buildRow('NIP', widget.data.nipDosen),
-                const SizedBox(height: 12),
-                const Text(
-                  'Memberikan rekomendasi kompensasi kepada:',
-                  style: TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-
-                // Info mahasiswa
-                _buildRow('Nama Mahasiswa', widget.data.namaMahasiswa),
-                _buildRow('NIM', widget.data.nim),
-                _buildRow('Kelas', widget.data.kelas),
-                _buildRow('Semester', widget.data.semester),
-                _buildRow('Mata Kuliah', widget.data.mataKuliah),
-                _buildRow('Pekerjaan', widget.data.pekerjaan),
-                _buildRow('Jumlah Jam', _jamTerbilang(widget.data.jumlahJam)),
-                _buildRow('Keterangan', widget.data.keterangan),
-                const SizedBox(height: 20),
-
-                // Tanggal
-                Text(
-                  'Malang, ${widget.data.tanggal}',
-                  style: const TextStyle(fontSize: 12),
-                ),
+                _buildFormTitle('BERITA ACARA KOMPENSASI'),
                 const SizedBox(height: 16),
 
-                // TTD section
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildTtdDosen()),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildTtdKaprodi()),
-                  ],
+                _buildRow('Nama Pengajar', widget.namaPengajar),
+                _buildRow('NIP', widget.nip),
+                const SizedBox(height: 8),
+                const Text(
+                  'Memberikan rekomendasi kompensasi kepada:',
+                  style: TextStyle(fontSize: 12, color: _grey),
+                ),
+                const SizedBox(height: 8),
+
+                _buildRow('Nama Mahasiswa', widget.namaMahasiswa),
+                _buildRow('NIM', widget.nim),
+
+                // Field khusus mode pengajuan
+                if (widget.mode == DetailVerifikasiMode.pengajuan &&
+                    widget.kelas != null)
+                  _buildRow('Kelas', widget.kelas!),
+
+                _buildRow('Semester', widget.semester),
+                _buildRow('Mata Kuliah', widget.mataKuliah),
+                _buildRow('Pekerjaan', widget.pekerjaan),
+                _buildRow('Jumlah Jam', widget.jumlahJam),
+
+                if (widget.mode == DetailVerifikasiMode.pengajuan &&
+                    widget.keterangan != null)
+                  _buildRow('Keterangan', widget.keterangan!),
+
+                const SizedBox(height: 20),
+                Text(
+                  'Malang, ${widget.tanggal}',
+                  style: const TextStyle(fontSize: 12, color: _dark),
+                ),
+                const SizedBox(height: 16),
+                _buildSignatureRow(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKopSurat() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: const BoxDecoration(
+              color: _red,
+              shape: BoxShape.circle,
+            ),
+            child:
+                const Icon(Icons.school, color: Colors.white, size: 26),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'POLITEKNIK NEGERI MALANG',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: _dark,
+                      letterSpacing: 0.3),
+                ),
+                Text(
+                  'JURUSAN TEKNOLOGI INFORMASI',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: _dark),
+                ),
+                Text(
+                  'PROGRAM STUDI D-IV SISTEM INFORMASI BISNIS',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 8, color: _dark),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Jl. Soekarno Hatta No.9 Malang 65141 · Telp. (0341) 404424',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 7.5, color: _grey),
                 ),
               ],
             ),
@@ -170,65 +267,42 @@ class _DetailVerifikasiViewState extends State<DetailVerifikasiView> {
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: _primaryRed,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.school, color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'POLITEKNIK NEGERI MALANG',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-                ),
-                Text(
-                  'JURUSAN TEKNOLOGI INFORMASI',
-                  style: TextStyle(fontSize: 9),
-                ),
-                Text(
-                  'PROGRAM STUDI D-IV SISTEM INFORMASI BISNIS',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9),
-                ),
-                Text(
-                  'Jl. Soekarno Hatta No.9 Malang 65141 · Telp. (0341) 404424',
-                  style: TextStyle(fontSize: 8, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ],
+  Widget _buildFormTitle(String title) {
+    return Center(
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: _dark,
+          letterSpacing: 0.5,
+          decoration: TextDecoration.underline,
+        ),
       ),
     );
   }
 
   Widget _buildRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: const TextStyle(fontSize: 11)),
+            child: Text(label,
+                style: const TextStyle(fontSize: 12, color: _dark)),
           ),
-          const Text(': ', style: TextStyle(fontSize: 11)),
+          const Text(': ',
+              style: TextStyle(fontSize: 12, color: _dark)),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 11),
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: _dark,
+                  fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -236,221 +310,125 @@ class _DetailVerifikasiViewState extends State<DetailVerifikasiView> {
     );
   }
 
-  Widget _buildTtdDosen() {
-    return Column(
+  Widget _buildSignatureRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Yang memberikan rekomendasi,',
-          style: TextStyle(fontSize: 10),
+        _buildSignatureColumn(
+          title: 'Yang memberikan rekomendasi,',
+          name: 'Budi Harjanta, S.T.,M.Kom',
+          nip: 'NIP. 198305210085041003',
+          showStamp: false,
         ),
-        const SizedBox(height: 8),
-        // QR dosen (selalu sudah TTD karena kaprodi TTD terakhir)
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: const Icon(Icons.qr_code_2, size: 50, color: Colors.black87),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          widget.data.namaDosen,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-          ),
-        ),
-        Text(
-          'NIP. ${widget.data.nipDosen}',
-          style: const TextStyle(fontSize: 9, color: Colors.grey),
+        _buildSignatureColumn(
+          title: 'Mengetahui, Ka. Program Studi',
+          name: 'Hendra Pradibta, S.E., M.Sc.',
+          nip: 'NIP. 198305210085041003',
+          showStamp: _sudahTTD, // ← QR muncul setelah ditandatangani
         ),
       ],
     );
   }
 
-  Widget _buildTtdKaprodi() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Mengetahui, Ka. Program Studi',
-          style: TextStyle(fontSize: 10),
-        ),
-        const SizedBox(height: 8),
-        // QR kaprodi — tampil kalau sudah TTD, placeholder kalau belum
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(4),
-            color: _sudahTtdKaprodi ? null : Colors.grey.shade100,
+  Widget _buildSignatureColumn({
+    required String title,
+    required String name,
+    required String nip,
+    required bool showStamp,
+  }) {
+    return SizedBox(
+      width: 140,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(fontSize: 9, color: _dark)),
+          const SizedBox(height: 6),
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: showStamp
+                    ? Colors.transparent
+                    : const Color(0xFFE0E0E0),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(6),
+              color: showStamp
+                  ? const Color(0xFFE8F5E9)
+                  : Colors.transparent,
+            ),
+            child: showStamp
+                ? const Icon(Icons.qr_code_2,
+                    size: 50, color: Color(0xFF2E7D32))
+                : null,
           ),
-          child: _sudahTtdKaprodi
-              ? const Icon(Icons.qr_code_2, size: 50, color: Colors.black87)
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.qr_code_2, size: 30, color: Colors.grey.shade400),
-                    Text(
-                      'Belum\nditandatangani',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 7, color: Colors.grey.shade400),
-                    ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          widget.data.namaKaprodi,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-          ),
-        ),
-        Text(
-          'NIP. ${widget.data.nipKaprodi}',
-          style: const TextStyle(fontSize: 9, color: Colors.grey),
-        ),
-      ],
+          const SizedBox(height: 6),
+          Text(name,
+              style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: _dark)),
+          Text(nip,
+              style: const TextStyle(fontSize: 8, color: _grey)),
+        ],
+      ),
     );
   }
 
   Widget _buildBottomButtons(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      color: _cream,
       child: Row(
         children: [
+          // Tutup
           Expanded(
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(color: Colors.grey.shade300),
+                side: const BorderSide(color: _red),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text(
                 'Tutup',
-                style: TextStyle(color: Colors.black54, fontSize: 15),
+                style: TextStyle(
+                    color: _red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
               ),
             ),
           ),
           const SizedBox(width: 12),
+
+          // Tandatangani
           Expanded(
             child: ElevatedButton(
-              onPressed: _sudahTtdKaprodi || _isLoading
-                  ? null
-                  : () => _konfirmasiTtd(context),
+              onPressed: _sudahTTD ? null : _tandatangani,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32), // hijau
+                backgroundColor: _sudahTTD ? Colors.grey.shade300 : _red,
                 disabledBackgroundColor: Colors.grey.shade300,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: Text(
+                _sudahTTD ? 'Sudah Ditandatangani' : 'Tandatangani',
+                style: TextStyle(
+                  color: _sudahTTD ? Colors.grey.shade600 : Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Text(
-                      'Tandatangani',
-                      style: TextStyle(
-                        color: _sudahTtdKaprodi
-                            ? Colors.grey.shade500
-                            : Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  // Dialog konfirmasi sebelum TTD
-  void _konfirmasiTtd(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Konfirmasi Tanda Tangan'),
-        content: Text(
-          'Yakin menandatangani berita acara kompensasi ${widget.data.namaMahasiswa}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _lakukanTtd(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D32),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Ya, Tandatangani',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _lakukanTtd(BuildContext context) async {
-    setState(() => _isLoading = true);
-
-    final provider = context.read<DosenProvider>();
-    final success = await provider.melakukanTTD(widget.data.idPengajuan);
-
-    setState(() => _isLoading = false);
-
-    if (success) {
-      setState(() => _sudahTtdKaprodi = true);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Berhasil ditandatangani!'),
-            backgroundColor: Color(0xFF2E7D32),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal menandatangani, coba lagi'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  String _jamTerbilang(int jam) {
-    const terbilang = [
-      '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima',
-      'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh'
-    ];
-    if (jam <= 10) return '$jam (${terbilang[jam]}) Jam';
-    return '$jam Jam';
   }
 }

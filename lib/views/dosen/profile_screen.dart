@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../providers/auth_provider.dart';
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
 
-class ProfileDosenScreen extends StatefulWidget {
+class ProfileDosenScreen extends StatelessWidget {
   const ProfileDosenScreen({super.key});
 
-  @override
-  State<ProfileDosenScreen> createState() => _ProfileDosenScreenState();
-}
-
-class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
@@ -124,26 +116,21 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Consumer<AuthProvider>(
-                  builder: (context, auth, _) => Text(
-                    auth.pengguna?.namaLengkap ?? 'Nama Dosen',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: _textDark,
-                    ),
+                const Text(
+                  'Luqman Affandi, S.Kom., MMSI',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: _textDark,
                   ),
                 ),
                 const SizedBox(height: 3),
-                FutureBuilder<SharedPreferences>(
-                  future: SharedPreferences.getInstance(),
-                  builder: (context, snap) {
-                    final nip = snap.data?.getString('nip') ?? '-';
-                    return Text(
-                      'NIP: $nip',
-                      style: const TextStyle(fontSize: 13, color: _textGrey),
-                    );
-                  },
+                const Text(
+                  'NIP: 198803012015041001',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _textGrey,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -477,16 +464,11 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
             ),
           );
           if (confirm == true && context.mounted) {
-            await context.read<AuthProvider>().logout();
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.clear();
-            if (context.mounted) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
-            }
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
           }
         },
         icon: const Icon(Icons.logout, color: Colors.white, size: 18),
