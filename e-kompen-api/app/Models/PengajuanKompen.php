@@ -9,7 +9,7 @@ class PengajuanKompen extends Model {
     protected $fillable   = [
         'id_mahasiswa','id_mata_kuliah', 'id_absensi', 'id_dosen', 'id_admin',
         'tujuan', 'status', 'semester', 'tanggal_pertemuan',
-        'total_jam_kompen', 'nama_lokasi', 'latitude', 'longitude'
+        'total_jam_kompen','deskripsi_tugas', 'nama_lokasi', 'latitude', 'longitude'
     ];
 
     public function mahasiswa() {

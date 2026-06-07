@@ -90,7 +90,7 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
   // Ajukan TTD — ubah status ke menunggu_ttd_dosen / menunggu_ttd_admin
   Future<bool> ajukanTTD(int idPengajuan) async {
     final result = await ApiService.post(
-      'pengajuan/$idPengajuan/ajukan-ttd',
+      'pengajuan-kompen/$idPengajuan/ajukan-ttd',
       {},
     );
     return result['success'] == true;
@@ -104,8 +104,11 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
     required double latitude,
     required double longitude,
   }) async {
+
+    print("===== MASUK SERVICE =====");
+
     final result = await ApiService.put(
-      'pengajuan/$idPengajuan/lengkapi',
+      'pengajuan-kompen/$idPengajuan/lengkapi',
       {
         'deskripsi_tugas': deskripsi,
         'nama_lokasi': namaLokasi,
@@ -113,6 +116,10 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
         'longitude': longitude,
       },
     );
+
+    print("===== HASIL API =====");
+    print(result);
+
     return result['success'] == true;
   }
 

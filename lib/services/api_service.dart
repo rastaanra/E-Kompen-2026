@@ -37,12 +37,25 @@ class ApiService {
   }
 
   // PUT request
-  static Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
+  static Future<dynamic> put(
+      String endpoint,
+      Map<String, dynamic> data,
+  ) async {
+
+    print("PUT URL : ${ApiConstant.baseUrl}/$endpoint");
+    print("PUT DATA : $data");
+
     final response = await http.put(
       Uri.parse('${ApiConstant.baseUrl}/$endpoint'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode(data),
     );
+
+    print("STATUS : ${response.statusCode}");
+    print("BODY : ${response.body}");
+
     return jsonDecode(response.body);
   }
 

@@ -335,6 +335,16 @@ class PengajuanKompenController extends Controller
             ], 400);
         }
 
+        if (
+            empty($request->deskripsi_tugas) ||
+            empty($request->nama_lokasi)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lengkapi semua data terlebih dahulu'
+            ], 400);
+        }
+
         $item->update([
             'deskripsi_tugas' => $request->deskripsi_tugas,
             'nama_lokasi'     => $request->nama_lokasi,
@@ -357,6 +367,7 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function ajukanTTD($id)
     {
+         dd("MASUK AJUKAN TTD");
         $item = PengajuanKompen::find($id);
         if (!$item) {
             return response()->json([

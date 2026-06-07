@@ -214,8 +214,17 @@ Future<void> _loadAdmin() async {
     if (p.totalJamKompen == null) fieldKurang.add('Durasi jam');
     if (p.deskripsiTugas == null || p.deskripsiTugas!.isEmpty)
       fieldKurang.add('Deskripsi');
-    if (p.namaLokasi == null || p.namaLokasi!.isEmpty)
-      fieldKurang.add('Lokasi');
+    if (p.namaLokasi != null && p.namaLokasi!.isNotEmpty)
+      Row(
+        children: [
+          const Icon(Icons.place_outlined, size: 13, color: _grey),
+          const SizedBox(width: 4),
+          Text(
+            p.namaLokasi!,
+            style: const TextStyle(fontSize: 11, color: _grey),
+          ),
+        ],
+      );
 
     return Container(
       decoration: BoxDecoration(
@@ -807,21 +816,19 @@ Future<void> _loadAdmin() async {
                   StatefulBuilder(
                     builder: (ctx, setLocal) => GestureDetector(
                       onTap: () async {
-                        final result =
-                            await Navigator.push<Map<String, dynamic>>(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const MapPickerView()),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            _selectedLat = result['lat'];
-                            _selectedLng = result['lng'];
-                            _selectedNamaLokasi = result['nama'];
-                          });
-                          setLocal(() {});
-                        }
-                      },
+                          final result = await Navigator.push<Map<String, dynamic>>(
+                            context,
+                            MaterialPageRoute(builder: (_) => const MapPickerView()),
+                          );
+                          if (result != null) {
+                            setState(() {
+                              _selectedLat = result['lat'];
+                              _selectedLng = result['lng'];
+                              _selectedNamaLokasi = result['nama'];
+                            });
+                            setLocal(() {});
+                          }
+                        },
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
@@ -1087,16 +1094,27 @@ Future<void> _loadAdmin() async {
       return;
     }
 
+        if (deskripsiCtrl.text.trim().isEmpty ||
+        _selectedLat == null ||
+        _selectedNamaLokasi == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Deskripsi dan lokasi wajib diisi!'),
+          backgroundColor: _red,
+        ),
+      );
+      return;
+    }
+
     Navigator.pop(ctx);
 
-    final success =
-        await context.read<PengajuanProvider>().updateDeskripsiLokasi(
-              p.idPengajuan,
-              deskripsi: deskripsiCtrl.text.trim(),
-              namaLokasi: _selectedNamaLokasi!,
-              latitude: _selectedLat!,
-              longitude: _selectedLng!,
-            );
+    final success = await context.read<PengajuanProvider>().updateDeskripsiLokasi(
+      p.idPengajuan,
+      deskripsi: deskripsiCtrl.text.trim(),
+      namaLokasi: _selectedNamaLokasi!,
+      latitude: _selectedLat!,
+      longitude: _selectedLng!,
+    );
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1117,6 +1135,8 @@ Future<void> _loadAdmin() async {
         }
       }
     }
+
+
   }
 
   // ── Helpers UI

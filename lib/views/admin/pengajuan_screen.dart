@@ -71,6 +71,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
     'Disetujui',
   ];
 
+
 List<PengajuanKompen> get _filteredList {
   final data = context.watch<AdminProvider>().listPengajuan;
 
