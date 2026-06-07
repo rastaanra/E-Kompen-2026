@@ -146,4 +146,17 @@ class PengajuanProvider extends ChangeNotifier {
     return success;
   }
   
+  List<PengajuanKompen> _pengajuanAdmin = [];
+  List<PengajuanKompen> get pengajuanAdmin => _pengajuanAdmin;
+  Future<void> getPengajuanAdmin(int idAdmin) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _pengajuanAdmin =
+        await _service.getPengajuanAdmin(idAdmin);
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
 }

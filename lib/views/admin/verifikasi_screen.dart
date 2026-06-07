@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/admin/app_bottom_nav_admin.dart';
 import '../../utils/nav_admin.dart';
+import 'package:provider/provider.dart';
+import '../../providers/pengajuan_provider.dart';
+import '../../utils/session_manager.dart';
+import '../../models/pengajuan_kompen.dart';
+import '../../services/pengajuan_service.dart';
 
 const _redV = Color(0xFFB71C1C);
 const _creamV = Color(0xFFF5EFE6);
@@ -40,6 +45,31 @@ class AdminVerifikasiScreen extends StatefulWidget {
 }
 
 class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
+
+bool _isInitialized = false;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+  final PengajuanService _pengajuanService = PengajuanService();
+List<PengajuanKompen> _pengajuanList = [];
+
+  Future<void> _loadData() async {
+    final idAdmin = await SessionManager.getIdAdmin();
+
+    print("ID ADMIN = $idAdmin");
+
+    if (idAdmin == null) return;
+
+    final data = await _pengajuanService.getPengajuanAdmin(idAdmin);
+
+    print("JUMLAH DATA = ${data.length}");
+
+    setState(() {
+      _pengajuanList = data;
+    });
+  }
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
 
@@ -53,58 +83,47 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
     'Semua Status', 'Menunggu TTD', 'Sudah TTD',
   ];
 
-  final List<_FormPenyelesaian> _dummyList = [
-    _FormPenyelesaian(
-      namaMahasiswa: 'Seli Permata',
-      nim: '244107060021',
-      mataKuliah: 'Basis Data',
-      semester: 'Semester 4',
-      jenisPekerjaan: 'Rekap Presensi Bulanan',
-      tanggalSelesai: '8 April 2024',
-      jam: 3,
-      status: 'menunggu_ttd',
-    ),
-    _FormPenyelesaian(
-      namaMahasiswa: 'Andi Budiman',
-      nim: '244107060034',
-      mataKuliah: 'Kalkulus',
-      semester: 'Semester 4',
-      jenisPekerjaan: 'Mengoreksi tugas mahasiswa',
-      tanggalSelesai: '6 April 2024',
-      jam: 2,
-      status: 'menunggu_ttd',
-    ),
-    _FormPenyelesaian(
-      namaMahasiswa: 'Budi Prasetyo',
-      nim: '244107060055',
-      mataKuliah: 'Basis Data',
-      semester: 'Semester 2',
-      jenisPekerjaan: 'Menyiapkan modul praktikum',
-      tanggalSelesai: '8 April 2024',
-      jam: 2,
-      status: 'sudah_ttd',
-    ),
-  ];
 
-  List<_FormPenyelesaian> get _filteredList {
-    final filtered = _dummyList.where((p) {
-      final matchSemester = _selectedSemester == 'Semua Semester' ||
-          p.semester == _selectedSemester;
-      final matchStatus = _selectedStatus == 'Semua Status' ||
-          (_selectedStatus == 'Menunggu TTD' && p.status == 'menunggu_ttd') ||
-          (_selectedStatus == 'Sudah TTD' && p.status == 'sudah_ttd');
+  List<PengajuanKompen> get _filteredList {
+    final data =
+        context.read<PengajuanProvider>().pengajuanAdmin;
+
+    final filtered = data.where((p) {
+
+      final semesterText = 'Semester ${p.semester}';
+
+      final matchSemester =
+          _selectedSemester == 'Semua Semester' ||
+          semesterText == _selectedSemester;
+
+      final matchStatus =
+          _selectedStatus == 'Semua Status' ||
+          (_selectedStatus == 'Menunggu TTD' &&
+              p.status == 'menunggu_ttd_admin') ||
+          (_selectedStatus == 'Sudah TTD' &&
+              p.status == 'selesai');
+
       return matchSemester && matchStatus;
     }).toList();
 
     filtered.sort((a, b) {
-      if (a.status == 'menunggu_ttd' && b.status != 'menunggu_ttd') return -1;
-      if (a.status != 'menunggu_ttd' && b.status == 'menunggu_ttd') return 1;
+      if (a.status == 'menunggu_ttd_admin' &&
+          b.status != 'menunggu_ttd_admin') {
+        return -1;
+      }
+
+      if (a.status != 'menunggu_ttd_admin' &&
+          b.status == 'menunggu_ttd_admin') {
+        return 1;
+      }
+
       return 0;
     });
+
     return filtered;
   }
 
-  void _showFormVerifikasi(_FormPenyelesaian p) {
+  void _showFormVerifikasi(PengajuanKompen p) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -216,7 +235,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
 
                         // Info pengajar
                         _buildFormRow('Nama Pengajar', 'Seli Permata'),
-                        _buildFormRow('NIP', p.nim),
+                        _buildFormRow('NIP',p.nim ?? '-' ),
                         const SizedBox(height: 12),
                         const Text(
                           'Memberikan rekomendasi kompensasi kepada:',
@@ -225,18 +244,18 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                         const SizedBox(height: 8),
 
                         // Info mahasiswa
-                        _buildFormRow('Nama Mahasiswa', p.namaMahasiswa),
-                        _buildFormRow('NIM', p.nim),
+                        _buildFormRow('Nama Mahasiswa', p.namaMahasiswa ?? '-'),
+                        _buildFormRow('NIM',p.nim ?? '-'),
                         _buildFormRow('Semester',
                             p.semester.replaceAll('Semester ', 'Semester ')),
-                        _buildFormRow('Mata Kuliah', p.mataKuliah),
-                        _buildFormRow('Pekerjaan', p.jenisPekerjaan),
+                        _buildFormRow('Mata Kuliah', p.namaMatkul ?? '-'),
+                        _buildFormRow('Pekerjaan',p.deskripsiTugas ?? '-' ),
                         _buildFormRow('Jumlah Jam',
-                            '${p.jam} (${_jamTerbilang(p.jam)}) Jam'),
+                            '${p.totalJamKompen ?? 0} (${_jamTerbilang(p.totalJamKompen ?? 0)} Jam)'),
                         const SizedBox(height: 16),
 
                         // Tanggal
-                        Text('Malang, ${p.tanggalSelesai}',
+                        Text('Malang, ${p.tanggalPertemuan?.toString().split(' ')[0] ?? '-'}',
                             style: const TextStyle(fontSize: 12, color: _darkV)),
                         const SizedBox(height: 16),
 
@@ -346,13 +365,18 @@ Row(
     const SizedBox(width: 12),
     Expanded(
       child: ElevatedButton.icon(
-        onPressed: sudahTTD
-            ? null
-            : () {
-                setState(() => p.status = 'sudah_ttd');
-                setLocal(() => sudahTTD = true);
-                Navigator.pop(ctx);
-              },
+onPressed: sudahTTD
+    ? null
+    : () async {
+        final success = await PengajuanService()
+            .ttdAdmin(p.idPengajuan);
+
+        if (success) {
+          setState(() {});
+          setLocal(() => sudahTTD = true);
+          Navigator.pop(ctx);
+        }
+      },
         icon: Icon(Icons.check,
             size: 16,
             color: sudahTTD ? Colors.grey[500] : Colors.white),
@@ -417,6 +441,19 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
 
   @override
   Widget build(BuildContext context) {
+      if (!_isInitialized) {
+    _isInitialized = true;
+
+    Future.microtask(() async {
+      final idAdmin = await SessionManager.getIdAdmin();
+
+      if (idAdmin != null && mounted) {
+        context
+            .read<PengajuanProvider>()
+            .getPengajuanAdmin(idAdmin);
+      }
+    });
+  }
     return Scaffold(
       backgroundColor: _redV,
       body: Column(
@@ -530,7 +567,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
     );
   }
 
-  Widget _buildCard(_FormPenyelesaian p) {
+  Widget _buildCard(PengajuanKompen p) {
     return Container(
       decoration: BoxDecoration(
         color: _cardBgV,
@@ -552,12 +589,12 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(p.namaMahasiswa,
+              Text(p.namaMahasiswa ?? '-',
                   style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: _darkV)),
-              Text(p.tanggalSelesai,
+              Text(p.tanggalPertemuan?.toString().split(' ')[0] ?? '-',
                   style: const TextStyle(fontSize: 10, color: _greyV)),
             ],
           ),
@@ -574,7 +611,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                 const Icon(Icons.menu_book_outlined,
                     size: 13, color: _greyV),
                 const SizedBox(width: 4),
-                Text(p.mataKuliah,
+                Text(p.namaMatkul ?? '-',
                     style:
                         const TextStyle(fontSize: 12, color: _darkV)),
               ]),
@@ -596,7 +633,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                 size: 13, color: _greyV),
             const SizedBox(width: 4),
             Expanded(
-              child: Text(p.jenisPekerjaan,
+              child: Text(p.deskripsiTugas ?? '-',
                   style: const TextStyle(fontSize: 12, color: _darkV),
                   overflow: TextOverflow.ellipsis),
             ),
@@ -608,7 +645,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
             const Icon(Icons.access_time_outlined,
                 size: 13, color: _greyV),
             const SizedBox(width: 4),
-            Text('${p.jam} Jam',
+            Text('${p.totalJamKompen ?? 0} Jam',
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -651,7 +688,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
   }
 
   Widget _buildStatusBadge(String status) {
-    final bool menunggu = status == 'menunggu_ttd';
+    final bool menunggu = status == 'menunggu_ttd_admin';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

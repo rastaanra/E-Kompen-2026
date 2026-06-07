@@ -69,8 +69,10 @@ Route::get('/pengajuan-kompen/dosen/{id}',              [PengajuanKompenControll
 Route::get('/pengajuan-kompen/admin/{id}',              [PengajuanKompenController::class, 'getByAdmin']);
 Route::get('/pengajuan-kompen/{id}',                    [PengajuanKompenController::class, 'show']);
 Route::put('/pengajuan-kompen/{id}/lengkapi',           [PengajuanKompenController::class, 'lengkapi']);
-Route::post('/pengajuan-kompen/{id}/ajukan-ttd',         [PengajuanKompenController::class, 'ajukanTTD']);
+Route::post('/pengajuan-kompen/{id}/ajukan-ttd',        [PengajuanKompenController::class, 'ajukanTTD']);
 Route::put('/pengajuan-kompen/{id}/konfirmasi',         [PengajuanKompenController::class, 'konfirmasi']);
+Route::put('/pengajuan-kompen/{id}/ttd-admin',          [PengajuanKompenController::class, 'ttdAdmin']
+);
 
 
 // TTD DIGITAL
@@ -80,3 +82,4 @@ Route::get('/ttd/{id_pengajuan}',               [TtdDigitalController::class, 'g
 
 // MATA KULIAH
 Route::get('/mata-kuliah/{idMahasiswa}',        [MataKuliahController::class, 'index']);
+

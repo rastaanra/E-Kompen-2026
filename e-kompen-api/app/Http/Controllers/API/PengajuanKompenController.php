@@ -425,4 +425,33 @@ class PengajuanKompenController extends Controller
             'data'    => $item
         ]);
     }
+
+        public function ttdAdmin($id)
+    {
+        $item = PengajuanKompen::find($id);
+
+        if (!$item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengajuan tidak ditemukan'
+            ], 404);
+        }
+
+        if ($item->status !== 'menunggu_ttd_admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status tidak valid'
+            ], 400);
+        }
+
+        $item->update([
+            'status' => 'menunggu_ttd_kaprodi'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'TTD Admin berhasil',
+            'data' => $item
+        ]);
+    }
 }

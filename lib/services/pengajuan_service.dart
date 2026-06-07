@@ -56,6 +56,20 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
   return [];
 }
 
+Future<List<PengajuanKompen>> getPengajuanAdmin(int idAdmin) async {
+  final data = await ApiService.get(
+    'pengajuan-kompen/admin/$idAdmin',
+  );
+
+  if (data['success']) {
+    return (data['data'] as List)
+        .map((item) => PengajuanKompen.fromJson(item))
+        .toList();
+  }
+
+  return [];
+}
+
   // Update lokasi pengerjaan kompen
   // Sesuai class diagram: setLokasi / updateLokasi
   Future<bool> updateLokasi(int idPengajuan, double lat, double long, String namaLokasi) async {
@@ -159,5 +173,14 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
     }
 
     return null;
+  }
+
+  Future<bool> ttdAdmin(int idPengajuan) async {
+    final result = await ApiService.put(
+      'pengajuan-kompen/$idPengajuan/ttd-admin',
+      {},
+    );
+
+    return result['success'] == true;
   }
 }
