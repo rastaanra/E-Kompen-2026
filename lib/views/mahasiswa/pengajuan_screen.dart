@@ -964,8 +964,8 @@ Future<void> _loadAdmin() async {
                     ]),
                     duration: const Duration(seconds: 3),
                   ));
-                  NavMahasiswa.handleBottomNav(
-                      context, NavTab.tracking, NavTab.pengajuan);
+                  //NavMahasiswa.handleBottomNav(
+                     // context, NavTab.tracking, NavTab.pengajuan);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text('Gagal mengajukan TTD, coba lagi'),

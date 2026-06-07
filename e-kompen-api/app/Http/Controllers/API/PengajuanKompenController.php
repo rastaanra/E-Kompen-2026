@@ -367,7 +367,6 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function ajukanTTD($id)
     {
-         dd("MASUK AJUKAN TTD");
         $item = PengajuanKompen::find($id);
         if (!$item) {
             return response()->json([

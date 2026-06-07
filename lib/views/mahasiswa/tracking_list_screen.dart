@@ -4,6 +4,9 @@ import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
 import '../../models/pengajuan_kompen.dart';
 import 'tracking_screen.dart';
+import 'package:provider/provider.dart';
+import '../../providers/pengajuan_provider.dart';
+import '../../utils/session_manager.dart';
 
 class TrackingListScreen extends StatelessWidget {
   const TrackingListScreen({super.key});
@@ -12,47 +15,6 @@ class TrackingListScreen extends StatelessWidget {
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
-
-  // Dummy data — hanya yang sudah ajukan TTD (masuk tracking)
-  // TODO: ganti dengan data dari PengajuanProvider
-  static final List<Map<String, dynamic>> _pengajuanList = [
-    {
-      'idPengajuan': 1,
-      'matkul': 'Pemrograman Web',
-      'dosen': 'Siti Rahayu, S.Kom, M.T',
-      'jamAlpha': 2,
-      'tanggal': '13 Apr 2026',
-      'status': 'selesai',
-      'namaLokasi': 'Lab Komputer B',
-      'latitude': -7.9402,
-      'longitude': 112.6178,
-      'deskripsiTugas': 'Menyiapkan modul Pemrograman Web semester depan',
-    },
-    {
-      'idPengajuan': 2,
-      'matkul': 'Jaringan Komputer',
-      'dosen': 'Ir. Budi Santoso, M.T',
-      'jamAlpha': 3,
-      'tanggal': '05 Apr 2026',
-      'status': 'menunggu_ttd_dosen',
-      'namaLokasi': 'Lab Jaringan',
-      'latitude': -7.9410,
-      'longitude': 112.6190,
-      'deskripsiTugas': 'Merapikan kabel jaringan di laboratorium komputer',
-    },
-    {
-      'idPengajuan': 3,
-      'matkul': 'Basis Data',
-      'dosen': 'Dr. Ahmad Fauzi, M.Kom',
-      'jamAlpha': 4,
-      'tanggal': '10 Apr 2026',
-      'status': 'menunggu_ttd_kaprodi',
-      'namaLokasi': 'Lab Komputer A',
-      'latitude': -7.9398,
-      'longitude': 112.6165,
-      'deskripsiTugas': 'Membantu persiapan UAS Basis Data',
-    },
-  ];
 
   bool _isSelesai(String status) => status == 'selesai';
 
@@ -100,8 +62,15 @@ class TrackingListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final aktif = _pengajuanList.where((e) => _isAktif(e['status'])).toList();
-    final selesai = _pengajuanList.where((e) => _isSelesai(e['status'])).toList();
+    final provider = context.watch<PengajuanProvider>();
+
+    final aktif = provider.listPengajuan
+        .where((e) => _isAktif(e.status))
+        .toList();
+
+    final selesai = provider.listPengajuan
+        .where((e) => _isSelesai(e.status))
+        .toList();
 
     return Scaffold(
       backgroundColor: _primaryRed,
@@ -230,25 +199,25 @@ class TrackingListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(BuildContext context, Map<String, dynamic> item,
+  Widget _buildCard(BuildContext context, PengajuanKompen item,
       {bool isSelesai = false}) {
-    final status = item['status'] as String;
-    final jamAlpha = item['jamAlpha'] as int;
+        final status = item.status;
+        final jamAlpha = item.totalJamKompen ?? 0;
 
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => TrackingScreen(
-            idPengajuan: item['idPengajuan'],
-            matkul: item['matkul'],
-            namaDosen: item['dosen'],
-            jamAlpha: item['jamAlpha'],
-            status: item['status'],
-            namaLokasi: item['namaLokasi'],
-            latitude: item['latitude'],
-            longitude: item['longitude'],
-            deskripsiTugas: item['deskripsiTugas'],
+            idPengajuan: item.idPengajuan,
+            matkul: item.namaMatkul ?? '-',
+            namaDosen: item.namaTujuan ?? '-',
+            jamAlpha: item.totalJamKompen ?? 0,
+            status: item.status,
+            namaLokasi: item.namaLokasi,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            deskripsiTugas: item.deskripsiTugas,
           ),
         ),
       ),
@@ -283,7 +252,7 @@ class TrackingListScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['matkul'],
+                        item.namaMatkul ?? '-',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
@@ -292,7 +261,7 @@ class TrackingListScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        item['dosen'],
+                       item.namaTujuan ?? '-',
                         style: const TextStyle(
                             fontSize: 12, color: Color(0xFF9E9E9E)),
                       ),
@@ -386,7 +355,7 @@ class TrackingListScreen extends StatelessWidget {
                     size: 13, color: Color(0xFF9E9E9E)),
                 const SizedBox(width: 4),
                 Text(
-                  item['tanggal'],
+                  item.tanggalPertemuan?.toString() ?? '-',
                   style: const TextStyle(
                       fontSize: 12, color: Color(0xFF9E9E9E)),
                 ),

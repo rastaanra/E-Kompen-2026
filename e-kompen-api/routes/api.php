@@ -69,7 +69,7 @@ Route::get('/pengajuan-kompen/dosen/{id}',              [PengajuanKompenControll
 Route::get('/pengajuan-kompen/admin/{id}',              [PengajuanKompenController::class, 'getByAdmin']);
 Route::get('/pengajuan-kompen/{id}',                    [PengajuanKompenController::class, 'show']);
 Route::put('/pengajuan-kompen/{id}/lengkapi',           [PengajuanKompenController::class, 'lengkapi']);
-Route::put('/pengajuan-kompen/{id}/ajukan-ttd',         [PengajuanKompenController::class, 'ajukanTTD']);
+Route::post('/pengajuan-kompen/{id}/ajukan-ttd',         [PengajuanKompenController::class, 'ajukanTTD']);
 Route::put('/pengajuan-kompen/{id}/konfirmasi',         [PengajuanKompenController::class, 'konfirmasi']);
 
 
