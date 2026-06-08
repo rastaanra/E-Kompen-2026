@@ -46,10 +46,14 @@ class AdminService {
   // Konfirmasi pengajuan
   // Sesuai class diagram: konfirmasiPengajuan(id_pengajuan: int): bool
   Future<bool> konfirmasiPengajuan(int idPengajuan) async {
-    final result = await ApiService.put('pengajuan/$idPengajuan/konfirmasi', {});
+    final result =
+        await ApiService.put(
+          'pengajuan-kompen/$idPengajuan/konfirmasi',
+          {},
+        );
+
     return result['success'] ?? false;
   }
-
   // TTD digital admin
   // Sesuai class diagram: melakukanTTD(id_pengajuan: int): bool
   Future<bool> melakukanTTD(int idPengajuan) async {
@@ -87,13 +91,20 @@ class AdminService {
   }
 
   // Ambil semua pengajuan untuk admin
-  Future<List<PengajuanKompen>> getAllPengajuan() async {
-    final data = await ApiService.get('admin/pengajuan');
-    if (data['success']) {
-      return (data['data'] as List)
-          .map((item) => PengajuanKompen.fromJson(item))
-          .toList();
-    }
-    return [];
+Future<List<PengajuanKompen>> getAllPengajuan(int idAdmin) async {
+  print("ID ADMIN = $idAdmin");
+
+  final data =
+      await ApiService.get('pengajuan-kompen/admin/$idAdmin');
+
+  print(data);
+
+  if (data['success']) {
+    return (data['data'] as List)
+        .map((item) => PengajuanKompen.fromJson(item))
+        .toList();
   }
+
+  return [];
+}
 }

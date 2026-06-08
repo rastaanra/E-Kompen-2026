@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/admin/app_bottom_nav_admin.dart';
 import '../../utils/nav_admin.dart';
+import 'package:provider/provider.dart';
+import '../../providers/admin_provider.dart';
+import '../../utils/session_manager.dart';
+import '../../models/pengajuan_kompen.dart';
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -32,14 +36,28 @@ class _PengajuanItem {
 
 class AdminPengajuanScreen extends StatefulWidget {
   const AdminPengajuanScreen({super.key});
-
   @override
   State<AdminPengajuanScreen> createState() => _AdminPengajuanScreenState();
+  
 }
 
 class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
+
+    @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final idAdmin = await SessionManager.getIdAdmin();
+
+    if (idAdmin != null) {
+      await context.read<AdminProvider>().getAllPengajuan(idAdmin);
+    }
+  }
 
   final List<String> _semesterOptions = [
     'Semua Semester',
@@ -53,68 +71,41 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
     'Disetujui',
   ];
 
-  final List<_PengajuanItem> _dummyList = [
-    _PengajuanItem(
-      namaMahasiswa: 'Seli Permata',
-      nim: '244107060021',
-      mataKuliah: 'Basis Data',
-      semester: 'Semester 4',
-      tanggal: '8 Apr 2024',
-      jam: 3,
-      status: 'menunggu_persetujuan',
-    ),
-    _PengajuanItem(
-      namaMahasiswa: 'Rina Lestari',
-      nim: '244107060047',
-      mataKuliah: 'Jarkom Komputer II',
-      semester: 'Semester 4',
-      tanggal: '4 Apr 2024',
-      jam: 4,
-      status: 'menunggu_persetujuan',
-    ),
-    _PengajuanItem(
-      namaMahasiswa: 'Andi Budiman',
-      nim: '244107060034',
-      mataKuliah: 'Kalkulus',
-      semester: 'Semester 4',
-      tanggal: '6 Apr 2024',
-      jam: 2,
-      status: 'disetujui',
-    ),
-    _PengajuanItem(
-      namaMahasiswa: 'Budi Prasetyo',
-      nim: '244107060055',
-      mataKuliah: 'Basis Data',
-      semester: 'Semester 2',
-      tanggal: '2 Apr 2024',
-      jam: 3,
-      status: 'disetujui',
-    ),
-  ];
 
-  List<_PengajuanItem> get _filteredList {
-    final filtered = _dummyList.where((p) {
-      final matchSemester = _selectedSemester == 'Semua Semester' ||
-          p.semester == _selectedSemester;
-      final matchStatus = _selectedStatus == 'Semua Status' ||
-          (_selectedStatus == 'Menunggu Persetujuan' &&
-              p.status == 'menunggu_persetujuan') ||
-          (_selectedStatus == 'Disetujui' && p.status == 'disetujui');
-      return matchSemester && matchStatus;
-    }).toList();
+List<PengajuanKompen> get _filteredList {
+  final data = context.watch<AdminProvider>().listPengajuan;
 
-    filtered.sort((a, b) {
-      if (a.status == 'menunggu_persetujuan' &&
-          b.status != 'menunggu_persetujuan') return -1;
-      if (a.status != 'menunggu_persetujuan' &&
-          b.status == 'menunggu_persetujuan') return 1;
-      return 0;
-    });
+  final filtered = data.where((p) {
+    final matchSemester =
+        _selectedSemester == 'Semua Semester' ||
+        p.semester == _selectedSemester.replaceAll('Semester ', '');
 
-    return filtered;
-  }
+    final matchStatus =
+        _selectedStatus == 'Semua Status' ||
+        (_selectedStatus == 'Menunggu Persetujuan' &&
+            p.status == 'pending') ||
+        (_selectedStatus == 'Disetujui' &&
+            p.status == 'sedang_dikerjakan');
 
-  void _showDetailPengajuan(_PengajuanItem p) {
+    return matchSemester && matchStatus;
+  }).toList();
+
+  filtered.sort((a, b) {
+    if (a.status == 'pending' &&
+        b.status != 'pending') {
+      return -1;
+    }
+    if (a.status != 'pending' &&
+        b.status == 'pending') {
+      return 1;
+    }
+    return 0;
+  });
+
+  return filtered;
+}
+
+  void _showDetailPengajuan(PengajuanKompen p) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -123,7 +114,8 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        bool sudahDisetujui = p.status == 'disetujui';
+        bool sudahDisetujui =
+          p.status == 'sedang_dikerjakan';
         return StatefulBuilder(
           builder: (ctx, setLocal) => Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -170,7 +162,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        p.namaMahasiswa,
+                        p.namaMahasiswa ?? '-',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -192,11 +184,16 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                _buildInfoRow('Mata Kuliah', p.mataKuliah),
+                _buildInfoRow(
+                  'Mata Kuliah',
+                  p.namaMatkul ?? '-',
+                ),
                 _buildInfoRow('Semester',
                     p.semester.replaceAll('Semester ', '')),
-                _buildInfoRow('Tanggal Pertemuan', p.tanggal),
-                _buildInfoRow('Total Jam Kompen', '${p.jam} Jam'),
+                _buildInfoRow('Tanggal Pertemuan', p.tanggalPertemuan != null
+                  ? '${p.tanggalPertemuan!.day}/${p.tanggalPertemuan!.month}/${p.tanggalPertemuan!.year}'
+                  : '-'),
+                _buildInfoRow('Total Jam Kompen', '${p.totalJamKompen ?? 0} Jam'),
                 const SizedBox(height: 20),
 
                 Row(
@@ -216,13 +213,27 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: sudahDisetujui
-                            ? null
-                            : () {
-                                setState(() => p.status = 'disetujui');
-                                setLocal(() => sudahDisetujui = true);
+                      onPressed: sudahDisetujui
+                          ? null
+                          : () async {
+                              final success = await context
+                                  .read<AdminProvider>()
+                                  .konfirmasiPengajuan(p.idPengajuan);
+
+                              if (success) {
+                                await _loadData();
+
+                                if (!mounted) return;
+
                                 Navigator.pop(ctx);
-                              },
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Pengajuan berhasil disetujui'),
+                                  ),
+                                );
+                              }
+                            },
                         icon: Icon(Icons.check,
                             size: 16,
                             color: sudahDisetujui
@@ -285,7 +296,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
       backgroundColor: _red,
       body: Column(
         children: [
-          const AppHeader(role: 'admin'),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -336,17 +347,20 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
                     ),
                   ),
                   Expanded(
-                    child: _filteredList.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                            itemCount: _filteredList.length,
-                            itemBuilder: (context, index) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCard(_filteredList[index]),
-                            ),
-                          ),
+                    child: context.watch<AdminProvider>().isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : _filteredList.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                                itemCount: _filteredList.length,
+                                itemBuilder: (context, index) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCard(_filteredList[index]),
+                                ),
+                              ),
                   ),
                 ],
               ),
@@ -395,7 +409,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
     );
   }
 
-  Widget _buildCard(_PengajuanItem p) {
+  Widget _buildCard(PengajuanKompen p) {
   return Container(
     decoration: BoxDecoration(
       color: _cardBg,
@@ -417,16 +431,18 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              p.namaMahasiswa,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _dark,
-              ),
+          Text(
+            p.namaMahasiswa ?? '-',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: _dark,
             ),
+          ),
             Text(
-              p.tanggal,
+            p.tanggalPertemuan != null
+                ? '${p.tanggalPertemuan!.day}/${p.tanggalPertemuan!.month}/${p.tanggalPertemuan!.year}'
+                : '-',
               style: const TextStyle(
                 fontSize: 10,
                 color: _grey,
@@ -438,7 +454,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
         const SizedBox(height: 2),
 
         Text(
-          'NIM: ${p.nim}',
+          'NIM: ${p.nim ?? '-'}',
           style: const TextStyle(
             fontSize: 11,
             color: _grey,
@@ -460,7 +476,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  p.mataKuliah,
+                  p.namaMatkul ?? '-',
                   style: const TextStyle(
                     fontSize: 12,
                     color: _dark,
@@ -477,7 +493,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  p.semester,
+                  'Semester ${p.semester}',
                   style: const TextStyle(
                     fontSize: 11,
                     color: _grey,
@@ -500,7 +516,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
             ),
             const SizedBox(width: 4),
             Text(
-              '${p.jam} Jam',
+              '${p.totalJamKompen ?? 0} Jam',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -556,37 +572,41 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
   );
 }
 
-  Widget _buildStatusBadge(String status) {
-    Color bg;
-    Color textColor;
-    String label;
+Widget _buildStatusBadge(String status) {
+  Color bg;
+  Color textColor;
+  String label;
 
-    switch (status) {
-      case 'disetujui':
-        bg = const Color(0xFFD1FAE5);
-        textColor = const Color(0xFF065F46);
-        label = 'Disetujui';
-        break;
-      default:
-        bg = const Color(0xFFFFF3CD);
-        textColor = const Color(0xFF856404);
-        label = 'Menunggu Persetujuan';
-    }
+  switch (status) {
+    case 'sedang_dikerjakan':
+      bg = const Color(0xFFD1FAE5);
+      textColor = const Color(0xFF065F46);
+      label = 'Disetujui';
+      break;
 
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: textColor)),
-    );
+    case 'pending':
+    default:
+      bg = const Color(0xFFFFF3CD);
+      textColor = const Color(0xFF856404);
+      label = 'Menunggu Persetujuan';
   }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: bg,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      label,
+      style: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+    ),
+  );
+}
 
   Widget _buildEmptyState() {
     return Center(

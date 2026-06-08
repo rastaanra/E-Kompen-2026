@@ -24,7 +24,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(role: 'admin'),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

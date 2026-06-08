@@ -21,7 +21,7 @@ class KaprodiHomeScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(role: 'kaprodi'),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

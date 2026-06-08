@@ -82,4 +82,25 @@ class DosenService {
     final data = await ApiService.get('dosen/check-nip/$nip');
     return data['is_registered'] ?? false;
   }
+
+  Future<List<Dosen>> getAllDosen() async {
+    final data = await ApiService.get('dosen');
+
+    if (data['success']) {
+      return (data['data'] as List)
+          .map((item) => Dosen.fromJson(item))
+          .toList();
+    }
+
+    return [];
+  }
+
+  Future<bool> setKaprodi(int idDosen) async {
+    final result = await ApiService.put(
+      'dosen/$idDosen/set-kaprodi',
+      {},
+    );
+
+    return result['success'] ?? false;
+  }
 }
