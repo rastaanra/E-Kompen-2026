@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/mahasiswa/app_bottom_nav.dart';
-import 'tracking_screen.dart';
 import '../../utils/nav_mahasiswa.dart';
+import '../../models/pengajuan_kompen.dart';
+import 'tracking_screen.dart';
+import 'package:provider/provider.dart';
+import '../../providers/pengajuan_provider.dart';
+import '../../utils/session_manager.dart';
 
 class TrackingListScreen extends StatelessWidget {
   const TrackingListScreen({super.key});
@@ -12,73 +16,67 @@ class TrackingListScreen extends StatelessWidget {
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
 
-  static const List<Map<String, dynamic>> _pengajuanList = [
-    {
-      "matkul": "Pemrograman Web",
-      "dosen": "Dr. Ahmad Fauzi, M.Kom",
-      "jamAlpha": 2,
-      "tanggal": "13 Apr 2026",
-      "statusLabel": "Menunggu TTD",
-      "statusType": "waiting",
-    },
-    {
-      "matkul": "Jaringan Komputer",
-      "dosen": "Ir. Budi Santoso, M.T",
-      "jamAlpha": 1,
-      "tanggal": "05 Apr 2026",
-      "statusLabel": "Sedang Diproses",
-      "statusType": "progress",
-    },
-    {
-      "matkul": "Basis Data",
-      "dosen": "Luqman Affandi, S.Kom., MMSI",
-      "jamAlpha": 3,
-      "tanggal": "10 Apr 2026",
-      "statusLabel": "Selesai",
-      "statusType": "selesai",
-    },
-  ];
+  bool _isSelesai(String status) => status == 'selesai';
 
-  Color _statusBgColor(String type) {
-    switch (type) {
+  bool _isAktif(String status) => !_isSelesai(status);
+
+  Color _statusBgColor(String status) {
+    switch (status) {
       case 'selesai': return const Color(0xFFE8F5E9);
-      case 'progress': return const Color(0xFFFFF8E1);
-      case 'waiting': return const Color(0xFFFCE8E8);
-      case 'ditolak': return const Color(0xFFFFEBEE);
+      case 'menunggu_ttd_kaprodi': return const Color(0xFFEDE7F6);
+      case 'menunggu_ttd_dosen':
+      case 'menunggu_ttd_admin': return const Color(0xFFFFF8E1);
       default: return const Color(0xFFF5F5F5);
     }
   }
 
-  Color _statusTextColor(String type) {
-    switch (type) {
+  Color _statusTextColor(String status) {
+    switch (status) {
       case 'selesai': return const Color(0xFF2E7D32);
-      case 'progress': return const Color(0xFFF57F17);
-      case 'waiting': return _primaryRed;
-      case 'ditolak': return const Color(0xFFC62828);
+      case 'menunggu_ttd_kaprodi': return const Color(0xFF6A1B9A);
+      case 'menunggu_ttd_dosen':
+      case 'menunggu_ttd_admin': return const Color(0xFFF57F17);
       default: return _textGrey;
     }
   }
 
-  IconData _statusIcon(String type) {
-    switch (type) {
+  IconData _statusIcon(String status) {
+    switch (status) {
       case 'selesai': return Icons.check_circle_outline;
-      case 'progress': return Icons.autorenew;
-      case 'waiting': return Icons.pending_outlined;
-      case 'ditolak': return Icons.cancel_outlined;
-      default: return Icons.info_outline;
+      case 'menunggu_ttd_kaprodi': return Icons.verified_outlined;
+      case 'menunggu_ttd_dosen':
+      case 'menunggu_ttd_admin': return Icons.draw_outlined;
+      default: return Icons.pending_outlined;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'selesai': return 'Selesai';
+      case 'menunggu_ttd_dosen': return 'Menunggu TTD Dosen';
+      case 'menunggu_ttd_admin': return 'Menunggu TTD Admin';
+      case 'menunggu_ttd_kaprodi': return 'Menunggu TTD Kaprodi';
+      default: return status;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final aktif = _pengajuanList.where((e) => e['statusType'] != 'selesai').toList();
-    final selesai = _pengajuanList.where((e) => e['statusType'] == 'selesai').toList();
+    final provider = context.watch<PengajuanProvider>();
+
+    final aktif = provider.listPengajuan
+        .where((e) => _isAktif(e.status))
+        .toList();
+
+    final selesai = provider.listPengajuan
+        .where((e) => _isSelesai(e.status))
+        .toList();
 
     return Scaffold(
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(role: 'mahasiswa'),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -95,7 +93,10 @@ class TrackingListScreen extends StatelessWidget {
                     padding: EdgeInsets.fromLTRB(20, 22, 20, 4),
                     child: Text(
                       'Tracking Pengajuan',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF2D2D2D)),
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2D2D2D)),
                     ),
                   ),
                   const Padding(
@@ -109,7 +110,7 @@ class TrackingListScreen extends StatelessWidget {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                       children: [
-                        // ── SECTION AKTIF ──
+                        // Sedang Berjalan
                         if (aktif.isNotEmpty) ...[
                           _buildSectionHeader(
                             icon: Icons.radio_button_checked,
@@ -123,7 +124,7 @@ class TrackingListScreen extends StatelessWidget {
                           ...aktif.map((item) => _buildCard(context, item)),
                         ],
 
-                        // ── SECTION SELESAI ──
+                        // Kompen Selesai
                         if (selesai.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           _buildSectionHeader(
@@ -135,8 +136,12 @@ class TrackingListScreen extends StatelessWidget {
                             countTextColor: const Color(0xFF2E7D32),
                           ),
                           const SizedBox(height: 10),
-                          ...selesai.map((item) => _buildCard(context, item, isSelesai: true)),
+                          ...selesai.map((item) =>
+                              _buildCard(context, item, isSelesai: true)),
                         ],
+
+                        if (aktif.isEmpty && selesai.isEmpty)
+                          _buildEmptyState(),
                       ],
                     ),
                   ),
@@ -146,14 +151,8 @@ class TrackingListScreen extends StatelessWidget {
           ),
           AppBottomNav(
             activeTab: NavTab.tracking,
-            onTabSelected: (tab) {
-              switch (tab) {
-                case NavTab.home: Navigator.pop(context); break;
-                case NavTab.pengajuan: Navigator.pop(context); break;
-                case NavTab.profil: Navigator.pop(context); break;
-                case NavTab.tracking: break;
-              }
-            },
+            onTabSelected: (tab) =>
+                NavMahasiswa.handleBottomNav(context, tab, NavTab.tracking),
           ),
         ],
       ),
@@ -190,35 +189,51 @@ class TrackingListScreen extends StatelessWidget {
           ),
           child: Text(
             '$count pengajuan',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: countTextColor),
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: countTextColor),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCard(BuildContext context, Map<String, dynamic> item, {bool isSelesai = false}) {
-    final statusType = item['statusType'] as String;
-    final jamAlpha = item['jamAlpha'] as int;
+  Widget _buildCard(BuildContext context, PengajuanKompen item,
+      {bool isSelesai = false}) {
+        final status = item.status;
+        final jamAlpha = item.totalJamKompen ?? 0;
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const TrackingScreen()),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TrackingScreen(
+            idPengajuan: item.idPengajuan,
+            matkul: item.namaMatkul ?? '-',
+            namaDosen: item.namaTujuan ?? '-',
+            jamAlpha: item.totalJamKompen ?? 0,
+            status: item.status,
+            namaLokasi: item.namaLokasi,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            deskripsiTugas: item.deskripsiTugas,
+          ),
+        ),
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelesai ? Colors.white.withOpacity(0.7) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: isSelesai ? Border.all(color: const Color(0xFFE0E0E0), width: 1) : null,
+          border: isSelesai
+              ? Border.all(color: const Color(0xFFE0E0E0))
+              : null,
           boxShadow: isSelesai
               ? []
-              : const [
-                  BoxShadow(
+              : [
+                  const BoxShadow(
                     color: Color.fromRGBO(0, 0, 0, 0.06),
                     blurRadius: 8,
                     offset: Offset(0, 2),
@@ -228,7 +243,7 @@ class TrackingListScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Baris atas: nama matkul + badge status
+            // Matkul + badge status
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -237,7 +252,7 @@ class TrackingListScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['matkul'],
+                        item.namaMatkul ?? '-',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
@@ -246,30 +261,33 @@ class TrackingListScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        item['dosen'],
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
+                       item.namaTujuan ?? '-',
+                        style: const TextStyle(
+                            fontSize: 12, color: Color(0xFF9E9E9E)),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: _statusBgColor(statusType),
+                    color: _statusBgColor(status),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_statusIcon(statusType), size: 12, color: _statusTextColor(statusType)),
+                      Icon(_statusIcon(status),
+                          size: 12, color: _statusTextColor(status)),
                       const SizedBox(width: 4),
                       Text(
-                        item['statusLabel'],
+                        _statusLabel(status),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: _statusTextColor(statusType),
+                          color: _statusTextColor(status),
                         ),
                       ),
                     ],
@@ -277,91 +295,116 @@ class TrackingListScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
 
-            // Jam alpha — dibikin menonjol
-            if (!isSelesai)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFCE8E8),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.timer_outlined, size: 16, color: _primaryRed),
-                    const SizedBox(width: 6),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(fontSize: 12, color: _textDark),
-                        children: [
-                          TextSpan(
-                            text: '$jamAlpha Jam Alpha ',
-                            style: const TextStyle(fontWeight: FontWeight.w700, color: _primaryRed, fontSize: 13),
-                          ),
-                          const TextSpan(text: 'perlu dikompensasi'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+            // Jam alpha
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelesai
+                    ? const Color(0xFFE8F5E9)
+                    : const Color(0xFFFCE8E8),
+                borderRadius: BorderRadius.circular(10),
               ),
-
-            if (isSelesai)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.verified_outlined, size: 16, color: Color(0xFF2E7D32)),
-                    const SizedBox(width: 6),
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(fontSize: 12, color: _textDark),
-                        children: [
-                          TextSpan(
-                            text: '$jamAlpha Jam Alpha ',
-                            style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF2E7D32), fontSize: 13),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelesai
+                        ? Icons.verified_outlined
+                        : Icons.timer_outlined,
+                    size: 16,
+                    color: isSelesai
+                        ? const Color(0xFF2E7D32)
+                        : _primaryRed,
+                  ),
+                  const SizedBox(width: 6),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                          fontSize: 12, color: _textDark),
+                      children: [
+                        TextSpan(
+                          text: '$jamAlpha Jam Alpha ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: isSelesai
+                                ? const Color(0xFF2E7D32)
+                                : _primaryRed,
+                            fontSize: 13,
                           ),
-                          const TextSpan(text: 'berhasil dikompensasi'),
-                        ],
-                      ),
+                        ),
+                        TextSpan(
+                          text: isSelesai
+                              ? 'berhasil dikompensasi'
+                              : 'perlu dikompensasi',
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
+            ),
             const SizedBox(height: 10),
 
-            // Baris bawah: tanggal + arrow
+            // Tanggal + arrow
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 13, color: Color(0xFF9E9E9E)),
+                const Icon(Icons.calendar_today_outlined,
+                    size: 13, color: Color(0xFF9E9E9E)),
                 const SizedBox(width: 4),
                 Text(
-                  item['tanggal'],
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
+                  item.tanggalPertemuan?.toString() ?? '-',
+                  style: const TextStyle(
+                      fontSize: 12, color: Color(0xFF9E9E9E)),
                 ),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: isSelesai ? const Color(0xFFE8F5E9) : const Color(0xFFFCE8E8),
+                    color: isSelesai
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFCE8E8),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.arrow_forward_ios,
                     size: 12,
-                    color: isSelesai ? const Color(0xFF2E7D32) : _primaryRed,
+                    color: isSelesai
+                        ? const Color(0xFF2E7D32)
+                        : _primaryRed,
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          children: [
+            Icon(Icons.track_changes_outlined,
+                size: 56, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            const Text(
+              'Belum ada tracking',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF9E9E9E)),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Ajukan TTD dulu dari halaman Pengajuan',
+              style:
+                  TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
             ),
           ],
         ),

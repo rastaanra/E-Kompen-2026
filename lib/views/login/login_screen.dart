@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/session_manager.dart';
 import '../mahasiswa/home_screen.dart';
 import '../dosen/home_screen.dart';
 import '../kaprodi/home_screen.dart';
@@ -33,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -46,32 +49,63 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (_formKey.currentState!.validate()) {
-      Widget targetScreen;
+      final provider = context.read<AuthProvider>();
 
-      switch (_selectedRole) {
-        case 'Mahasiswa':
-          targetScreen = const HomeScreen();
-          break;
-        case 'Dosen':
-          targetScreen = const DosenHomeScreen();
-          break;
-        case 'Kaprodi':
-          targetScreen = const KaprodiHomeScreen();
-          break;
-        case 'Admin':
-          targetScreen = const AdminHomeScreen();
-          break;
-        default:
-          targetScreen = const HomeScreen();
-      }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => targetScreen),
+      final berhasil = await provider.login(
+        _emailController.text,
+        _passwordController.text,
       );
+
+      if (berhasil && mounted) {
+        print(provider.lastResponse);
+        // Simpan session sesuai format dari temenmu
+        await SessionManager.simpanLogin(provider.lastResponse);
+
+        // Redirect sesuai role dari response backend
+      if (_selectedRole == 'Mahasiswa') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      }
+      else if (_selectedRole == 'Dosen') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DosenHomeScreen(),
+          ),
+        );
+      }
+      else if (_selectedRole == 'Kaprodi') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const KaprodiHomeScreen(),
+          ),
+        );
+      }
+      else if (_selectedRole == 'Admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AdminHomeScreen(),
+          ),
+        );
+      }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.errorMessage ?? 'Login gagal'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
-
+  
   Widget _buildRoleButton(String label, IconData icon) {
     final bool isSelected = _selectedRole == label;
     return Expanded(

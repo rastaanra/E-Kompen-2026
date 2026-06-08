@@ -372,7 +372,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
       backgroundColor: _redV,
       body: Column(
         children: [
-          const AppHeader(role: 'dosen'),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

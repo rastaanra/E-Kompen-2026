@@ -23,7 +23,7 @@ class DosenHomeScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(role: 'dosen'),
+          const AppHeader(),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
