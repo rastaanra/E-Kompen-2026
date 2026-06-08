@@ -269,7 +269,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'mahasiswa'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

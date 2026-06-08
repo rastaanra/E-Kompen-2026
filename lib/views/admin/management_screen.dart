@@ -1005,7 +1005,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'admin'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

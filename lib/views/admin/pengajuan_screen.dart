@@ -285,7 +285,7 @@ class _AdminPengajuanScreenState extends State<AdminPengajuanScreen> {
       backgroundColor: _red,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'admin'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

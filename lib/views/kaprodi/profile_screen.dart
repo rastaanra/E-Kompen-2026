@@ -17,7 +17,7 @@ class ProfileKaprodiScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'kaprodi'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

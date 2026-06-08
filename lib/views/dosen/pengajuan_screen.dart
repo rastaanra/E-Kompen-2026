@@ -41,13 +41,13 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
 
-  final List<String> _semesterOptions = [
+  final List<String> _semesterOptions = <String>[
     'Semua Semester',
     'Semester 1', 'Semester 2', 'Semester 3', 'Semester 4',
     'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8',
   ];
 
-  final List<String> _statusOptions = [
+  final List<String> _statusOptions = <String>[
     'Semua Status',
     'Menunggu Persetujuan',
     'Disetujui',
@@ -281,7 +281,7 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
       backgroundColor: _red,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'dosen'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

@@ -21,7 +21,7 @@ class AdminHomeScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'admin'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

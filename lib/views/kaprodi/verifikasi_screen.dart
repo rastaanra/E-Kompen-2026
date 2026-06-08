@@ -108,7 +108,7 @@ class _KaprodiVerifikasiScreenState extends State<KaprodiVerifikasiScreen> {
       backgroundColor: _red,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'kaprodi'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

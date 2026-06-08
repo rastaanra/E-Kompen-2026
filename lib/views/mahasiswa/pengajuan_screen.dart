@@ -86,7 +86,7 @@ class _State extends State<PengajuanKompenScreen> {
       backgroundColor: _red,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'mahasiswa'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

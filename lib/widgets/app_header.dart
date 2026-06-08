@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../views/shared/notifikasi.dart';
 
 class AppHeader extends StatelessWidget {
-  const AppHeader({super.key});
+  final String role; // Tambahkan variabel untuk menampung role dari halaman asal
+
+  // Wajibkan pengisian role saat AppHeader dipanggil
+  const AppHeader({super.key, required this.role});
 
   static const Color _primaryRed = Color(0xFFB71C1C);
 
@@ -27,26 +31,44 @@ class AppHeader extends StatelessWidget {
               ),
             ],
           ),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 26,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.yellow,
-                    shape: BoxShape.circle,
-                  ),
+          GestureDetector(
+            onTap: () {
+              // SEKARANG BERUBAH DI SINI: oper string role-nya secara dinamis!
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NotificationScreen(role: role),
                 ),
+              );
+            },
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Stack(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: Colors.yellow,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _primaryRed, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),

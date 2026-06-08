@@ -421,7 +421,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
       backgroundColor: _redV,
       body: Column(
         children: [
-          const AppHeader(),
+          const AppHeader(role: 'admin'),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
