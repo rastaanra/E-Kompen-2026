@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/pengajuan_kompen.dart';
 import '../models/riwayat_kompen.dart';
 import '../services/pengajuan_service.dart';
+import '../models/mata_kuliah.dart';
+import '../models/dosen.dart';
+import '../models/admin.dart';
 
 class PengajuanProvider extends ChangeNotifier {
   final PengajuanService _service = PengajuanService();
@@ -18,16 +21,51 @@ class PengajuanProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // Ambil semua pengajuan mahasiswa
-  Future<void> getAllPengajuan(int idMahasiswa) async {
+  List<MataKuliah> _mataKuliah = [];
+  List<MataKuliah> get mataKuliah => _mataKuliah;
+
+  Future<void> getMataKuliah(int idMahasiswa) async {
     _isLoading = true;
     notifyListeners();
 
-    _listPengajuan = await _service.getAllPengajuan(idMahasiswa);
+    _mataKuliah =
+        await _service.getMataKuliah(idMahasiswa);
 
     _isLoading = false;
     notifyListeners();
   }
+
+  List<Dosen> _dosen = [];
+  List<Dosen> get dosen => _dosen;
+
+  Future<void> getDosen() async {
+    _isLoading = true;
+    notifyListeners();
+
+    _dosen = await _service.getDosen();
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Admin? _admin;
+  Admin? get admin => _admin;
+
+  Future<void> getAdmin() async {
+  _admin = await _service.getAdmin();
+  notifyListeners();
+}
+
+    // Ambil semua pengajuan mahasiswa
+    Future<void> getAllPengajuan(int idMahasiswa) async {
+      _isLoading = true;
+      notifyListeners();
+
+      _listPengajuan = await _service.getAllPengajuan(idMahasiswa);
+
+      _isLoading = false;
+      notifyListeners();
+    }
 
   // Ambil detail pengajuan
   Future<void> getPengajuan(int idPengajuan) async {
@@ -68,10 +106,14 @@ class PengajuanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  
+
   // Ajukan TTD
   Future<bool> ajukanTTD(int idPengajuan) async {
+    
     _isLoading = true;
     notifyListeners();
+
  
     final success = await _service.ajukanTTD(idPengajuan);
  
@@ -104,4 +146,17 @@ class PengajuanProvider extends ChangeNotifier {
     return success;
   }
   
+  List<PengajuanKompen> _pengajuanAdmin = [];
+  List<PengajuanKompen> get pengajuanAdmin => _pengajuanAdmin;
+  Future<void> getPengajuanAdmin(int idAdmin) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _pengajuanAdmin =
+        await _service.getPengajuanAdmin(idAdmin);
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
 }

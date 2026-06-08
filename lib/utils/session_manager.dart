@@ -38,30 +38,6 @@ class SessionManager {
     return prefs.getInt('id_pengguna');
   }
 
-  // Ambil id mahasiswa
-  static Future<int?> getIdMahasiswa() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('id_mahasiswa');
-  }
-
-  // Ambil id dosen (termasuk kaprodi)
-  static Future<int?> getIdDosen() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('id_dosen');
-  }
-
-  // Ambil id admin
-  static Future<int?> getIdAdmin() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('id_admin');
-  }
-
-  // Ambil nama lengkap
-  static Future<String?> getNamaLengkap() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('nama_lengkap');
-  }
-
   // Cek sudah login atau belum
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
@@ -73,4 +49,14 @@ class SessionManager {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
+
+  static Future<int?> getIdAdmin() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('id_admin');
+}
+
+static Future<int?> getIdMahasiswa() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('id_mahasiswa');
+}
 }

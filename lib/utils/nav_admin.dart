@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../views/admin/home_screen.dart';
-import '../views/admin/management/management_view.dart';
+import '../views/admin/pengajuan_screen.dart';
+import '../views/admin/verifikasi_screen.dart';
+import '../views/admin/management_screen.dart';
+import '../views/admin/profile_screen.dart';
+import '../views/login/login_screen.dart';
 import '../widgets/admin/app_bottom_nav_admin.dart';
-
-// TODO: import ini kalau udah dibuat
-// import '../views/admin/pengajuan_screen.dart';
-// import '../views/admin/profile_screen.dart';
+import '../../utils/nav_admin.dart';
 
 class NavAdmin {
   static void toHome(BuildContext context) {
@@ -16,33 +17,40 @@ class NavAdmin {
   }
 
   static void toPengajuan(BuildContext context) {
-    // TODO: ganti Placeholder dengan AdminPengajuanScreen()
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const Placeholder()),
+      MaterialPageRoute(builder: (_) => const AdminPengajuanScreen()),
     );
   }
 
   static void toVerifikasi(BuildContext context) {
-    // TODO: ganti Placeholder dengan AdminVerifikasiScreen()
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const Placeholder()),
+      MaterialPageRoute(builder: (_) => const AdminVerifikasiScreen()),
     );
   }
 
-  static void toManagement(BuildContext context) {
+  static void toManagement(BuildContext context, {int initialTab = -1}) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const ManagementView()),
+      MaterialPageRoute(
+        builder: (_) => AdminManagementScreen(initialTab: initialTab),
+      ),
     );
   }
 
   static void toProfil(BuildContext context) {
-    // TODO: ganti Placeholder dengan AdminProfileScreen()
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const Placeholder()),
+      MaterialPageRoute(builder: (_) => const AdminProfileScreen()),
+    );
+  }
+
+  static void toLogin(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
     );
   }
 

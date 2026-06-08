@@ -13,22 +13,49 @@ class ApiService {
   }
 
   // POST request
-  static Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
-    final response = await http.post(
+  static Future<dynamic> post(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    print('POST URL: ${ApiConstant.baseUrl}/$endpoint');
+    print('POST DATA: $data');
+
+   final response = await http
+    .post(
       Uri.parse('${ApiConstant.baseUrl}/$endpoint'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
+    )
+    .timeout(
+      const Duration(seconds: 10),
     );
+
+    print('STATUS: ${response.statusCode}');
+    print('BODY: ${response.body}');
+
     return jsonDecode(response.body);
   }
 
   // PUT request
-  static Future<dynamic> put(String endpoint, Map<String, dynamic> data) async {
+  static Future<dynamic> put(
+      String endpoint,
+      Map<String, dynamic> data,
+  ) async {
+
+    print("PUT URL : ${ApiConstant.baseUrl}/$endpoint");
+    print("PUT DATA : $data");
+
     final response = await http.put(
       Uri.parse('${ApiConstant.baseUrl}/$endpoint'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode(data),
     );
+
+    print("STATUS : ${response.statusCode}");
+    print("BODY : ${response.body}");
+
     return jsonDecode(response.body);
   }
 
@@ -40,4 +67,40 @@ class ApiService {
     );
     return jsonDecode(response.body);
   }
+
+  // File upload
+  static Future<dynamic> uploadFile(
+  String endpoint,
+  String filePath, {
+  Map<String, String>? fields,
+}) async {
+
+  var request = http.MultipartRequest(
+    'POST',
+    Uri.parse(
+      '${ApiConstant.baseUrl}/$endpoint',
+    ),
+  );
+
+  request.files.add(
+    await http.MultipartFile.fromPath(
+      'file',
+      filePath,
+    ),
+  );
+
+  if (fields != null) {
+  request.fields.addAll(fields);
+}
+
+  var response = await request.send();
+
+  final responseBody =
+      await response.stream.bytesToString();
+
+  print('STATUS: ${response.statusCode}');
+  print('BODY: $responseBody');
+
+  return response.statusCode;
+}
 }

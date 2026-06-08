@@ -246,7 +246,7 @@ class _ListMahasiswaViewState extends State<ListMahasiswaView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  mhs.nama_lengkap,
+                  mhs.nama,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -475,7 +475,7 @@ class _ListMahasiswaViewState extends State<ListMahasiswaView> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Hapus Mahasiswa'),
-        content: Text('Yakin ingin menghapus data ${mhs.nama_lengkap}?'),
+        content: Text('Yakin ingin menghapus data ${mhs.nama}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
