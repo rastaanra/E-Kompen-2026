@@ -33,7 +33,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final idPengguna = prefs.getString('id_pengguna');
+      final idPengguna = prefs.getInt('id_pengguna')?.toString();
 
       if (idPengguna == null) {
         _showError('Session tidak ditemukan. Silakan login ulang.');
@@ -196,7 +196,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             const SizedBox(width: 10),
                             const Expanded(
                               child: Text(
-                                'Password baru minimal 8 karakter dan '
+                                'Password baru minimal 6 karakter dan '
                                 'harus berbeda dari password lama.',
                                 style: TextStyle(
                                     fontSize: 12, color: _textDark),
@@ -238,8 +238,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           if (v == null || v.isEmpty) {
                             return 'Password baru tidak boleh kosong';
                           }
-                          if (v.length < 8) {
-                            return 'Minimal 8 karakter';
+                          if (v.length < 6) {
+                            return 'Minimal 6 karakter';
                           }
                           if (v == _oldPassController.text) {
                             return 'Password baru harus berbeda dari password lama';
