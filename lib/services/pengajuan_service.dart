@@ -70,6 +70,20 @@ Future<List<PengajuanKompen>> getPengajuanAdmin(int idAdmin) async {
   return [];
 }
 
+Future<List<PengajuanKompen>> getPengajuanDosen(int idDosen) async {
+  final data = await ApiService.get(
+    'pengajuan-kompen/dosen/$idDosen',
+  );
+
+  if (data['success']) {
+    return (data['data'] as List)
+        .map((item) => PengajuanKompen.fromJson(item))
+        .toList();
+  }
+
+  return [];
+}
+
   // Update lokasi pengerjaan kompen
   // Sesuai class diagram: setLokasi / updateLokasi
   Future<bool> updateLokasi(int idPengajuan, double lat, double long, String namaLokasi) async {

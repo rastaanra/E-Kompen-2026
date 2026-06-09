@@ -1,3 +1,6 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/pengajuan_service.dart';
+import '../../utils/session_manager.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
@@ -5,17 +8,73 @@ import '../../utils/nav_dosen.dart';
 import 'pengajuan_screen.dart';
 import 'verifikasi_screen.dart';
 
-class DosenHomeScreen extends StatelessWidget {
+class DosenHomeScreen extends StatefulWidget {
   const DosenHomeScreen({super.key});
 
+  @override
+  State<DosenHomeScreen> createState() => _DosenHomeScreenState();
+}
+
+class _DosenHomeScreenState extends State<DosenHomeScreen> {
+
+  String namaDosen = '';
+  String nipDosen = '';
+
+  int jumlahPengajuan = 0;
+  int jumlahMenunggu = 0;
+  int jumlahDisetujui = 0;
+  int jumlahSelesai = 0;
+
+  final PengajuanService _service = PengajuanService();
+    
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _cardBeige = Color(0xFFEDE0CC);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
 
-  static const int jumlahPengajuan = 3;
-  static const int jumlahVerifikasi = 0;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final idDosen = await SessionManager.getIdDosen();
+
+  if (idDosen == null) return;
+
+  final pengajuan =
+      await _service.getPengajuanDosen(idDosen);
+
+  setState(() {
+    namaDosen = prefs.getString('nama_lengkap') ?? '';
+    nipDosen = prefs.getString('nip') ?? '';
+
+    jumlahPengajuan = pengajuan.length;
+
+    jumlahMenunggu = pengajuan
+        .where((e) => e.status == 'pending')
+        .length;
+
+    jumlahSelesai = pengajuan
+        .where((e) => e.status == 'selesai')
+        .length;
+
+    jumlahDisetujui = pengajuan
+        .where((e) =>
+            e.status == 'sedang_dikerjakan' ||
+            e.status == 'siap_diajukan' ||
+            e.status == 'menunggu_ttd_dosen' ||
+            e.status == 'menunggu_ttd_admin' ||
+            e.status == 'menunggu_ttd_kaprodi')
+        .length;
+  });
+}
+
+  int jumlahVerifikasi = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +94,7 @@ class DosenHomeScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildGreetingCard(),
+                  _buildGreetingCard(namaDosen),
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -51,6 +110,7 @@ class DosenHomeScreen extends StatelessWidget {
                             count: jumlahPengajuan,
                             emptyText: 'Tidak ada pengajuan',
                             onTap: () => NavDosen.toPengajuan(context),
+                            alwaysTappable: true,
                           ),
                           const SizedBox(height: 12),
                           _buildActionCard(
@@ -85,29 +145,29 @@ class DosenHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGreetingCard() {
+  Widget _buildGreetingCard(String nama) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Halo, Pak Luqman',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 22,
-                    color: _textDark,
-                  ),
+                'Halo, $nama',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
+                  color: _textDark,
                 ),
+              ),
                 SizedBox(height: 6),
                 Text(
                   'Dosen Pengampu',
-                  style: TextStyle(fontSize: 14, color: _textGrey),
+                  style: const TextStyle(fontSize: 14, color: _textGrey),
                 ),
               ],
             ),
@@ -261,15 +321,15 @@ class DosenHomeScreen extends StatelessWidget {
           children: [
             Expanded(child: _buildRekapCard(label: 'Total Mahasiswa', value: '12 Orang')),
             const SizedBox(width: 12),
-            Expanded(child: _buildRekapCard(label: 'Disetujui', value: '6 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Disetujui', value: '$jumlahDisetujui Pengajuan')),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Menunggu', value: '2 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Menunggu', value: '$jumlahMenunggu Pengajuan')),
             const SizedBox(width: 12),
-            Expanded(child: _buildRekapCard(label: 'Selesai', value: '4 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Selesai', value: '$jumlahSelesai Pengajuan')),
           ],
         ),
       ],

@@ -59,4 +59,9 @@ static Future<int?> getIdMahasiswa() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getInt('id_mahasiswa');
 }
+
+static Future<int?> getIdDosen() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('id_dosen');
+}
 }
