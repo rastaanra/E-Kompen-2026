@@ -295,7 +295,7 @@ Future<void> _loadData() async {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       QrImageView(
-                                        data: p.kodeTtd ?? '',
+                                        data: p.kodeTtdTujuan ?? '',
                                         version: QrVersions.auto,
                                         size: 100,
                                       ),

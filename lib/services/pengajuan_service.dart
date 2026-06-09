@@ -56,19 +56,35 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
   return [];
 }
 
-Future<List<PengajuanKompen>> getPengajuanAdmin(int idAdmin) async {
-  final data = await ApiService.get(
-    'pengajuan-kompen/admin/$idAdmin',
-  );
+  Future<List<PengajuanKompen>> getPengajuanAdmin(int idAdmin) async {
+    final data = await ApiService.get(
+      'pengajuan-kompen/admin/$idAdmin',
+    );
 
-  if (data['success']) {
-    return (data['data'] as List)
-        .map((item) => PengajuanKompen.fromJson(item))
-        .toList();
+    if (data['success']) {
+      return (data['data'] as List)
+          .map((item) => PengajuanKompen.fromJson(item))
+          .toList();
+    }
+
+    return [];
   }
 
-  return [];
-}
+  Future<List<PengajuanKompen>> getPengajuanKaprodi() async {
+    final data = await ApiService.get(
+      'pengajuan-kompen/kaprodi',
+    );
+
+    print('DATA KAPRODI = ${data['data']}');
+
+    if (data['success']) {
+      return (data['data'] as List)
+          .map((item) => PengajuanKompen.fromJson(item))
+          .toList();
+    }
+
+    return [];
+  }
 
   // Update lokasi pengerjaan kompen
   // Sesuai class diagram: setLokasi / updateLokasi
@@ -182,6 +198,16 @@ Future<List<PengajuanKompen>> getPengajuanAdmin(int idAdmin) async {
     );
 
     return result['success'] == true;
+  }
+
+    Future<bool> ttdKaprodi(int idPengajuan) async {
+    final result = await ApiService.post(
+      'ttd/$idPengajuan/ttd-kaprodi',
+      {},
+    );
+
+    return result['success'] == true;
+    print('TTD KAPRODI RESULT = $result');
   }
     Future<List<dynamic>> getTtdByPengajuan(int idPengajuan) async {
     final result = await ApiService.get(

@@ -68,6 +68,10 @@ Route::post('/pengajuan-kompen',                        [PengajuanKompenControll
 Route::get('/pengajuan-kompen/mahasiswa/{id}',          [PengajuanKompenController::class, 'getByMahasiswa']);
 Route::get('/pengajuan-kompen/dosen/{id}',              [PengajuanKompenController::class, 'getByDosen']);
 Route::get('/pengajuan-kompen/admin/{id}',              [PengajuanKompenController::class, 'getByAdmin']);
+Route::get(
+    '/pengajuan-kompen/kaprodi',
+    [PengajuanKompenController::class, 'getByKaprodi']
+);
 Route::get('/pengajuan-kompen/{id}',                    [PengajuanKompenController::class, 'show']);
 Route::put('/pengajuan-kompen/{id}/lengkapi',           [PengajuanKompenController::class, 'lengkapi']);
 Route::post('/pengajuan-kompen/{id}/ajukan-ttd',        [PengajuanKompenController::class, 'ajukanTTD']);

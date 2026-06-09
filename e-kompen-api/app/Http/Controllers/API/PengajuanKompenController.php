@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use App\Models\Absensi;
 use App\Models\TtdDigital;
 use App\Models\Mahasiswa;
+use App\Models\Dosen;
+use App\Models\MataKuliah;
 
 class PengajuanKompenController extends Controller
 {
@@ -204,13 +206,14 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByDosen($id_dosen)
     {
-        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa', 'ttdDigital'])
+        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa', 'ttdDigital', 'dosen', 'admin'])
             ->where('id_dosen', $id_dosen)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
                 return [
                     'id_pengajuan'      => $item->id_pengajuan,
+                    'nama_tujuan'       => $item->dosen->nama_lengkap ?? null,
                     'nama_mahasiswa'    => $item->mahasiswa->nama_lengkap ?? null,
                     'nim'               => $item->mahasiswa->nim ?? null,
                     'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
@@ -241,14 +244,14 @@ class PengajuanKompenController extends Controller
     // ==========================================
     public function getByAdmin($id_admin)
     {
-        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa', 'ttdDigital'])
+        $data = PengajuanKompen::with(['mataKuliah', 'mahasiswa', 'ttdDigital', 'dosen', 'admin'])
             ->where('id_admin', $id_admin)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
                 return [
                     'id_pengajuan'      => $item->id_pengajuan,
-
+                    'nama_tujuan'       => $item->admin->nama ?? null,
                     'id_mahasiswa'      => $item->id_mahasiswa,
                     'id_absensi'        => $item->id_absensi,
                     'id_dosen'          => $item->id_dosen,
@@ -280,6 +283,74 @@ class PengajuanKompenController extends Controller
                     }),
                 ];
             });
+
+        return response()->json([
+            'success' => true,
+            'data'    => $data
+        ]);
+    }
+
+    //Kaprodi
+    public function getByKaprodi()
+    {
+        $data = PengajuanKompen::with([
+            'mataKuliah',
+            'mahasiswa',
+            'ttdDigital',
+            'dosen',
+            'admin'
+        ])
+        ->whereIn('status', [
+            'menunggu_ttd_kaprodi',
+            'selesai'
+        ])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($item) {
+            $kaprodi = Dosen::where('is_kaprodi', 1)->first();
+            return [
+                'id_pengajuan'      => $item->id_pengajuan,
+                'nama_tujuan'       => $item->dosen->nama_lengkap ?? $item->admin->nama ?? null,
+                'kode_ttd_tujuan' => optional(
+                    $item->ttdDigital->firstWhere('role_ttd', 'admin')
+                )->kode_ttd,
+
+                'kode_ttd_kaprodi' => optional(
+                    $item->ttdDigital->firstWhere('role_ttd', 'kaprodi')
+                )->kode_ttd,
+                'id_mahasiswa'      => $item->id_mahasiswa,
+                'id_absensi'        => $item->id_absensi,
+                'id_dosen'          => $item->id_dosen,
+                'id_admin'          => $item->id_admin,
+                'id_mata_kuliah'    => $item->id_mata_kuliah,
+
+                'nama_mahasiswa'    => $item->mahasiswa->nama_lengkap ?? null,
+                'nim'               => $item->mahasiswa->nim ?? null,
+                'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
+
+                'tujuan'            => $item->tujuan,
+                'semester'          => $item->semester,
+                'tanggal_pertemuan' => $item->tanggal_pertemuan,
+                'total_jam_kompen'  => $item->total_jam_kompen,
+
+                'deskripsi_tugas'   => $item->deskripsi_tugas,
+                'nama_lokasi'       => $item->nama_lokasi,
+                'latitude'          => $item->latitude,
+                'longitude'         => $item->longitude,
+
+                'status'            => $item->status,
+
+                'ttd_digital' => $item->ttdDigital->map(function ($ttd) {
+                    return [
+                        'id_ttd'     => $ttd->id_ttd,
+                        'kode_ttd'   => $ttd->kode_ttd,
+                        'status_ttd' => $ttd->status_ttd,
+                    ];
+                }),
+                'nama_kaprodi' => $kaprodi->nama_lengkap ?? null,
+                'nip_kaprodi'  => $kaprodi->nip ?? null,
+            ];
+        });
 
         return response()->json([
             'success' => true,

@@ -27,7 +27,10 @@ class PengajuanKompen {
   final String? namaMahasiswa;
   final String? nim;
   final String? namaMatkul;
-  String? kodeTtd;
+  String? kodeTtdTujuan;
+  String? kodeTtdKaprodi;
+  final String? namaKaprodi;
+  final String? nipKaprodi;
 
 
   PengajuanKompen({
@@ -50,10 +53,14 @@ class PengajuanKompen {
     this.namaMahasiswa,
     this.nim,
     this.namaMatkul,
-    this.kodeTtd,
+    this.kodeTtdTujuan,
+    this.kodeTtdKaprodi,
+    this.namaKaprodi,
+    this.nipKaprodi,
   });
 
   factory PengajuanKompen.fromJson(Map<String, dynamic> json) {
+    print('JSON MASUK = $json');
     return PengajuanKompen(
       idPengajuan: json['id_pengajuan'],
       idMahasiswa: json['id_mahasiswa'],
@@ -80,10 +87,10 @@ class PengajuanKompen {
       namaMahasiswa: json['nama_mahasiswa'],
       nim: json['nim'],
       namaMatkul: json['nama_matkul'],
-      kodeTtd: json['ttd_digital'] != null &&
-          (json['ttd_digital'] as List).isNotEmpty
-      ? json['ttd_digital'][0]['kode_ttd']
-      : null,
+      kodeTtdTujuan: json['kode_ttd_tujuan'],
+      kodeTtdKaprodi: json['kode_ttd_kaprodi'],
+      namaKaprodi: json['nama_kaprodi'],
+      nipKaprodi: json['nip_kaprodi'],
     );
   }
 
