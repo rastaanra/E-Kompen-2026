@@ -2,7 +2,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
   // Simpan semua data setelah login
-  // Simpan semua data setelah login
   static Future<void> simpanLogin(Map<String, dynamic> response) async {
     final prefs = await SharedPreferences.getInstance();
     

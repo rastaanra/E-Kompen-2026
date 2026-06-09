@@ -1,6 +1,6 @@
-import 'dart:io'; // Wajib untuk penanganan file gambar
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Wajib untuk mengambil foto dari galeri/kamera
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/app_header.dart';
@@ -51,7 +51,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUser();
   }
 
-  // 🟢 PERBAIKAN TOTAL: Memuat semua data session secara sinkron & bersih
   Future<void> _loadUser() async {
     final nama = await SessionManager.getNamaLengkap();
     final emailUser = await SessionManager.getEmail();
@@ -67,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       namaMahasiswa = nama ?? '-';
       nim = nimUser ?? '-';
       email = emailUser ?? '-';
-      prodi = prodiUser ?? '-'; // 🟢 Sekarang data Prodi terisi mantap tanpa tersangkut null
+      prodi = prodiUser ?? '-';
       fotoProfilUrl = foto ?? '';
       notifikasiAktif = notif;
     });
