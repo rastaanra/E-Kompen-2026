@@ -2,18 +2,67 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/kaprodi/app_bottom_nav_kaprodi.dart';
 import '../../utils/nav_kaprodi.dart';
-
-class KaprodiHomeScreen extends StatelessWidget {
+import '../../services/pengajuan_service.dart';
+import '../../models/pengajuan_kompen.dart';
+import '../../utils/session_manager.dart';
+class KaprodiHomeScreen extends StatefulWidget {
   const KaprodiHomeScreen({super.key});
+
+  @override
+  State<KaprodiHomeScreen> createState() => _KaprodiHomeScreenState();
+}
+class _KaprodiHomeScreenState extends State<KaprodiHomeScreen> {
+  List<PengajuanKompen> pengajuanList = [];
+  int jumlahMenungguTtd = 0;
+  int jumlahSudahTtd = 0;
+  int totalMahasiswa = 0;
+   int jumlahVerifikasi = 0;
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _cardBeige = Color(0xFFEDE0CC);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+  String namaKaprodi = '';
+ 
 
-  static const int jumlahPengajuan = 3;
-  static const int jumlahVerifikasi = 0;
+  Future<void> _loadUser() async {
+    final nama = await SessionManager.getNamaLengkap();
+
+    setState(() {
+      namaKaprodi = nama ?? 'Kaprodi';
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    _loadUser();
+  }
+
+  Future<void> _loadData() async {
+    final data = await PengajuanService().getPengajuanKaprodi();
+
+    setState(() {
+      pengajuanList = data;
+
+      jumlahMenungguTtd = data
+          .where((p) => p.status == 'menunggu_ttd_kaprodi')
+          .length;
+
+      jumlahSudahTtd = data
+          .where((p) => p.status == 'selesai')
+          .length;
+
+      totalMahasiswa = data
+          .map((p) => p.idMahasiswa)
+          .toSet()
+          .length;
+
+      jumlahVerifikasi = jumlahMenungguTtd;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +96,7 @@ class KaprodiHomeScreen extends StatelessWidget {
                             context: context,
                             icon: Icons.draw_outlined,
                             label: 'Tanda Tangan Penyelesaian',
-                            count: jumlahVerifikasi,
+                            count: jumlahMenungguTtd,
                             emptyText: 'Tidak ada form',
                             onTap: () => NavKaprodi.toVerifikasi(context),
                           ),
@@ -81,12 +130,12 @@ class KaprodiHomeScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Halo, Pak Putra',
+                   'Halo, $namaKaprodi',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 22,
@@ -247,15 +296,30 @@ class KaprodiHomeScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Total Mahasiswa', value: '12 Orang')),
+            Expanded(
+              child: _buildRekapCard(
+                label: 'Total Mahasiswa',
+                value: '$totalMahasiswa Orang',
+              ),
+            )
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Menunggu TTD', value: '2 Pengajuan')),
+            Expanded(
+              child: _buildRekapCard(
+                label: 'Menunggu TTD',
+                value: '$jumlahMenungguTtd Pengajuan',
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildRekapCard(label: 'Sudah TTD', value: '6 Pengajuan')),
+            Expanded(
+              child: _buildRekapCard(
+                label: 'Sudah TTD',
+                value: '$jumlahSudahTtd Pengajuan',
+              ),
+            ),
           ],
         ),
       ],
