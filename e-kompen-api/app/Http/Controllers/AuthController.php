@@ -157,12 +157,10 @@ class AuthController extends Controller
         ]);
     }
 
-    // ==========================================
-    // UPDATE PROFILE
+// ==========================================
+    // UPDATE PROFILE (SUDAH DISINKRONKAN ANTAR TABEL)
     // PUT /api/auth/update-profile/{id}
     // Body: { nama_lengkap, email, foto_profil (hanya sekali) }
-    // Note: password tidak bisa diupdate
-    //       foto_profil tidak bisa diganti jika sudah ada
     // ==========================================
     public function updateProfile(Request $request, $id)
     {
@@ -182,11 +180,28 @@ class AuthController extends Controller
             unset($data['foto_profil']);
         }
 
+        // 1. Update data di tabel utama (pengguna) terlebih dahulu
         $user->update($data);
+
+        // 2. 🟢 SINKRONISASI OTOMATIS: Jika nama_lengkap ikut diubah, update juga tabel relasinya
+        if (isset($data['nama_lengkap'])) {
+            if ($user->role === 'mahasiswa') {
+                Mahasiswa::where('id_pengguna', $user->id_pengguna)
+                    ->update(['nama_lengkap' => $data['nama_lengkap']]);
+
+            } elseif ($user->role === 'dosen') {
+                Dosen::where('id_pengguna', $user->id_pengguna)
+                    ->update(['nama_lengkap' => $data['nama_lengkap']]);
+
+            } elseif ($user->role === 'admin') {
+                Admin::where('id_pengguna', $user->id_pengguna)
+                    ->update(['nama_lengkap' => $data['nama_lengkap']]);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Profil berhasil diupdate',
+            'message' => 'Profil berhasil diupdate dan disinkronkan di semua tabel! ✨',
             'data'    => $user
         ]);
     }
