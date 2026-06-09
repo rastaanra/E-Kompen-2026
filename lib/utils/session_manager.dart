@@ -2,28 +2,35 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
   // Simpan semua data setelah login
+  // Simpan semua data setelah login
   static Future<void> simpanLogin(Map<String, dynamic> response) async {
     final prefs = await SharedPreferences.getInstance();
     
-    // Data pengguna
+    // Data pengguna umum
     prefs.setInt('id_pengguna', response['data']['id_pengguna']);
     prefs.setString('nama_lengkap', response['data']['nama_lengkap']);
     prefs.setString('email', response['data']['email']);
     prefs.setString('foto_profil', response['data']['foto_profil'] ?? '');
-
-    // Role
     prefs.setString('role', response['role']);
 
     // Data sesuai role
     if (response['role'] == 'mahasiswa') {
       prefs.setInt('id_mahasiswa', response['role_data']['id_mahasiswa']);
       prefs.setString('nim', response['role_data']['nim']);
+      // 🟢 Pastikan mengambil key yang tepat dari response API (misal: 'program_studi')
+      prefs.setString('program_studi', response['role_data']['program_studi'] ?? '-');
     } else if (response['role'] == 'dosen' || response['role'] == 'kaprodi') {
       prefs.setInt('id_dosen', response['role_data']['id_dosen']);
       prefs.setString('nip', response['role_data']['nip']);
     } else if (response['role'] == 'admin') {
       prefs.setInt('id_admin', response['role_data']['id_admin']);
     }
+  }
+
+  // 🟢 TAMBAHKAN GETTER RESMI INI DI DALAM CLASS SESSIONMANAGER
+  static Future<String?> getProgramStudi() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('program_studi');
   }
 
   // Ambil role
