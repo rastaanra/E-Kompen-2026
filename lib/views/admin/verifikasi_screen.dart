@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/admin/app_bottom_nav_admin.dart';
 import '../../utils/nav_admin.dart';
-import 'package:provider/provider.dart';
-import '../../providers/pengajuan_provider.dart';
 import '../../utils/session_manager.dart';
 import '../../models/pengajuan_kompen.dart';
 import '../../services/pengajuan_service.dart';
@@ -16,28 +14,6 @@ const _greyV = Color(0xFF9E9E9E);
 const _cardBgV = Color(0xFFFFFFFF);
 const _cardBorderV = Color(0xFFEDE0CC);
 
-class _FormPenyelesaian {
-  final String namaMahasiswa;
-  final String nim;
-  final String mataKuliah;
-  final String semester;
-  final String jenisPekerjaan;
-  final String tanggalSelesai;
-  final int jam;
-  String status;
-
-  _FormPenyelesaian({
-    required this.namaMahasiswa,
-    required this.nim,
-    required this.mataKuliah,
-    required this.semester,
-    required this.jenisPekerjaan,
-    required this.tanggalSelesai,
-    required this.jam,
-    required this.status,
-  });
-}
-
 class AdminVerifikasiScreen extends StatefulWidget {
   const AdminVerifikasiScreen({super.key});
 
@@ -46,42 +22,19 @@ class AdminVerifikasiScreen extends StatefulWidget {
 }
 
 class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
+  final PengajuanService _pengajuanService = PengajuanService();
+
+  List<PengajuanKompen> _pengajuanList = [];
+  bool _isLoading = true;
+
   String namaKaprodi = '';
   String nipKaprodi = '';
 
-bool _isInitialized = false;
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-  final PengajuanService _pengajuanService = PengajuanService();
-List<PengajuanKompen> _pengajuanList = [];
-
-Future<void> _loadData() async {
-  final idAdmin = await SessionManager.getIdAdmin();
-
-  print("ID ADMIN = $idAdmin");
-
-  if (idAdmin == null) return;
-
-  final data = await _pengajuanService.getPengajuanAdmin(idAdmin);
-
-  final kaprodi = await _pengajuanService.getKaprodi();
-
-  print("JUMLAH DATA = ${data.length}");
-
-  setState(() {
-    _pengajuanList = data;
-
-    if (kaprodi != null) {
-      namaKaprodi = kaprodi['nama'];
-      nipKaprodi = kaprodi['nip'];
-    }
-  });
-}
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
+  String _selectedUrutan = 'Terbaru';
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   final List<String> _semesterOptions = [
     'Semua Semester',
@@ -90,50 +43,135 @@ Future<void> _loadData() async {
   ];
 
   final List<String> _statusOptions = [
-    'Semua Status', 'Menunggu TTD', 'Sudah TTD',
+    'Semua Status',
+    'Menunggu TTD',
+    'Sudah TTD',
   ];
 
+  final List<String> _urutanOptions = [
+    'Terbaru',
+    'Terlama',
+    'Nama A-Z',
+    'Jam Terbanyak',
+  ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+
+    final idAdmin = await SessionManager.getIdAdmin();
+    if (idAdmin == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final data = await _pengajuanService.getPengajuanAdmin(idAdmin);
+    final kaprodi = await _pengajuanService.getKaprodi();
+
+    if (mounted) {
+      setState(() {
+        _pengajuanList = data;
+        if (kaprodi != null) {
+          namaKaprodi = kaprodi['nama'] ?? '';
+          nipKaprodi = kaprodi['nip'] ?? '';
+        }
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ── Filter + urutan ────────────────────────────────────────────────────────
   List<PengajuanKompen> get _filteredList {
-    final data =
-        context.read<PengajuanProvider>().pengajuanAdmin;
+    // Verifikasi hanya tampilkan yang status sudah melewati konfirmasi admin
+    final relevant = ['menunggu_ttd_admin', 'menunggu_ttd_kaprodi', 'selesai'];
 
-    final filtered = data.where((p) {
+    var filtered = _pengajuanList.where((p) {
+      if (!relevant.contains(p.status)) return false;
 
-      final semesterText = 'Semester ${p.semester}';
+      // Filter semester — p.semester berupa angka string "4"
+      final matchSemester = _selectedSemester == 'Semua Semester' ||
+          'Semester ${p.semester}' == _selectedSemester;
 
-      final matchSemester =
-          _selectedSemester == 'Semua Semester' ||
-          semesterText == _selectedSemester;
-
-      final matchStatus =
-          _selectedStatus == 'Semua Status' ||
+      // Filter status
+      final matchStatus = _selectedStatus == 'Semua Status' ||
           (_selectedStatus == 'Menunggu TTD' &&
               p.status == 'menunggu_ttd_admin') ||
           (_selectedStatus == 'Sudah TTD' &&
-              p.status ==  'menunggu_ttd_kaprodi' ||
-                p.status == 'selesai');
+              (p.status == 'menunggu_ttd_kaprodi' ||
+                  p.status == 'selesai'));
 
-      return matchSemester && matchStatus;
+      // Search
+      final q = _searchQuery.toLowerCase();
+      final matchSearch = q.isEmpty ||
+          (p.namaMahasiswa?.toLowerCase().contains(q) ?? false) ||
+          (p.nim?.toLowerCase().contains(q) ?? false);
+
+      return matchSemester && matchStatus && matchSearch;
     }).toList();
 
-    filtered.sort((a, b) {
-      if (a.status == 'menunggu_ttd_admin' &&
-          b.status != 'menunggu_ttd_admin') {
-        return -1;
-      }
-
-      if (a.status != 'menunggu_ttd_admin' &&
-          b.status == 'menunggu_ttd_admin') {
-        return 1;
-      }
-
-      return 0;
-    });
+    // Urutan
+    switch (_selectedUrutan) {
+      case 'Terlama':
+        filtered.sort((a, b) =>
+            (a.tanggalPertemuan ?? DateTime(0))
+                .compareTo(b.tanggalPertemuan ?? DateTime(0)));
+        break;
+      case 'Nama A-Z':
+        filtered.sort((a, b) =>
+            (a.namaMahasiswa ?? '').compareTo(b.namaMahasiswa ?? ''));
+        break;
+      case 'Jam Terbanyak':
+        filtered.sort((a, b) =>
+            (b.totalJamKompen ?? 0).compareTo(a.totalJamKompen ?? 0));
+        break;
+      case 'Terbaru':
+      default:
+        filtered.sort((a, b) =>
+            (b.tanggalPertemuan ?? DateTime(0))
+                .compareTo(a.tanggalPertemuan ?? DateTime(0)));
+        // Menunggu TTD di atas
+        filtered.sort((a, b) {
+          if (a.status == 'menunggu_ttd_admin' &&
+              b.status != 'menunggu_ttd_admin') return -1;
+          if (a.status != 'menunggu_ttd_admin' &&
+              b.status == 'menunggu_ttd_admin') return 1;
+          return 0;
+        });
+    }
 
     return filtered;
   }
 
+  String _formatTanggal(DateTime? dt) {
+    if (dt == null) return '-';
+    const bulan = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return '${dt.day} ${bulan[dt.month]} ${dt.year}';
+  }
+
+  String _jamTerbilang(int jam) {
+    const terbilang = [
+      '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima',
+      'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh'
+    ];
+    if (jam >= 1 && jam <= 10) return terbilang[jam];
+    return '$jam';
+  }
+
+  // ── Bottom sheet detail / form TTD ────────────────────────────────────────
   void _showFormVerifikasi(PengajuanKompen p) {
     showModalBottomSheet(
       context: context,
@@ -143,7 +181,7 @@ Future<void> _loadData() async {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        bool sudahTTD = p.status == 'menunggu_ttd_kaprodi';
+        bool sudahTTD = p.status != 'menunggu_ttd_admin';
         return StatefulBuilder(
           builder: (ctx, setLocal) => DraggableScrollableSheet(
             expand: false,
@@ -166,201 +204,247 @@ Future<void> _loadData() async {
                   ),
                 ),
 
-                // Scrollable content
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    // Kop surat
-    Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B0000), Color(0xFFB71C1C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: _redV.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.school, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text('POLITEKNIK NEGERI MALANG',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text('JURUSAN TEKNOLOGI INFORMASI',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
-                Text('PROGRAM STUDI D-IV SISTEM INFORMASI BISNIS',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
-                SizedBox(height: 2),
-                Text('Jl. Soekarno Hatta No.9 Malang 65141 · Telp. (0341) 404424',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 8, color: Colors.white70)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-    const SizedBox(height: 16),
-    Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5EFE6),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Center(
-        child: Text('BERITA ACARA KOMPENSASI',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: _darkV,
-                letterSpacing: 1)),
-      ),
-    ),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Kop surat ──────────────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8B0000), Color(0xFFB71C1C)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _redV.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 52, height: 52,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.school,
+                                    color: Colors.white, size: 28),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.center,
+                                  children: [
+                                    Text('POLITEKNIK NEGERI MALANG',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white)),
+                                    Text('JURUSAN TEKNOLOGI INFORMASI',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white)),
+                                    Text(
+                                        'PROGRAM STUDI D-IV SISTEM INFORMASI BISNIS',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white)),
+                                    SizedBox(height: 2),
+                                    Text(
+                                        'Jl. Soekarno Hatta No.9 Malang 65141 · Telp. (0341) 404424',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontSize: 8,
+                                            color: Colors.white70)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
 
-                        // Info pengajar
+                        // ── Judul berita acara ──────────────────────────────
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _creamV,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Text('BERITA ACARA KOMPENSASI',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: _darkV,
+                                    letterSpacing: 1)),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // ── Info ───────────────────────────────────────────
                         _buildFormRow('Nama Admin', p.namaTujuan ?? '-'),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         const Text(
                           'Memberikan rekomendasi kompensasi kepada:',
                           style: TextStyle(fontSize: 12, color: _darkV),
                         ),
                         const SizedBox(height: 8),
-
-                        // Info mahasiswa
                         _buildFormRow('Nama Mahasiswa', p.namaMahasiswa ?? '-'),
-                        _buildFormRow('NIM',p.nim ?? '-'),
-                        _buildFormRow('Semester',
-                            p.semester.replaceAll('Semester ', 'Semester ')),
+                        _buildFormRow('NIM', p.nim ?? '-'),
+                        _buildFormRow('Semester', 'Semester ${p.semester}'),
                         _buildFormRow('Mata Kuliah', p.namaMatkul ?? '-'),
-                        _buildFormRow('Pekerjaan',p.deskripsiTugas ?? '-' ),
-                        _buildFormRow('Jumlah Jam',
-                            '${p.totalJamKompen ?? 0} (${_jamTerbilang(p.totalJamKompen ?? 0)} Jam)'),
+                        _buildFormRow('Pekerjaan', p.deskripsiTugas ?? '-'),
+                        _buildFormRow(
+                          'Jumlah Jam',
+                          '${p.totalJamKompen ?? 0} (${_jamTerbilang(p.totalJamKompen ?? 0)} Jam)',
+                        ),
+                        _buildFormRow(
+                            'Tanggal', _formatTanggal(p.tanggalPertemuan)),
                         const SizedBox(height: 16),
 
-                        // Tanggal
-                        Text('Malang, ${p.tanggalPertemuan?.toString().split(' ')[0] ?? '-'}',
-                            style: const TextStyle(fontSize: 12, color: _darkV)),
+                        Text(
+                          'Malang, ${_formatTanggal(p.tanggalPertemuan)}',
+                          style: const TextStyle(
+                              fontSize: 12, color: _darkV),
+                        ),
                         const SizedBox(height: 16),
 
-                        // TTD section
+                        // ── TTD section ────────────────────────────────────
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Kiri - Dosen
+                            // Kiri — Admin
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Yang memberikan rekomendasi,',
-                                      style: TextStyle(fontSize: 11, color: _darkV)),
+                                  const Text(
+                                      'Yang memberikan rekomendasi,',
+                                      style: TextStyle(
+                                          fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
                                     height: 110,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.black12),
-                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                          color: Colors.black12),
+                                      borderRadius:
+                                          BorderRadius.circular(6),
+                                      color: sudahTTD
+                                          ? Colors.green[50]
+                                          : null,
                                     ),
                                     child: Center(
                                       child: sudahTTD
-                                      
-                                ? Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      QrImageView(
-                                        data: p.kodeTtd ?? '',
-                                        version: QrVersions.auto,
-                                        size: 100,
-                                      ),
-
-                                    ],
-                                  )
-                                            
-                                          : Text('Belum\nditandatangani',
+                                          ? Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                if (p.kodeTtd != null &&
+                                                    p.kodeTtd!.isNotEmpty)
+                                                  QrImageView(
+                                                    data: p.kodeTtd!,
+                                                    version:
+                                                        QrVersions.auto,
+                                                    size: 90,
+                                                  ),
+                                                const SizedBox(height: 4),
+                                                Icon(
+                                                    Icons
+                                                        .check_circle_outline,
+                                                    color: Colors.green[600],
+                                                    size: 16),
+                                              ],
+                                            )
+                                          : Text(
+                                              'Belum\nditandatangani',
                                               textAlign: TextAlign.center,
                                               style: TextStyle(
                                                   fontSize: 9,
-                                                  color: _greyV)),
+                                                  color: _greyV),
+                                            ),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     p.namaTujuan ?? '-',
                                     style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: _darkV,
-                                    ),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: _darkV),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 16),
 
-                            // Kanan - Kaprodi
+                            // Kanan — Kaprodi
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Mengetahui, Ka. Program Studi',
-                                      style: TextStyle(fontSize: 11, color: _darkV)),
+                                  const Text(
+                                      'Mengetahui, Ka. Program Studi',
+                                      style: TextStyle(
+                                          fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
                                     height: 110,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.black12),
-                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                          color: Colors.black12),
+                                      borderRadius:
+                                          BorderRadius.circular(6),
+                                      color: p.status == 'selesai'
+                                          ? Colors.green[50]
+                                          : null,
                                     ),
                                     child: Center(
-                                      child: Text('Belum\nditandatangani',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                              fontSize: 9, color: _greyV)),
+                                      child: p.status == 'selesai'
+                                          ? Icon(
+                                              Icons.check_circle_outline,
+                                              color: Colors.green[600],
+                                              size: 24)
+                                          : Text(
+                                              'Belum\nditandatangani',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                  fontSize: 9,
+                                                  color: _greyV),
+                                            ),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  Text(
-                                  namaKaprodi,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: _darkV,
-                                  ),),
-                                 Text(
-                                  'NIP. $nipKaprodi',
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: _greyV,
-                                  ),
-                                ),
+                                  Text(namaKaprodi,
+                                      style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: _darkV)),
+                                  Text('NIP. $nipKaprodi',
+                                      style: const TextStyle(
+                                          fontSize: 9, color: _greyV)),
                                 ],
                               ),
                             ),
@@ -368,56 +452,74 @@ Future<void> _loadData() async {
                         ),
                         const SizedBox(height: 24),
 
-                        // Tombol
-                        // SESUDAH — disamain gaya dengan pengajuan
-Row(
-  children: [
-    Expanded(
-      child: OutlinedButton(
-        onPressed: () => Navigator.pop(ctx),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-          foregroundColor: _redV,
-          side: const BorderSide(color: _redV),
-        ),
-        child: const Text('Tutup'),
-      ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-      child: ElevatedButton.icon(
-onPressed: sudahTTD
-    ? null
-    : () async {
-        final success =
-      await PengajuanService().ttdAdmin(p.idPengajuan);
-      if (success) {
-        await _loadData(); // refresh data terbaru
-
-        setLocal(() => sudahTTD = true);
-
-        Navigator.pop(ctx);
-      }
-    },
-        icon: Icon(Icons.check,
-            size: 16,
-            color: sudahTTD ? Colors.grey[500] : Colors.white),
-        label: Text('Tandatangani',
-            style: TextStyle(
-                color: sudahTTD ? Colors.grey[500] : Colors.white)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-        ),
-      ),
-    ),
-  ],
-),
+                        // ── Tombol ─────────────────────────────────────────
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                  foregroundColor: _redV,
+                                  side: const BorderSide(color: _redV),
+                                ),
+                                child: const Text('Tutup'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: sudahTTD
+                                    ? null
+                                    : () async {
+                                        final success =
+                                            await _pengajuanService
+                                                .ttdAdmin(p.idPengajuan);
+                                        if (success) {
+                                          await _loadData();
+                                          if (!mounted) return;
+                                          setLocal(() => sudahTTD = true);
+                                          Navigator.pop(ctx);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Berhasil ditandatangani'),
+                                              backgroundColor: _redV,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                icon: Icon(Icons.draw_outlined,
+                                    size: 16,
+                                    color: sudahTTD
+                                        ? Colors.grey[500]
+                                        : Colors.white),
+                                label: Text(
+                                  sudahTTD ? 'Sudah TTD' : 'Tandatangani',
+                                  style: TextStyle(
+                                      color: sudahTTD
+                                          ? Colors.grey[500]
+                                          : Colors.white),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      sudahTTD ? Colors.grey[200] : _redV,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                  elevation: 0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -430,54 +532,38 @@ onPressed: sudahTTD
     );
   }
 
-Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-    decoration: BoxDecoration(
-      color: isAlt ? const Color(0xFFF5EFE6) : Colors.transparent,
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 110,
-          child: Text(label,
-              style: const TextStyle(fontSize: 12, color: _greyV)),
-        ),
-        const Text(': ', style: TextStyle(fontSize: 12, color: _darkV)),
-        Expanded(
-          child: Text(value,
-              style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: _darkV)),
-        ),
-      ],
-    ),
-  );
-}
-
-  String _jamTerbilang(int jam) {
-    const terbilang = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima',
-        'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh'];
-    if (jam <= 10) return terbilang[jam];
-    return '$jam';
+  Widget _buildFormRow(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(label,
+                style: const TextStyle(fontSize: 12, color: _greyV)),
+          ),
+          const Text(': ',
+              style: TextStyle(fontSize: 12, color: _darkV)),
+          Expanded(
+            child: Text(value,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _darkV)),
+          ),
+        ],
+      ),
+    );
   }
 
+  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-      if (!_isInitialized) {
-    _isInitialized = true;
+    final total = _filteredList.length;
+    final menunggu =
+        _filteredList.where((p) => p.status == 'menunggu_ttd_admin').length;
 
-    Future.microtask(() async {
-      final idAdmin = await SessionManager.getIdAdmin();
-
-      if (idAdmin != null && mounted) {
-        context
-            .read<PengajuanProvider>()
-            .getPengajuanAdmin(idAdmin);
-      }
-    });
-  }
     return Scaffold(
       backgroundColor: _redV,
       body: Column(
@@ -487,7 +573,8 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
             child: Container(
               decoration: const BoxDecoration(
                 color: _creamV,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(35)),
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(35)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,16 +584,81 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Verifikasi Kompen',
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: _darkV)),
-                        const SizedBox(height: 4),
-                        const Text(
-                            'Form penyelesaian kompen yang perlu ditandatangani',
-                            style: TextStyle(fontSize: 13, color: _greyV)),
-                        const SizedBox(height: 16),
+                        // Judul + badge
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text('Verifikasi Kompen',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: _darkV)),
+                            ),
+                            if (menunggu > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _redV,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '$menunggu Menunggu TTD',
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text('$total form ditemukan',
+                            style: const TextStyle(
+                                fontSize: 12, color: _greyV)),
+                        const SizedBox(height: 14),
+
+                        // Search
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _cardBorderV),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (v) =>
+                                setState(() => _searchQuery = v),
+                            style: const TextStyle(
+                                fontSize: 13, color: _darkV),
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Cari nama mahasiswa atau NIM...',
+                              hintStyle: const TextStyle(
+                                  fontSize: 13, color: _greyV),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: _greyV, size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                        setState(
+                                            () => _searchQuery = '');
+                                      },
+                                      child: const Icon(Icons.close,
+                                          color: _greyV, size: 18),
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding:
+                                  const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Filter row
                         Row(
                           children: [
                             Expanded(
@@ -517,7 +669,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                                     () => _selectedSemester = val!),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: _buildDropdown(
                                 value: _selectedStatus,
@@ -526,23 +678,46 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                                     () => _selectedStatus = val!),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildDropdown(
+                                value: _selectedUrutan,
+                                items: _urutanOptions,
+                                onChanged: (val) => setState(
+                                    () => _selectedUrutan = val!),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
                       ],
                     ),
                   ),
+
+                  // List
                   Expanded(
-                    child: _filteredList.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                            itemCount: _filteredList.length,
-                            itemBuilder: (context, index) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCard(_filteredList[index]),
-                            ),
-                          ),
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                                color: _redV))
+                        : _filteredList.isEmpty
+                            ? _buildEmptyState()
+                            : RefreshIndicator(
+                                color: _redV,
+                                onRefresh: _loadData,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      16, 0, 16, 24),
+                                  itemCount: _filteredList.length,
+                                  itemBuilder: (context, index) =>
+                                      Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 12),
+                                    child: _buildCard(
+                                        _filteredList[index]),
+                                  ),
+                                ),
+                              ),
                   ),
                 ],
               ),
@@ -564,7 +739,7 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -575,14 +750,14 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           value: value,
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down,
-              color: _greyV, size: 18),
-          style: const TextStyle(fontSize: 12, color: _darkV),
+              color: _greyV, size: 16),
+          style: const TextStyle(fontSize: 11, color: _darkV),
           items: items
               .map((e) => DropdownMenuItem(
                     value: e,
                     child: Text(e,
-                        style:
-                            const TextStyle(fontSize: 12, color: _darkV)),
+                        style: const TextStyle(
+                            fontSize: 11, color: _darkV)),
                   ))
               .toList(),
           onChanged: onChanged,
@@ -613,17 +788,21 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(p.namaMahasiswa ?? '-',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: _darkV)),
-              Text(p.tanggalPertemuan?.toString().split(' ')[0] ?? '-',
-                  style: const TextStyle(fontSize: 10, color: _greyV)),
+              Expanded(
+                child: Text(p.namaMahasiswa ?? '-',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _darkV),
+                    overflow: TextOverflow.ellipsis),
+              ),
+              Text(_formatTanggal(p.tanggalPertemuan),
+                  style:
+                      const TextStyle(fontSize: 10, color: _greyV)),
             ],
           ),
           const SizedBox(height: 2),
-          Text('NIM: ${p.nim}',
+          Text('NIM: ${p.nim ?? '-'}',
               style: const TextStyle(fontSize: 11, color: _greyV)),
           const SizedBox(height: 10),
 
@@ -631,19 +810,24 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(children: [
-                const Icon(Icons.menu_book_outlined,
-                    size: 13, color: _greyV),
-                const SizedBox(width: 4),
-                Text(p.deskripsiTugas ?? '-',
-                    style:
-                        const TextStyle(fontSize: 12, color: _darkV)),
-              ]),
+              Expanded(
+                child: Row(children: [
+                  const Icon(Icons.menu_book_outlined,
+                      size: 13, color: _greyV),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(p.namaMatkul ?? p.deskripsiTugas ?? '-',
+                        style: const TextStyle(
+                            fontSize: 12, color: _darkV),
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                ]),
+              ),
               Row(children: [
                 const Icon(Icons.school_outlined,
                     size: 13, color: _greyV),
                 const SizedBox(width: 4),
-                Text(p.semester,
+                Text('Semester ${p.semester}',
                     style:
                         const TextStyle(fontSize: 11, color: _greyV)),
               ]),
@@ -651,25 +835,12 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           ),
           const SizedBox(height: 6),
 
-          // Nama Lokasi
+          // Jam
           Row(children: [
-            const Icon(Icons.location_on_outlined ,
+            const Icon(Icons.access_time_outlined,
                 size: 13, color: _greyV),
             const SizedBox(width: 4),
-            Expanded(
-              child: Text(p.namaLokasi ?? '-',
-                  style: const TextStyle(fontSize: 12, color: _darkV),
-                  overflow: TextOverflow.ellipsis),
-            ),
-          ]),
-          const SizedBox(height: 6),
-
-          // Titik koordinat
-          Row(children: [
-            const Icon(Icons.near_me_outlined,
-                size: 13, color: _greyV),
-            const SizedBox(width: 4),
-            Text('${p.latitude}, ${p.longitude}',
+            Text('${p.totalJamKompen ?? 0} Jam',
                 style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -691,17 +862,16 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
                     color: _redV.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
-                    children: [
-                      Text('Detail',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _redV)),
-                      SizedBox(width: 2),
-                      Icon(Icons.chevron_right, size: 14, color: _redV),
-                    ],
-                  ),
+                  child: const Row(children: [
+                    Text('Detail',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: _redV)),
+                    SizedBox(width: 2),
+                    Icon(Icons.chevron_right,
+                        size: 14, color: _redV),
+                  ]),
                 ),
               ),
             ],
@@ -712,25 +882,43 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
   }
 
   Widget _buildStatusBadge(String status) {
-    final bool menunggu = status == 'menunggu_ttd_admin';
+    Color bg;
+    Color textColor;
+    String label;
+
+    switch (status) {
+      case 'menunggu_ttd_admin':
+        bg = const Color(0xFFFFF3CD);
+        textColor = const Color(0xFF856404);
+        label = 'Menunggu TTD';
+        break;
+      case 'menunggu_ttd_kaprodi':
+        bg = const Color(0xFFDBEAFE);
+        textColor = const Color(0xFF1E40AF);
+        label = 'Menunggu TTD Kaprodi';
+        break;
+      case 'selesai':
+        bg = const Color(0xFFD1FAE5);
+        textColor = const Color(0xFF065F46);
+        label = 'Sudah TTD';
+        break;
+      default:
+        bg = const Color(0xFFE5E7EB);
+        textColor = const Color(0xFF6B7280);
+        label = status;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: menunggu
-            ? const Color(0xFFFFF3CD)
-            : const Color(0xFFD1FAE5),
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        menunggu ? 'Menunggu TTD' : 'Sudah TTD',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: menunggu
-              ? const Color(0xFF856404)
-              : const Color(0xFF065F46),
-        ),
-      ),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: textColor)),
     );
   }
 
@@ -750,6 +938,21 @@ Widget _buildFormRow(String label, String value, {bool isAlt = false}) {
           const SizedBox(height: 4),
           const Text('Belum ada form yang sesuai filter',
               style: TextStyle(fontSize: 12, color: _greyV)),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _selectedSemester = 'Semua Semester';
+                _selectedStatus = 'Semua Status';
+                _selectedUrutan = 'Terbaru';
+                _searchQuery = '';
+                _searchController.clear();
+              });
+            },
+            icon: const Icon(Icons.refresh, color: _redV, size: 16),
+            label: const Text('Reset Filter',
+                style: TextStyle(color: _redV, fontSize: 13)),
+          ),
         ],
       ),
     );
