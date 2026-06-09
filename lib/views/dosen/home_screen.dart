@@ -2,20 +2,82 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
+import '../../utils/session_manager.dart';
+import '../../services/pengajuan_service.dart'; // 🟢 Mengambil service yang sama
+import '../../models/pengajuan_kompen.dart';    // 🟢 Mengambil model data yang sama
 import 'pengajuan_screen.dart';
 import 'verifikasi_screen.dart';
 
-class DosenHomeScreen extends StatelessWidget {
+class DosenHomeScreen extends StatefulWidget {
   const DosenHomeScreen({super.key});
+
+  @override
+  State<DosenHomeScreen> createState() => _DosenHomeScreenState();
+}
+
+class _DosenHomeScreenState extends State<DosenHomeScreen> {
+  // 🟢 List penampung data asli dari API
+  List<PengajuanKompen> pengajuanList = [];
+  
+  // 🟢 Variabel rekapitulasi & tindakan (Awalnya di-set 0, nanti diisi via API)
+  int jumlahPengajuan = 0;
+  int jumlahVerifikasi = 0;
+  int totalMahasiswa = 0;
+  int totalDisetujui = 0;
+  int totalMenunggu = 0;
+  int totalSelesai = 0;
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _cardBeige = Color(0xFFEDE0CC);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+  String namaDosen = 'Dosen'; 
 
-  static const int jumlahPengajuan = 3;
-  static const int jumlahVerifikasi = 0;
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+    _loadDataDariAPI(); // 🟢 Panggil fungsi API pas halaman dibuka
+  }
+
+  Future<void> _loadUser() async {
+    final nama = await SessionManager.getNamaLengkap();
+    if (nama != null && nama.isNotEmpty) {
+      setState(() {
+        namaDosen = nama;
+      });
+    }
+  }
+
+  // 🟢 FUNGSI UTAMA: Ambil data real-time dari API backend
+  Future<void> _loadDataDariAPI() async {
+    try {
+      // Sesuaiin dengan nama fungsi fetch khusus dosen di PengajuanService-mu (misal: getPengajuanDosen)
+      final data = await PengajuanService().getPengajuanDosen(); 
+
+      setState(() {
+        pengajuanList = data;
+
+        // 1. Hitung jumlah tindakan Konfirmasi Pengajuan (yang butuh ttd/persetujuan dosen)
+        // Silakan sesuaikan string statusnya dengan response enum dari backend-mu
+        jumlahPengajuan = data.where((p) => p.status == 'menunggu_persetujuan_dosen').length;
+        
+        // 2. Hitung jumlah tindakan Tanda Tangan Penyelesaian (kalau alurnya ada 2 tahap)
+        jumlahVerifikasi = data.where((p) => p.status == 'menunggu_ttd_dosen').length;
+
+        // 3. Hitung jumlah Unik Mahasiswa yang ditangani oleh Dosen ini
+        totalMahasiswa = data.map((p) => p.idMahasiswa).toSet().length;
+
+        // 4. Hitung data rekapitulasi berdasarkan status kompen
+        totalDisetujui = data.where((p) => p.status == 'disetujui').length;
+        totalMenunggu = data.where((p) => p.status == 'menunggu_persetujuan_dosen' || p.status == 'menunggu_ttd_dosen').length;
+        totalSelesai = data.where((p) => p.status == 'selesai').length;
+      });
+    } catch (e) {
+      debugPrint("Gagal memuat data API Dosen: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +106,7 @@ class DosenHomeScreen extends StatelessWidget {
                         children: [
                           _buildSectionTitle('PERLU TINDAKAN'),
                           const SizedBox(height: 12),
+                          // 🟢 Dinamis: Otomatis terkunci abu-abu jika jumlahPengajuan dari API adalah 0
                           _buildActionCard(
                             context: context,
                             icon: Icons.list_alt_outlined,
@@ -53,6 +116,7 @@ class DosenHomeScreen extends StatelessWidget {
                             onTap: () => NavDosen.toPengajuan(context),
                           ),
                           const SizedBox(height: 12),
+                          // 🟢 Dinamis: Otomatis terkunci abu-abu jika jumlahVerifikasi dari API adalah 0
                           _buildActionCard(
                             context: context,
                             icon: Icons.draw_outlined,
@@ -60,7 +124,6 @@ class DosenHomeScreen extends StatelessWidget {
                             count: jumlahVerifikasi,
                             emptyText: 'Tidak ada form',
                             onTap: () => NavDosen.toVerifikasi(context),
-                            alwaysTappable: true,
                           ),
                           const SizedBox(height: 20),
                           _buildSectionTitle('REKAPITULASI'),
@@ -92,20 +155,20 @@ class DosenHomeScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Halo, Pak Luqman',
-                  style: TextStyle(
+                  'Halo, $namaDosen', 
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 22,
                     color: _textDark,
                   ),
                 ),
-                SizedBox(height: 6),
-                Text(
+                const SizedBox(height: 6),
+                const Text(
                   'Dosen Pengampu',
                   style: TextStyle(fontSize: 14, color: _textGrey),
                 ),
@@ -203,9 +266,9 @@ class DosenHomeScreen extends StatelessWidget {
     required int count,
     required String emptyText,
     required VoidCallback onTap,
-    bool alwaysTappable = false,
   }) {
     final bool hasAction = count > 0;
+    
     final Color bgColor = hasAction ? _primaryRed : const Color(0xFFBDB5A6);
     final Color iconBg = hasAction ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.3);
     final Color iconColor = hasAction ? Colors.white : const Color(0xFF7A6F65);
@@ -214,7 +277,7 @@ class DosenHomeScreen extends StatelessWidget {
     final Color arrowColor = hasAction ? Colors.white.withOpacity(0.8) : const Color(0xFFA09890);
 
     return GestureDetector(
-      onTap: hasAction || alwaysTappable ? onTap : null,
+      onTap: hasAction ? onTap : null, 
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
@@ -254,22 +317,23 @@ class DosenHomeScreen extends StatelessWidget {
     );
   }
 
+  // 🟢 REKAPITULASI SEKARANG 100% DINAMIS: Menghitung dari hasil data list API Dosen
   Widget _buildRekapitulasiSection() {
     return Column(
       children: [
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Total Mahasiswa', value: '12 Orang')),
+            Expanded(child: _buildRekapCard(label: 'Total Mahasiswa', value: '$totalMahasiswa Orang')),
             const SizedBox(width: 12),
-            Expanded(child: _buildRekapCard(label: 'Disetujui', value: '6 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Disetujui', value: '$totalDisetujui Pengajuan')),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildRekapCard(label: 'Menunggu', value: '2 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Menunggu', value: '$totalMenunggu Pengajuan')),
             const SizedBox(width: 12),
-            Expanded(child: _buildRekapCard(label: 'Selesai', value: '4 Pengajuan')),
+            Expanded(child: _buildRekapCard(label: 'Selesai', value: '$totalSelesai Pengajuan')),
           ],
         ),
       ],

@@ -226,4 +226,21 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
 
     return null;
   }
+
+  // 🟢 Tambahkan ini di bagian paling bawah class PengajuanService (sebelum penutup class '}')
+  Future<List<PengajuanKompen>> getPengajuanDosen() async {
+    final data = await ApiService.get(
+      'pengajuan-kompen/dosen', // ⚠️ Sesuaikan endpoint URL dari backend untuk dosen jika berbeda
+    );
+
+    print('DATA DOSEN = ${data['data']}');
+
+    if (data['success']) {
+      return (data['data'] as List)
+          .map((item) => PengajuanKompen.fromJson(item))
+          .toList();
+    }
+
+    return [];
+  }
 }
