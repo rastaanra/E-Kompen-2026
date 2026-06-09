@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
@@ -17,6 +21,11 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
   String nama = '';
   String email = '';
   String nip = '';
+  String idUser = ''; // Menampung ID untuk keperluan update API
+  String? fotoUrl;    // Menampung path foto dari backend jika sudah ada
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
@@ -30,59 +39,197 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final role = await SessionManager.getRole();
-
-    print("ROLE = $role");
-
-    final prefs =
-        await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
     setState(() {
       nama = prefs.getString('nama_lengkap') ?? '';
       email = prefs.getString('email') ?? '';
       nip = prefs.getString('nip') ?? '';
+      idUser = prefs.getString('id_user') ?? ''; // Pastikan id_user disimpan saat login
+      fotoUrl = prefs.getString('foto'); // Mengambil data foto jika ada
     });
 
-    print("NAMA = $nama");
-    print("EMAIL = $email");
-    print("NIP = $nip");
+    print("NAMA = $nama, EMAIL = $email, NIP = $nip, ID = $idUser");
+  }
+
+  // 📸 Fungsi memilih foto dari Galeri
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80, // Kompres biar ga terlalu berat
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+        // Langsung upload foto begitu dipilih
+        _updateProfileAPI(nama, email, _imageFile);
+      }
+    } catch (e) {
+      _showSnackBar("Gagal mengambil gambar: $e", isError: true);
+    }
+  }
+
+  // ☁️ Fungsi Kirim Data ke API Laravel (Nama, Email, dan Foto)
+  Future<void> _updateProfileAPI(String newNama, String newEmail, File? imageFile) async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Sesuaikan base URL API e-kompen kamu
+      var uri = Uri.parse("http://10.0.2.2:8000/api/auth/update-profile/$idUser");
+      
+      // Menggunakan MultipartRequest karena ada file data
+      var request = http.MultipartRequest('POST', uri);
+
+      // Trik mengakali Route::put Laravel agar mau menerima kiriman file multipart
+      request.fields['_method'] = 'PUT';
+      request.fields['nama'] = newNama;
+      request.fields['email'] = newEmail;
+
+      if (imageFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('foto', imageFile.path),
+        );
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        // Simpan perubahan baru ke local SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('nama_lengkap', newNama);
+        await prefs.setString('email', newEmail);
+        
+        // Sesuaikan key string dari key database kembalian backend-mu (misal: data['user']['foto'])
+        if (data['foto'] != null) {
+          await prefs.setString('foto', data['foto']);
+        }
+
+        setState(() {
+          nama = newNama;
+          email = newEmail;
+          if (data['foto'] != null) fotoUrl = data['foto'];
+        });
+
+        _showSnackBar("Profil berhasil diperbarui! ✨");
+      } else {
+        _showSnackBar("Gagal memperbarui ke server (${response.statusCode})", isError: true);
+      }
+    } catch (e) {
+      _showSnackBar("Terjadi kesalahan jaringan: $e", isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // 📝 Dialog Popup Edit Nama & Email
+  void _showEditProfileDialog() {
+    final nameController = TextEditingController(text: nama);
+    final emailController = TextEditingController(text: email);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Edit Profil Dosen',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18, color: _textDark),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  icon: Icon(Icons.person_outline, color: _primaryRed),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  icon: Icon(Icons.email_outlined, color: _primaryRed),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: _textGrey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _updateProfileAPI(nameController.text, emailController.text, _imageFile);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: _primaryRed),
+            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _primaryRed,
-      body: Column(
+      body: Stack(
         children: [
-          const AppHeader(),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: _backgroundCream,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(35),
-                  topRight: Radius.circular(35),
-                ),
-              ),
-              child: ScrollConfiguration(
-                behavior: const ScrollBehavior().copyWith(overscroll: false),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics()),
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProfileCard(),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Kontak'),
-                      const SizedBox(height: 10),
-                      _buildInfoCard(items: [
-                        _InfoItem(
-                          icon: Icons.email_outlined,
-                          label: 'Email',
-                          value: email,
-                          valueColor: _primaryRed,
+          Column(
+            children: [
+              const AppHeader(),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: _backgroundCream,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(35),
+                      topRight: Radius.circular(35),
+                    ),
+                  ),
+                  child: ScrollConfiguration(
+                    behavior: const ScrollBehavior().copyWith(overscroll: false),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics()),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildProfileCard(),
+                          const SizedBox(height: 20),
+                          _buildSectionLabel('Kontak'),
+                          const SizedBox(height: 10),
+                          _buildInfoCard(items: [
+                            _InfoItem(
+                              icon: Icons.email_outlined,
+                              label: 'Email',
+                              value: email,
+                              valueColor: _primaryRed,
                         ),
                       ]),
                       const SizedBox(height: 20),
@@ -103,6 +250,12 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
             onTabSelected: (tab) =>
                 NavDosen.handleBottomNav(context, tab, NavTabDosen.profil),
           ),
+        ],
+      ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(color: _primaryRed),
+            ),
         ],
       ),
     );
@@ -127,23 +280,44 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar lingkaran merah
-          Container(
-            width: 66,
-            height: 66,
-            decoration: const BoxDecoration(
-              color: _primaryRed,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                nama.isNotEmpty ? nama.substring(0, 1).toUpperCase() : '?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+          // Avatar lingkaran merah (Sekarang bisa diklik ganti foto)
+          GestureDetector(
+            onTap: _pickImage,
+            child: Stack(
+              children: [
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: const BoxDecoration(
+                    color: _primaryRed,
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(33),
+                    child: _imageFile != null
+                        ? Image.file(_imageFile!, fit: BoxFit.cover)
+                        : (fotoUrl != null && fotoUrl!.isNotEmpty)
+                            ? Image.network(
+                                "http://10.0.2.2:8000/storage/$fotoUrl", // Sesuaikan path asset backend kamu
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) => Center(child: _buildInitialText()),
+                              )
+                            : Center(child: _buildInitialText()),
+                  ),
                 ),
-              ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.camera_alt, size: 12, color: _primaryRed),
+                  ),
+                )
+              ],
             ),
           ),
           const SizedBox(width: 16),
@@ -153,8 +327,8 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  nama,
-                  style: TextStyle(
+                  nama.isNotEmpty ? nama : "Loading...",
+                  style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                     color: _textDark,
@@ -163,7 +337,7 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
                 const SizedBox(height: 3),
                 Text(
                   'NIP: $nip',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: _textGrey,
                   ),
@@ -204,20 +378,34 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
               ],
             ),
           ),
-          // Tombol edit
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE5E5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.edit_outlined,
-              color: _primaryRed,
-              size: 18,
+          // Tombol edit profil data teks (Nama & Email)
+          GestureDetector(
+            onTap: _showEditProfileDialog,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE5E5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.edit_outlined,
+                color: _primaryRed,
+                size: 18,
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInitialText() {
+    return Text(
+      nama.isNotEmpty ? nama.substring(0, 1).toUpperCase() : '?',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -529,7 +717,6 @@ class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
   }
 }
 
-// ── Model data baris info
 class _InfoItem {
   final IconData icon;
   final String label;
