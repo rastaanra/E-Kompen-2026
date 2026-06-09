@@ -2,7 +2,7 @@ class Pengguna {
   final int idPengguna;
   final String namaLengkap;
   final String email;
-  final String password;
+  final String? password;
   final String role; // 'mahasiswa', 'dosen', 'admin', 'kaprodi'
   final String? fotoProfil;
 
@@ -10,7 +10,7 @@ class Pengguna {
     required this.idPengguna,
     required this.namaLengkap,
     required this.email,
-    required this.password,
+    this.password,
     required this.role,
     this.fotoProfil,
   });

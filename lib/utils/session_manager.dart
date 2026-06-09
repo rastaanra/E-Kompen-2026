@@ -20,7 +20,7 @@ class SessionManager {
       prefs.setString('nim', response['role_data']['nim']);
     } else if (response['role'] == 'dosen' || response['role'] == 'kaprodi') {
       prefs.setInt('id_dosen', response['role_data']['id_dosen']);
-      prefs.setString('nip', response['role_data']['nip']);
+      prefs.setString('nip', response['role_data']['nip']); 
     } else if (response['role'] == 'admin') {
       prefs.setInt('id_admin', response['role_data']['id_admin']);
     }

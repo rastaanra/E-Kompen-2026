@@ -29,6 +29,8 @@ class AuthProvider extends ChangeNotifier {
 
         userData['role'] = result['role'];
 
+        print("DATA LOGIN = ${result['data']}");
+        print("PASSWORD = ${result['data']['password']}");
         _pengguna = Pengguna.fromJson(result['data']);
 
         _lastResponse = result;

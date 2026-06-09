@@ -2,15 +2,51 @@ import 'package:flutter/material.dart';
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
+import '../../utils/session_manager.dart';
 import '../../utils/nav_dosen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfileDosenScreen extends StatelessWidget {
+class ProfileDosenScreen extends StatefulWidget {
   const ProfileDosenScreen({super.key});
+
+  @override
+  State<ProfileDosenScreen> createState() => _ProfileDosenScreenState();
+}
+
+class _ProfileDosenScreenState extends State<ProfileDosenScreen> {
+  String nama = '';
+  String email = '';
+  String nip = '';
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final role = await SessionManager.getRole();
+
+    print("ROLE = $role");
+
+    final prefs =
+        await SharedPreferences.getInstance();
+
+    setState(() {
+      nama = prefs.getString('nama_lengkap') ?? '';
+      email = prefs.getString('email') ?? '';
+      nip = prefs.getString('nip') ?? '';
+    });
+
+    print("NAMA = $nama");
+    print("EMAIL = $email");
+    print("NIP = $nip");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +81,7 @@ class ProfileDosenScreen extends StatelessWidget {
                         _InfoItem(
                           icon: Icons.email_outlined,
                           label: 'Email',
-                          value: 'luqman.affandi@dosen.jti.ac.id',
+                          value: email,
                           valueColor: _primaryRed,
                         ),
                       ]),
@@ -99,9 +135,9 @@ class ProfileDosenScreen extends StatelessWidget {
               color: _primaryRed,
               shape: BoxShape.circle,
             ),
-            child: const Center(
+            child: Center(
               child: Text(
-                'LA',
+                nama.isNotEmpty ? nama.substring(0, 1).toUpperCase() : '?',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -116,8 +152,8 @@ class ProfileDosenScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Luqman Affandi, S.Kom., MMSI',
+                Text(
+                  nama,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -125,8 +161,8 @@ class ProfileDosenScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'NIP: 198803012015041001',
+                Text(
+                  'NIP: $nip',
                   style: TextStyle(
                     fontSize: 13,
                     color: _textGrey,
