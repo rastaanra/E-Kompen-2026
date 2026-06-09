@@ -1,6 +1,8 @@
+import 'dart:io'; // 🟢 Tambahan wajib untuk mengurus file gambar
 import 'package:flutter/material.dart';
 import '../models/pengguna.dart';
 import '../services/auth_service.dart';
+import '../utils/session_manager.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _service = AuthService();
@@ -23,19 +25,19 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final Map<String, dynamic> result = await _service.login(email, password);
-      if (result['success'] == true) {
+    if (result['success'] == true) {
+      final userData = result['data'];
+      userData['role'] = result['role'];
 
-        final userData = result['data'];
+      print("DATA LOGIN = ${result['data']}");
+      print("PASSWORD = ${result['data']['password']}");
+      _pengguna = Pengguna.fromJson(result['data']);
 
-        userData['role'] = result['role'];
-
-        _pengguna = Pengguna.fromJson(result['data']);
-
-        _lastResponse = result;
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
+      _lastResponse = result;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
 
     _errorMessage = result['message'] ?? 'Login gagal';
     _isLoading = false;
@@ -49,7 +51,7 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    final Map<String, dynamic> result = await _service.register(data); // ✅ Map
+    final Map<String, dynamic> result = await _service.register(data);
 
     _isLoading = false;
 
@@ -69,20 +71,94 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Update profil — service return bool
-  // Foto profil hanya bisa dipasang sekali, tidak bisa diganti
+  // Update profil — Menggunakan SessionManager agar ID selalu valid & tidak null
   Future<bool> updateProfile(Map<String, dynamic> data) async {
-    if (_pengguna?.fotoProfil != null && _pengguna!.fotoProfil!.isNotEmpty) {
-      data.remove('foto_profil');
-    }
-
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
-    final bool success = await _service.updateProfile(data);
+    try {
+      final int? idPenggunaSesi = await SessionManager.getIdPengguna();
+      
+      if (idPenggunaSesi == null) {
+        _isLoading = false;
+        _errorMessage = 'Sesi habis, silakan login ulang';
+        notifyListeners();
+        return false;
+      }
 
-    _isLoading = false;
+      if (_pengguna?.fotoProfil != null && _pengguna!.fotoProfil!.isNotEmpty) {
+        data.remove('foto_profil');
+      }
+
+      final Map<String, dynamic> result = await _service.updateProfile(
+        idPengguna: idPenggunaSesi,
+        data: data,
+      );
+
+      _isLoading = false;
+
+      if (result['success'] == true) {
+        if (result['data'] != null) {
+          _pengguna = Pengguna.fromJson(result['data']);
+        }
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'] ?? 'Gagal memperbarui profil';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Terjadi kesalahan sistem: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // 🟢 FUNGSI BARU: Mengirim file foto profil ke backend Laravel (Sekali Pakai)
+  Future<bool> uploadFotoProfilOnce(File imageFile) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    return success;
+
+    try {
+      // 1. Ambil ID Pengguna dari SessionManager HP
+      final int? idPenggunaSesi = await SessionManager.getIdPengguna();
+      
+      if (idPenggunaSesi == null) {
+        _isLoading = false;
+        _errorMessage = 'Sesi habis, silakan login ulang';
+        notifyListeners();
+        return false;
+      }
+
+      // 2. Kirim Multipart Request ke AuthService
+      final Map<String, dynamic> result = await _service.updateProfileFotoKaprodi(
+        idPengguna: idPenggunaSesi,
+        imageFile: imageFile,
+      );
+
+      _isLoading = false;
+
+      if (result['success'] == true) {
+        // 3. Update data objek _pengguna lokal jika backend mengembalikan data terbaru
+        if (result['data'] != null) {
+          _pengguna = Pengguna.fromJson(result['data']);
+        }
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'] ?? 'Gagal mengunggah foto profil';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Terjadi kesalahan sistem upload foto: $e';
+      notifyListeners();
+      return false;
+    }
   }
 }

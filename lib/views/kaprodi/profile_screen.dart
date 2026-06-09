@@ -1,9 +1,14 @@
+import 'dart:io'; // Wajib untuk penanganan file gambar
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'; // Wajib untuk mengambil foto dari galeri/kamera
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/kaprodi/app_bottom_nav_kaprodi.dart';
 import '../../utils/nav_kaprodi.dart';
 import '../../utils/session_manager.dart';
 import '../../services/auth_service.dart';
+import '../../providers/auth_provider.dart';
 
 class ProfileKaprodiScreen extends StatefulWidget {
   const ProfileKaprodiScreen({super.key});
@@ -17,7 +22,9 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
   String namaKaprodi = '';
   String nip = '';
   String email = '';
+  String fotoProfilUrl = ''; // 🟢 Menyimpan URL foto dari server
   bool notifikasiAktif = true;
+  bool _isLoading = false;
 
   String get inisialKaprodi {
     if (namaKaprodi.isEmpty) return 'KP';
@@ -42,18 +49,190 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
     _loadUser();
   }
 
+  // Memuat data dari SessionManager HP
   Future<void> _loadUser() async {
     final nama = await SessionManager.getNamaLengkap();
     final nipUser = await SessionManager.getNip();
     final emailUser = await SessionManager.getEmail();
+    final foto = await SessionManager.getFotoProfil(); // 🟢 Ambil data foto lokal
     final notif = await SessionManager.getNotifikasiAktif();
 
     setState(() {
       namaKaprodi = nama ?? '-';
       nip = nipUser ?? '-';
       email = emailUser ?? '-';
+      fotoProfilUrl = foto ?? ''; // 🟢 Masukkan ke state
       notifikasiAktif = notif;
     });
+  }
+
+  // Fungsi menyimpan perubahan teks nama lengkap
+  Future<void> _prosesUpdateNama(String namaBaru) async {
+    if (namaBaru.trim().isEmpty) {
+      _showSnackBar("Nama tidak boleh kosong!", isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      final Map<String, dynamic> dataUpdate = {
+        'nama_lengkap': namaBaru,
+      };
+
+      final bool statusSukses = await authProvider.updateProfile(dataUpdate);
+
+      if (statusSukses) {
+        await SessionManager.setNamaLengkap(namaBaru);
+        await _loadUser();
+        _showSnackBar("Profil berhasil diperbarui! ✨");
+      } else {
+        _showSnackBar(authProvider.errorMessage ?? "Gagal memperbarui profil", isError: true);
+      }
+    } catch (e) {
+      _showSnackBar("Terjadi kesalahan: $e", isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // 🟢 SEKARANG BISA TERIMA SOURCE (KAMERA/GALERI)
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    
+    // Membuka sesuai pilihan (Kamera atau Galeri)
+    final XFile? image = await picker.pickImage(
+      source: source,
+      imageQuality: 50, // Kompres gambar agar tidak terlalu besar saat diupload
+    );
+    
+    if (image == null) return; 
+
+    final File imageFile = File(image.path);
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final bool statusSukses = await authProvider.uploadFotoProfilOnce(imageFile);
+
+      if (statusSukses) {
+        final String? newFotoUrl = authProvider.pengguna?.fotoProfil;
+        if (newFotoUrl != null) {
+          await SessionManager.setFotoProfil(newFotoUrl);
+          setState(() {
+            fotoProfilUrl = newFotoUrl;
+          });
+          _showSnackBar("Foto profil berhasil dipasang! ✨");
+        }
+      } else {
+        _showSnackBar(authProvider.errorMessage ?? "Gagal memasang foto profil", isError: true);
+      }
+    } catch (e) {
+      _showSnackBar("Terjadi kesalahan sistem: $e", isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // 🟢 FUNGSI UNTUK MUNCULIN PILIHAN BOTTOM SHEET GANTI FOTO Profil
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ganti Foto Profil',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: _primaryRed),
+                title: const Text('Ambil Foto dari Kamera'),
+                onTap: () {
+                  Navigator.pop(context); // Tutup menu Bottom Sheet
+                  _pickAndUploadImage(ImageSource.camera); // Jalankan Kamera
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: _primaryRed),
+                title: const Text('Pilih dari Galeri'),
+                onTap: () {
+                  Navigator.pop(context); // Tutup menu Bottom Sheet
+                  _pickAndUploadImage(ImageSource.gallery); // Jalankan Galeri
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditProfileSheet() {
+    final namaController = TextEditingController(
+      text: namaKaprodi,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Edit Profil',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: namaController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Lengkap',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _prosesUpdateNama(namaController.text);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryRed,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showChangePasswordDialog() {
@@ -71,17 +250,13 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
               TextField(
                 controller: oldPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password Lama',
-                ),
+                decoration: const InputDecoration(labelText: 'Password Lama'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: newPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password Baru',
-                ),
+                decoration: const InputDecoration(labelText: 'Password Baru'),
               ),
             ],
           ),
@@ -96,8 +271,10 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
 
                 if (idPengguna == null) return;
 
+                final intId = int.tryParse(idPengguna.toString()) ?? 0;
+
                 final result = await AuthService().changePassword(
-                  idPengguna: idPengguna,
+                  idPengguna: intId,
                   oldPassword: oldPasswordController.text,
                   newPassword: newPasswordController.text,
                 );
@@ -105,11 +282,7 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
                 if (!context.mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      result['message'] ?? 'Terjadi kesalahan',
-                    ),
-                  ),
+                  SnackBar(content: Text(result['message'] ?? 'Terjadi kesalahan')),
                 );
 
                 if (result['success'] == true) {
@@ -124,67 +297,91 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
     );
   }
 
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _primaryRed,
-      body: Column(
+      body: Stack(
         children: [
-          const AppHeader(),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: _backgroundCream,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(35),
-                  topRight: Radius.circular(35),
-                ),
-              ),
-              child: ScrollConfiguration(
-                behavior: const ScrollBehavior().copyWith(overscroll: false),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProfileCard(),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Kontak'),
-                      const SizedBox(height: 10),
-                      _buildInfoCard(items: [
-                        _InfoItem(
-                          icon: Icons.email_outlined,
-                          label: 'Email',
-                          value: email,
-                          valueColor: _primaryRed,
-                          isLast: true,
-                        ),
-                      ]),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Pengaturan'),
-                      const SizedBox(height: 10),
-                      _buildSettingsCard(context),
-                      const SizedBox(height: 24),
-                      _buildLogoutButton(context),
-                      const SizedBox(height: 8),
-                    ],
+          Column(
+            children: [
+              const AppHeader(),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: _backgroundCream,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(35),
+                      topRight: Radius.circular(35),
+                    ),
+                  ),
+                  child: ScrollConfiguration(
+                    behavior: const ScrollBehavior().copyWith(overscroll: false),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildProfileCard(),
+                          const SizedBox(height: 20),
+                          _buildSectionLabel('Kontak'),
+                          const SizedBox(height: 10),
+                          _buildInfoCard(items: [
+                            _InfoItem(
+                              icon: Icons.email_outlined,
+                              label: 'Email',
+                              value: email,
+                              valueColor: _primaryRed,
+                              isLast: true,
+                            ),
+                          ]),
+                          const SizedBox(height: 20),
+                          _buildSectionLabel('Pengaturan'),
+                          const SizedBox(height: 10),
+                          _buildSettingsCard(context),
+                          const SizedBox(height: 24),
+                          _buildLogoutButton(context),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
+              AppBottomNavKaprodi(
+                activeTab: NavTabKaprodi.profil,
+                onTabSelected: (tab) =>
+                    NavKaprodi.handleBottomNav(context, tab, NavTabKaprodi.profil),
+              ),
+            ],
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(color: _primaryRed),
+              ),
             ),
-          ),
-          AppBottomNavKaprodi(
-            activeTab: NavTabKaprodi.profil,
-            onTabSelected: (tab) =>
-                NavKaprodi.handleBottomNav(context, tab, NavTabKaprodi.profil),
-          ),
         ],
       ),
     );
   }
 
   Widget _buildProfileCard() {
+    // 🟢 CEK KONDISI: Apakah user sudah memiliki foto profil atau tidak
+    final bool isFotoAda = fotoProfilUrl.isNotEmpty && fotoProfilUrl != 'null' && fotoProfilUrl != '';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -196,38 +393,68 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 66, height: 66,
-            decoration: const BoxDecoration(color: _primaryRed, shape: BoxShape.circle),
-            child: Center(
-              child: Text(
-                inisialKaprodi,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
+          // 🔴 BAGIAN COMPONENT FOTO PROFIL + KAMERA SEKALI PAKAI
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 66, height: 66,
+                decoration: const BoxDecoration(color: _primaryRed, shape: BoxShape.circle),
+                child: isFotoAda
+                    ? ClipOval(
+                        child: Image.network(
+                          fotoProfilUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, stack) => Center(
+                            child: Text(
+                              inisialKaprodi,
+                              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          inisialKaprodi,
+                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+                        ),
+                      ),
               ),
-            ),
+              // 🟢 LOGIKA EMAS: Tombol Kamera HANYA muncul jika foto profil masih kosong!
+              if (!isFotoAda)
+                Positioned(
+                  bottom: -3,
+                  right: -3,
+                  child: GestureDetector(
+                    onTap: _showPhotoOptions, // 🟢 SUDAH DIPERBAIKI: Sekarang memanggil pilihan kamera/galeri, bukan langsung galeri
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 1))],
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt_outlined,
+                        color: _primaryRed,
+                        size: 15,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(
                 namaKaprodi,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: _textDark,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textDark),
               ),
               const SizedBox(height: 3),
               Text(
                 'NIP: $nip',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: _textGrey,
-                ),
+                style: const TextStyle(fontSize: 13, color: _textGrey),
               ),
               const SizedBox(height: 8),
               Container(
@@ -241,11 +468,17 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
               ),
             ]),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: const Color(0xFFFFE5E5), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.edit_outlined, color: _primaryRed, size: 18),
-          ),
+          GestureDetector(
+            onTap: _showEditProfileSheet,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE5E5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.edit_outlined, color: _primaryRed, size: 18),
+            ),
+          )
         ],
       ),
     );
@@ -298,14 +531,10 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(children: [
-       _buildSettingsTile(
+        _buildSettingsTile(
           icon: Icons.lock_outline,
           label: 'Ubah Password',
-          trailing: const Icon(
-            Icons.chevron_right,
-            color: _textGrey,
-            size: 20,
-          ),
+          trailing: const Icon(Icons.chevron_right, color: _textGrey, size: 20),
           onTap: _showChangePasswordDialog,
         ),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
@@ -329,25 +558,12 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFE5E5),
-                borderRadius: BorderRadius.circular(10),
-              ),
+              width: 38, height: 38,
+              decoration: BoxDecoration(color: const Color(0xFFFFE5E5), borderRadius: BorderRadius.circular(10)),
               child: Icon(icon, color: _primaryRed, size: 18),
             ),
             const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: _textDark,
-                ),
-              ),
-            ),
+            Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _textDark))),
             trailing,
           ],
         ),
@@ -357,35 +573,29 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
 
   Widget _buildToggle() {
     return GestureDetector(
-    onTap: () async {
-      final newValue = !notifikasiAktif;
-
-      await SessionManager.setNotifikasiAktif(newValue);
-
-      setState(() {
-        notifikasiAktif = newValue;
-      });
-    },
+      onTap: () async {
+        final newValue = !notifikasiAktif;
+        await SessionManager.setNotifikasiAktif(newValue);
+        setState(() {
+          notifikasiAktif = newValue;
+        });
+      },
       child: Container(
         width: 38,
         height: 22,
         decoration: BoxDecoration(
-          color: notifikasiAktif
-              ? _primaryRed
-              : Colors.grey.shade300,
+          color: notifikasiAktif ? _primaryRed : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(11),
         ),
         child: Align(
-          alignment: notifikasiAktif
-              ? Alignment.centerRight
-              : Alignment.centerLeft,
+          alignment: notifikasiAktif ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             width: 18,
             height: 18,
             margin: const EdgeInsets.symmetric(horizontal: 2),
             decoration: const BoxDecoration(
               color: Colors.white,
-              shape: BoxShape.circle,
+              shape: BoxShape.circle, // 🟢 SUDAH DIPERBAIKI: Tipe bentuk bulat yang benar adalah 'circle'
             ),
           ),
         ),

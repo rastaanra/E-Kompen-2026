@@ -4,7 +4,7 @@ class SessionManager {
   // Simpan semua data setelah login
   static Future<void> simpanLogin(Map<String, dynamic> response) async {
     final prefs = await SharedPreferences.getInstance();
-
+    
     // Data pengguna
     prefs.setInt('id_pengguna', response['data']['id_pengguna']);
     prefs.setString('nama_lengkap', response['data']['nama_lengkap']);
@@ -51,35 +51,55 @@ class SessionManager {
   }
 
   static Future<int?> getIdAdmin() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('id_admin');
-}
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_admin');
+  }
 
-static Future<int?> getIdMahasiswa() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('id_mahasiswa');
-}
-static Future<String?> getNamaLengkap() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('nama_lengkap');
-}
-static Future<String?> getEmail() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('email');
-}
+  static Future<int?> getIdMahasiswa() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_mahasiswa');
+  }
 
-static Future<String?> getNip() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('nip');
-}
+  static Future<String?> getNamaLengkap() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('nama_lengkap');
+  }
 
-static Future<void> setNotifikasiAktif(bool value) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setBool('notifikasi_aktif', value);
-}
+  static Future<String?> getEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('email');
+  }
 
-static Future<bool> getNotifikasiAktif() async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.getBool('notifikasi_aktif') ?? true;
-}
+  static Future<String?> getNip() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('nip');
+  }
+
+  static Future<void> setNotifikasiAktif(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifikasi_aktif', value);
+  }
+
+  static Future<bool> getNotifikasiAktif() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('notifikasi_aktif') ?? true;
+  }
+
+  // Set nama baru setelah update profil sukses
+  static Future<void> setNamaLengkap(String namaBaru) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nama_lengkap', namaBaru);
+  }
+
+  // 🟢 TAMBAHAN BARU: Menyimpan URL foto profil terbaru
+  static Future<void> setFotoProfil(String newUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('foto_profil', newUrl);
+  }
+
+  // 🟢 TAMBAHAN BARU: Mengambil URL foto profil untuk UI
+  static Future<String?> getFotoProfil() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('foto_profil');
+  }
 }
