@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/session_manager.dart';
 import '../mahasiswa/home_screen.dart';
 import '../dosen/home_screen.dart';
 import '../kaprodi/home_screen.dart';
@@ -33,45 +36,96 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
-    if (_selectedRole == null) {
+  void _login() async {
+  if (_selectedRole == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Silakan pilih login sebagai terlebih dahulu'),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
+  }
+
+  if (_formKey.currentState!.validate()) {
+    final provider = context.read<AuthProvider>();
+
+    final berhasil = await provider.login(
+      _emailController.text,
+      _passwordController.text,
+    );
+
+    print("LOGIN RESULT = $berhasil");
+    print("LAST RESPONSE = ${provider.lastResponse}");
+    print("ERROR MESSAGE = ${provider.errorMessage}");
+
+    if (berhasil && mounted) {
+      try {
+        print("LOGIN BERHASIL");
+
+        await SessionManager.simpanLogin(
+          provider.lastResponse,
+        );
+
+        print("SESSION TERSIMPAN");
+        print("ROLE DIPILIH = $_selectedRole");
+
+        if (_selectedRole == 'Mahasiswa') {
+          print("MASUK KE HOME MAHASISWA");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const HomeScreen(),
+            ),
+          );
+        }
+        else if (_selectedRole == 'Dosen') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const DosenHomeScreen(),
+            ),
+          );
+        }
+        else if (_selectedRole == 'Kaprodi') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const KaprodiHomeScreen(),
+            ),
+          );
+        }
+        else if (_selectedRole == 'Admin') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AdminHomeScreen(),
+            ),
+          );
+        }
+      } catch (e) {
+        print("ERROR SESSION: $e");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("ERROR SESSION: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan pilih login sebagai terlebih dahulu'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Login gagal'),
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      return;
-    }
-
-    if (_formKey.currentState!.validate()) {
-      Widget targetScreen;
-
-      switch (_selectedRole) {
-        case 'Mahasiswa':
-          targetScreen = const HomeScreen();
-          break;
-        case 'Dosen':
-          targetScreen = const DosenHomeScreen();
-          break;
-        case 'Kaprodi':
-          targetScreen = const KaprodiHomeScreen();
-          break;
-        case 'Admin':
-          targetScreen = const AdminHomeScreen();
-          break;
-        default:
-          targetScreen = const HomeScreen();
-      }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => targetScreen),
-      );
     }
   }
-
+}
+  
   Widget _buildRoleButton(String label, IconData icon) {
     final bool isSelected = _selectedRole == label;
     return Expanded(

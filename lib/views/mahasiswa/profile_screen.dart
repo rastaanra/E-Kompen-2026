@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../providers/auth_provider.dart';
 import '../login/login_screen.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/mahasiswa/app_bottom_nav.dart';
 import '../../utils/nav_mahasiswa.dart';
-import '../../services/user_service.dart';
-import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
@@ -24,32 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? _fotoProfile;
   final ImagePicker _picker = ImagePicker();
 
-  // Data dari SharedPreferences
-  String _namaLengkap = 'Sally Savista';
-  String _email = 'sally.savista@student.jti.ac.id';
-  String _nim = '244107060064';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDataUser();
-  }
-
-  Future<void> _loadDataUser() async {
-    final data = await UserService.getUserData();
-    setState(() {
-      if ((data['nama_lengkap'] as String).isNotEmpty) {
-        _namaLengkap = data['nama_lengkap'];
-      }
-      if ((data['email'] as String).isNotEmpty) {
-        _email = data['email'];
-      }
-      if ((data['nim'] as String).isNotEmpty) {
-        _nim = data['nim'];
-      }
-    });
-  }
-
+  // Method untuk pilih foto dari kamera atau galeri
   Future<void> _pilihFoto(ImageSource source) async {
     final XFile? picked = await _picker.pickImage(
       source: source,
@@ -64,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Tampilkan dialog pilihan sumber foto
   void _showPilihFotoDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -142,54 +120,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: ScrollConfiguration(
                 behavior: const ScrollBehavior().copyWith(overscroll: false),
                 child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics()),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildProfileCard(context),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Informasi Akademik'),
-                      const SizedBox(height: 10),
-                      _buildInfoCard(items: [
-                        _InfoItem(
-                          icon: Icons.school_outlined,
-                          label: 'Program Studi',
-                          value: 'Sistem Informasi Bisnis',
-                        ),
-                        _InfoItem(
-                          icon: Icons.menu_book_outlined,
-                          label: 'Semester',
-                          value: '4 (Genap 2025/2026)',
-                        ),
-                        _InfoItem(
-                          icon: Icons.person_outline,
-                          label: 'Dosen Pembimbing Akademik',
-                          value: 'Luqman Affandi, S.Kom., MMSI',
-                          isLast: true,
-                        ),
-                      ]),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Kontak'),
-                      const SizedBox(height: 10),
-                      _buildInfoCard(items: [
-                        _InfoItem(
-                          icon: Icons.email_outlined,
-                          label: 'Email',
-                          value: _email, // ← dari SharedPreferences
-                          valueColor: _primaryRed,
-                        ),
-                      ]),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Pengaturan'),
-                      const SizedBox(height: 10),
-                      _buildSettingsCard(context),
-                      const SizedBox(height: 24),
-                      _buildLogoutButton(context),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProfileCard(context),
+                    const SizedBox(height: 20),
+                    _buildSectionLabel('Informasi Akademik'),
+                    const SizedBox(height: 10),
+                    _buildInfoCard(items: [
+                      _InfoItem(
+                        icon: Icons.school_outlined,
+                        label: 'Program Studi',
+                        value: 'Sistem Informasi Bisnis',
+                      ),
+                      _InfoItem(
+                        icon: Icons.menu_book_outlined,
+                        label: 'Semester',
+                        value: '4 (Genap 2025/2026)',
+                      ),
+                      _InfoItem(
+                        icon: Icons.person_outline,
+                        label: 'Dosen Pembimbing Akademik',
+                        value: 'Luqman Affandi, S.Kom., MMSI',
+                        isLast: true,
+                      ),
+                    ]),
+                    const SizedBox(height: 20),
+                    _buildSectionLabel('Kontak'),
+                    const SizedBox(height: 10),
+                    _buildInfoCard(items: [
+                      _InfoItem(
+                        icon: Icons.email_outlined,
+                        label: 'Email',
+                        value: 'sally.savista@student.jti.ac.id',
+                        valueColor: _primaryRed,
+                      ),
+                    ]),
+                    const SizedBox(height: 20),
+                    _buildSectionLabel('Pengaturan'),
+                    const SizedBox(height: 10),
+                    _buildSettingsCard(context),
+                    const SizedBox(height: 24),
+                    _buildLogoutButton(context),
+                    const SizedBox(height: 8),
+                  ],
+                ),
                 ),
               ),
             ),
@@ -204,6 +181,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+
+  // ── Kartu profil utama
   Widget _buildProfileCard(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -222,84 +201,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          GestureDetector(
-            onTap: () => _showPilihFotoDialog(context),
-            child: Stack(
-              children: [
-                Container(
-                  width: 66,
-                  height: 66,
-                  decoration: const BoxDecoration(
-                    color: _primaryRed,
-                    shape: BoxShape.circle,
-                  ),
-                  child: _fotoProfile != null
-                      ? ClipOval(
-                          child: Image.file(
-                            _fotoProfile!,
-                            width: 66,
-                            height: 66,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Center(
-                          child: Text(
-                            // Inisial dari nama
-                            _namaLengkap.isNotEmpty
-                                ? _namaLengkap
-                                    .trim()
-                                    .split(' ')
-                                    .take(2)
-                                    .map((e) => e[0].toUpperCase())
-                                    .join()
-                                : 'SS',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
+          // Avatar dengan foto profil
+          Consumer<AuthProvider>(
+            builder: (context, auth, _) {
+              final sudahAdaFoto = auth.pengguna?.fotoProfil != null &&
+                  auth.pengguna!.fotoProfil!.isNotEmpty;
+              return GestureDetector(
+                onTap: sudahAdaFoto ? null : () => _showPilihFotoDialog(context),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 66,
+                      height: 66,
+                      decoration: const BoxDecoration(
+                        color: _primaryRed,
+                        shape: BoxShape.circle,
+                      ),
+                      child: _fotoProfile != null
+                          ? ClipOval(
+                              child: Image.file(
+                                _fotoProfile!,
+                                width: 66,
+                                height: 66,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : const Center(
+                              child: Text(
+                                'SS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
+                    ),
+                    // Badge kamera kecil di pojok bawah
+                    // Sembunyikan badge kalau foto sudah dipasang
+                    if (!sudahAdaFoto)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: _primaryRed,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 11,
                           ),
                         ),
+                      ),
+                  ],
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: _primaryRed,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 11),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(width: 16),
+          // Nama + NIM + badge
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _namaLengkap, // ← dari SharedPreferences
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: _textDark,
+                Consumer<AuthProvider>(
+                  builder: (context, auth, _) => Text(
+                    auth.pengguna?.namaLengkap ?? 'Nama',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: _textDark,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  _nim, // ← dari SharedPreferences
-                  style: const TextStyle(fontSize: 13, color: _textGrey),
+                FutureBuilder<SharedPreferences>(
+                  future: SharedPreferences.getInstance(),
+                  builder: (context, snap) {
+                    final nim = snap.data?.getString('nim') ?? '-';
+                    return Text(
+                      nim,
+                      style: const TextStyle(fontSize: 13, color: _textGrey),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFE5E5),
                     borderRadius: BorderRadius.circular(20),
@@ -330,23 +326,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          // Tombol edit → navigate ke EditProfileScreen
+          // Tombol edit
           GestureDetector(
-            onTap: () async {
-              final updated = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const EditProfileScreen()),
-              );
-              if (updated == true) _loadDataUser();
-            },
+            onTap: () => _showPilihFotoDialog(context),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFE5E5),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.edit_outlined, color: _primaryRed, size: 18),
+              child: const Icon(
+                Icons.edit_outlined,
+                color: _primaryRed,
+                size: 18,
+              ),
             ),
           ),
         ],
@@ -366,6 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ── Card info (akademik & kontak)
   Widget _buildInfoCard({required List<_InfoItem> items}) {
     return Container(
       width: double.infinity,
@@ -387,8 +381,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -405,9 +401,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.label,
-                              style: const TextStyle(
-                                  fontSize: 12, color: _textGrey)),
+                          Text(
+                            item.label,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _textGrey,
+                            ),
+                          ),
                           const SizedBox(height: 3),
                           Text(
                             item.value,
@@ -438,6 +438,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ── Card pengaturan
   Widget _buildSettingsCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -456,31 +457,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildSettingsTile(
             icon: Icons.lock_outline,
             label: 'Ubah Password',
-            trailing:
-                const Icon(Icons.chevron_right, color: _textGrey, size: 20),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: _textGrey,
+              size: 20,
+            ),
           ),
           const Divider(
-              height: 1,
-              thickness: 0.5,
-              color: Color(0xFFF0EBE0),
-              indent: 16,
-              endIndent: 16),
+            height: 1,
+            thickness: 0.5,
+            color: Color(0xFFF0EBE0),
+            indent: 16,
+            endIndent: 16,
+          ),
           _buildSettingsTile(
             icon: Icons.notifications_outlined,
             label: 'Notifikasi',
             trailing: _buildToggle(true),
           ),
           const Divider(
-              height: 1,
-              thickness: 0.5,
-              color: Color(0xFFF0EBE0),
-              indent: 16,
-              endIndent: 16),
+            height: 1,
+            thickness: 0.5,
+            color: Color(0xFFF0EBE0),
+            indent: 16,
+            endIndent: 16,
+          ),
           _buildSettingsTile(
             icon: Icons.help_outline,
             label: 'Bantuan & FAQ',
-            trailing:
-                const Icon(Icons.chevron_right, color: _textGrey, size: 20),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: _textGrey,
+              size: 20,
+            ),
           ),
         ],
       ),
@@ -507,11 +516,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: _textDark)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: _textDark,
+              ),
+            ),
           ),
           trailing,
         ],
@@ -534,12 +546,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 18,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: const BoxDecoration(
-              color: Colors.white, shape: BoxShape.circle),
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
         ),
       ),
     );
   }
 
+  // Tombol logout 
   Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
@@ -549,14 +564,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             context: context,
             builder: (ctx) => AlertDialog(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              title: const Text('Keluar dari Akun',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: _textDark)),
-              content: const Text('Yakin keluar dari akun?',
-                  style: TextStyle(fontSize: 14, color: _textGrey)),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Text(
+                'Keluar dari Akun',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _textDark,
+                ),
+              ),
+              content: const Text(
+                'Yakin keluar dari akun?',
+                style: TextStyle(fontSize: 14, color: _textGrey),
+              ),
               actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               actions: [
                 OutlinedButton(
@@ -564,57 +585,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: _primaryRed),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 10),
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
                   ),
-                  child: const Text('Tidak',
-                      style: TextStyle(
-                          color: _primaryRed, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Tidak',
+                    style: TextStyle(
+                      color: _primaryRed,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primaryRed,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 10),
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
                     elevation: 0,
                   ),
-                  child: const Text('Ya',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Ya',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
           );
           if (confirm == true && context.mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
+            await context.read<AuthProvider>().logout();
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.clear();
+            if (context.mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
+            }
           }
         },
         icon: const Icon(Icons.logout, color: Colors.white, size: 18),
-        label: const Text('Keluar',
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600)),
+        label: const Text(
+          'Keluar',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: _primaryRed,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
         ),
       ),
     );
   }
+
+
 }
 
+// ── Model data baris info
 class _InfoItem {
   final IconData icon;
   final String label;

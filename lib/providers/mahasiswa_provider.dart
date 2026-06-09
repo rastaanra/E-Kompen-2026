@@ -40,8 +40,17 @@ class MahasiswaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Cek jam alpha
-  Future<List<dynamic>> cekJamAlpha(int idMahasiswa) async {
-    return await _mahasiswaService.cekJamAlpha(idMahasiswa);
+  
+  List<dynamic> _homeData = [];
+  List<dynamic> get homeData => _homeData;
+
+  Future<void> getHomeData(int idMahasiswa) async {
+    _isLoading = true;
+    notifyListeners();
+
+    _homeData = await _mahasiswaService.getHomeData(idMahasiswa);
+
+    _isLoading = false;
+    notifyListeners();
   }
 }

@@ -20,8 +20,9 @@ class Mahasiswa {
       idMahasiswa: json['id_mahasiswa'],
       idPengguna: json['id_pengguna'],
       nim: json['nim'],
-      nama: json['nama'],
-      programStudi: json['program_studi'],
+      // coba 'nama' dulu, fallback ke 'nama_lengkap'
+      nama: json['nama'] ?? json['nama_lengkap'] ?? '',
+      programStudi: json['program_studi'] ?? '',
       isRegistered: json['is_registered'] == 1 || json['is_registered'] == true,
     );
   }

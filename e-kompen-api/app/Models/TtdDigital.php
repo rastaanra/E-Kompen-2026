@@ -13,4 +13,12 @@ class TtdDigital extends Model {
     public function pengajuanKompen() {
         return $this->belongsTo(PengajuanKompen::class, 'id_pengajuan', 'id_pengajuan');
     }
+    public function ttdDigital()
+    {
+        return $this->hasMany(
+            \App\Models\TtdDigital::class,
+            'id_pengajuan',
+            'id_pengajuan'
+        );
+    }
 }

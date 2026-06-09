@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/kaprodi/app_bottom_nav_kaprodi.dart';
 import '../../utils/nav_kaprodi.dart';
-import 'detail_verifikasi_screen.dart'; // ← import halaman detail
+import 'detail_verifikasi_view.dart'; // ← import halaman detail
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);

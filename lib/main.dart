@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tugas4_pm/views/login/login_screen.dart';
+import 'providers/auth_provider.dart';
 import 'views/mahasiswa/home_screen.dart';
 import 'theme/app_theme.dart';
-import 'views/login/login_screen.dart';
 import 'views/dosen/home_screen.dart';
 import 'views/splash/splash_screen.dart';
-
+import 'providers/mahasiswa_provider.dart';
+import 'providers/pengajuan_provider.dart';
 void main() {
   runApp(const KompenApp());
 }
@@ -15,11 +17,24 @@ class KompenApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Kompen App',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
-      home: const SplashScreen(),
+    return MultiProvider(
+      providers: [
+  ChangeNotifierProvider(
+    create: (_) => AuthProvider(),
+  ),
+  ChangeNotifierProvider(
+    create: (_) => MahasiswaProvider(),
+  ),
+  ChangeNotifierProvider(
+    create: (_) => PengajuanProvider(),
+  ),
+],
+      child: MaterialApp(
+        title: 'Kompen App',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.theme,
+        home: const SplashScreen(),
+      ),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -34,30 +36,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _register() {
-    if (_selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan pilih role terlebih dahulu'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pendaftaran berhasil! Silakan login.'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.pop(context);
-      });
-    }
+Future<void> _register() async {
+  if (_selectedRole == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Silakan pilih role terlebih dahulu'),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
   }
+
+  if (!_formKey.currentState!.validate()) return;
+
+  // 'Dosen/Kaprodi' di UI → kirim 'dosen' ke backend (sesuai pesan temanmu)
+  final String backendRole =
+      _selectedRole == 'Mahasiswa' ? 'mahasiswa' : 'dosen';
+
+  final Map<String, dynamic> data = {
+    'email': _emailController.text.trim(),
+    'password': _passwordController.text,
+    'role': backendRole,
+    if (_selectedRole == 'Mahasiswa')
+      'nim': _nimController.text.trim()
+    else
+      'nip': _nipController.text.trim(),
+  };
+
+  final provider = Provider.of<AuthProvider>(context, listen: false);
+  final success = await provider.register(data);
+
+  if (!mounted) return;
+
+  if (success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Pendaftaran berhasil! Silakan login.'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) Navigator.pop(context);
+    });
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(provider.errorMessage ?? 'Registrasi gagal'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
 
   Widget _buildRoleButton(String label, IconData icon) {
     final bool isSelected = _selectedRole == label;
@@ -294,17 +326,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Tombol Daftar
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _register,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primaryRed,
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'Daftar',
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          child: Consumer<AuthProvider>(
+                            builder: (context, auth, _) => ElevatedButton(
+                              onPressed: auth.isLoading ? null : _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _primaryRed,
+                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              child: auth.isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Daftar',
+                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                                    ),
                             ),
                           ),
                         ),

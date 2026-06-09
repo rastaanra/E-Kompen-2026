@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
+import 'pengajuan_screen.dart';
+import 'verifikasi_screen.dart';
 
 class DosenHomeScreen extends StatelessWidget {
   const DosenHomeScreen({super.key});
@@ -58,6 +60,7 @@ class DosenHomeScreen extends StatelessWidget {
                             count: jumlahVerifikasi,
                             emptyText: 'Tidak ada form',
                             onTap: () => NavDosen.toVerifikasi(context),
+                            alwaysTappable: true,
                           ),
                           const SizedBox(height: 20),
                           _buildSectionTitle('REKAPITULASI'),
@@ -200,6 +203,7 @@ class DosenHomeScreen extends StatelessWidget {
     required int count,
     required String emptyText,
     required VoidCallback onTap,
+    bool alwaysTappable = false,
   }) {
     final bool hasAction = count > 0;
     final Color bgColor = hasAction ? _primaryRed : const Color(0xFFBDB5A6);
@@ -210,7 +214,7 @@ class DosenHomeScreen extends StatelessWidget {
     final Color arrowColor = hasAction ? Colors.white.withOpacity(0.8) : const Color(0xFFA09890);
 
     return GestureDetector(
-      onTap: hasAction ? onTap : null,
+      onTap: hasAction || alwaysTappable ? onTap : null,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
