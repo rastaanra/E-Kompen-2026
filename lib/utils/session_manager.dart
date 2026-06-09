@@ -82,4 +82,9 @@ static Future<bool> getNotifikasiAktif() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getBool('notifikasi_aktif') ?? true;
 }
+
+static Future<int?> getIdDosen() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('id_dosen');
+}
 }
