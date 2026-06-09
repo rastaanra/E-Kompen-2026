@@ -72,4 +72,14 @@ static Future<String?> getNip() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('nip');
 }
+
+static Future<void> setNotifikasiAktif(bool value) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('notifikasi_aktif', value);
+}
+
+static Future<bool> getNotifikasiAktif() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('notifikasi_aktif') ?? true;
+}
 }

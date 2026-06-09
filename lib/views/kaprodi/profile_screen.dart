@@ -17,6 +17,7 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
   String namaKaprodi = '';
   String nip = '';
   String email = '';
+  bool notifikasiAktif = true;
 
   String get inisialKaprodi {
     if (namaKaprodi.isEmpty) return 'KP';
@@ -45,11 +46,13 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
     final nama = await SessionManager.getNamaLengkap();
     final nipUser = await SessionManager.getNip();
     final emailUser = await SessionManager.getEmail();
+    final notif = await SessionManager.getNotifikasiAktif();
 
     setState(() {
       namaKaprodi = nama ?? '-';
       nip = nipUser ?? '-';
       email = emailUser ?? '-';
+      notifikasiAktif = notif;
     });
   }
 
@@ -306,7 +309,7 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
           onTap: _showChangePasswordDialog,
         ),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
-        _buildSettingsTile(icon: Icons.notifications_outlined, label: 'Notifikasi', trailing: _buildToggle(true)),
+        _buildSettingsTile(icon: Icons.notifications_outlined, label: 'Notifikasi', trailing: _buildToggle()),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
         _buildSettingsTile(icon: Icons.help_outline, label: 'Bantuan & FAQ', trailing: const Icon(Icons.chevron_right, color: _textGrey, size: 20)),
       ]),
@@ -352,14 +355,40 @@ class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
     );
   }
 
-  Widget _buildToggle(bool isOn) {
-    return Container(
-      width: 38, height: 22,
-      decoration: BoxDecoration(color: isOn ? _primaryRed : Colors.grey.shade300, borderRadius: BorderRadius.circular(11)),
-      child: Align(
-        alignment: isOn ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(width: 18, height: 18, margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+  Widget _buildToggle() {
+    return GestureDetector(
+    onTap: () async {
+      final newValue = !notifikasiAktif;
+
+      await SessionManager.setNotifikasiAktif(newValue);
+
+      setState(() {
+        notifikasiAktif = newValue;
+      });
+    },
+      child: Container(
+        width: 38,
+        height: 22,
+        decoration: BoxDecoration(
+          color: notifikasiAktif
+              ? _primaryRed
+              : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Align(
+          alignment: notifikasiAktif
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
+          child: Container(
+            width: 18,
+            height: 18,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
       ),
     );
   }
