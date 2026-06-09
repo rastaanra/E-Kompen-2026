@@ -9,6 +9,7 @@ import '../../utils/nav_mahasiswa.dart';
 import '../../utils/session_manager.dart';
 import '../../services/auth_service.dart';
 import '../../providers/auth_provider.dart';
+import '../login/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -640,16 +641,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           );
+
+          // Jika user menekan tombol 'Ya'
           if (confirm == true && context.mounted) {
+            // 1. Simpan objek Navigator terlebih dahulu sebelum context berubah
+            final navigator = Navigator.of(context);
+
+            // 2. Bersihkan session data (Token / SharedPreferences)
             await SessionManager.hapus();
-            if (context.mounted) {
-              NavMahasiswa.handleBottomNav(context, NavTab.profil, NavTab.profil); 
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const Scaffold(body: Center(child: Text("Logging out...")))),
-                (route) => false,
-              );
-            }
+
+            // 3. Kick langsung ke halaman LoginScreen secara bersih tanpa sisa tumpukan page
+            navigator.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginScreen()), // 🟢 Pastikan mengarah ke LoginScreen() kamu
+              (route) => false,
+            );
           }
         },
         icon: const Icon(Icons.logout, color: Colors.white, size: 18),
