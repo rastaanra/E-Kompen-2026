@@ -2,14 +2,124 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/kaprodi/app_bottom_nav_kaprodi.dart';
 import '../../utils/nav_kaprodi.dart';
+import '../../utils/session_manager.dart';
+import '../../services/auth_service.dart';
 
-class ProfileKaprodiScreen extends StatelessWidget {
+class ProfileKaprodiScreen extends StatefulWidget {
   const ProfileKaprodiScreen({super.key});
+
+  @override
+  State<ProfileKaprodiScreen> createState() =>
+      _ProfileKaprodiScreenState();
+}
+
+class _ProfileKaprodiScreenState extends State<ProfileKaprodiScreen> {
+  String namaKaprodi = '';
+  String nip = '';
+  String email = '';
+
+  String get inisialKaprodi {
+    if (namaKaprodi.isEmpty) return 'KP';
+
+    final parts = namaKaprodi.trim().split(' ');
+
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    }
+
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final nama = await SessionManager.getNamaLengkap();
+    final nipUser = await SessionManager.getNip();
+    final emailUser = await SessionManager.getEmail();
+
+    setState(() {
+      namaKaprodi = nama ?? '-';
+      nip = nipUser ?? '-';
+      email = emailUser ?? '-';
+    });
+  }
+
+  void _showChangePasswordDialog() {
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Ubah Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: oldPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password Lama',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: newPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password Baru',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final idPengguna = await SessionManager.getIdPengguna();
+
+                if (idPengguna == null) return;
+
+                final result = await AuthService().changePassword(
+                  idPengguna: idPengguna,
+                  oldPassword: oldPasswordController.text,
+                  newPassword: newPasswordController.text,
+                );
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      result['message'] ?? 'Terjadi kesalahan',
+                    ),
+                  ),
+                );
+
+                if (result['success'] == true) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +153,7 @@ class ProfileKaprodiScreen extends StatelessWidget {
                         _InfoItem(
                           icon: Icons.email_outlined,
                           label: 'Email',
-                          value: 'kaprodi@jti.ac.id',
+                          value: email,
                           valueColor: _primaryRed,
                           isLast: true,
                         ),
@@ -86,15 +196,36 @@ class ProfileKaprodiScreen extends StatelessWidget {
           Container(
             width: 66, height: 66,
             decoration: const BoxDecoration(color: _primaryRed, shape: BoxShape.circle),
-            child: const Center(child: Text('KP', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700))),
+            child: Center(
+              child: Text(
+                inisialKaprodi,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Nama Kaprodi',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textDark)),
+              Text(
+                namaKaprodi,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _textDark,
+                ),
+              ),
               const SizedBox(height: 3),
-              const Text('NIP: 000000000000000000', style: TextStyle(fontSize: 13, color: _textGrey)),
+              Text(
+                'NIP: $nip',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _textGrey,
+                ),
+              ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -164,7 +295,16 @@ class ProfileKaprodiScreen extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(children: [
-        _buildSettingsTile(icon: Icons.lock_outline, label: 'Ubah Password', trailing: const Icon(Icons.chevron_right, color: _textGrey, size: 20)),
+       _buildSettingsTile(
+          icon: Icons.lock_outline,
+          label: 'Ubah Password',
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: _textGrey,
+            size: 20,
+          ),
+          onTap: _showChangePasswordDialog,
+        ),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
         _buildSettingsTile(icon: Icons.notifications_outlined, label: 'Notifikasi', trailing: _buildToggle(true)),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
@@ -173,19 +313,42 @@ class ProfileKaprodiScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsTile({required IconData icon, required String label, required Widget trailing}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(children: [
-        Container(
-          width: 38, height: 38,
-          decoration: BoxDecoration(color: const Color(0xFFFFE5E5), borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, color: _primaryRed, size: 18),
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String label,
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE5E5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: _primaryRed, size: 18),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _textDark,
+                ),
+              ),
+            ),
+            trailing,
+          ],
         ),
-        const SizedBox(width: 14),
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _textDark))),
-        trailing,
-      ]),
+      ),
     );
   }
 
@@ -228,6 +391,7 @@ class ProfileKaprodiScreen extends StatelessWidget {
             ),
           );
           if (confirm == true && context.mounted) {
+            await SessionManager.hapus();
             NavKaprodi.toLogin(context);
           }
         },

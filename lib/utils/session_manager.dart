@@ -63,4 +63,13 @@ static Future<String?> getNamaLengkap() async {
   final prefs = await SharedPreferences.getInstance();
   return prefs.getString('nama_lengkap');
 }
+static Future<String?> getEmail() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('email');
+}
+
+static Future<String?> getNip() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('nip');
+}
 }

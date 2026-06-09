@@ -32,6 +32,20 @@ class AuthService {
     return result['success'] ?? false;
   }
 
+  Future<Map<String, dynamic>> changePassword({
+    required int idPengguna,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    return await ApiService.post(
+      'auth/change-password/$idPengguna',
+      {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      },
+    );
+  }
+
   // Register akun baru
   // Sesuai class diagram: register(data: Map): bool
       // SESUDAH

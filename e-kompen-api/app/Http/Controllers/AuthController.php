@@ -190,4 +190,46 @@ class AuthController extends Controller
             'data'    => $user
         ]);
     }
+
+        // ==========================================
+        // CHANGE PASSWORD
+        // POST /api/auth/change-password/{id}
+        // Body: { old_password, new_password }
+        // ==========================================
+        public function changePassword(Request $request, $id)
+        {
+            $user = Pengguna::find($id);
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak ditemukan'
+                ], 404);
+            }
+
+            // Cek password lama
+            if (!Hash::check($request->old_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password lama tidak sesuai'
+                ], 400);
+            }
+
+            // Pastikan password baru berbeda
+            if ($request->old_password === $request->new_password) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password baru harus berbeda dari password lama'
+                ], 400);
+            }
+
+            $user->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password berhasil diubah'
+            ]);
+        }
 }
