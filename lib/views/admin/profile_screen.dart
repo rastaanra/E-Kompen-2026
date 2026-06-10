@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ambil data login asli
 import '../../widgets/app_header.dart';
 import '../../widgets/admin/app_bottom_nav_admin.dart';
 import '../../utils/nav_admin.dart';
+
+// Import file Screen yang lupa dihubunginnn:
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
+import 'bantuan_faq_screen.dart';
 
 class AdminProfileScreen extends StatefulWidget {
   const AdminProfileScreen({super.key});
@@ -18,8 +24,53 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
   bool _notifEnabled = true;
 
+  // Variabel penampung data login asli
+  String _namaLengkap = 'Loading...';
+  String _email = 'Loading...';
+  String _initials = 'AD';
+  String? _currentFotoPath; 
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  // Fungsi untuk meload data asli dari database/session login 
+Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nama = prefs.getString('nama_lengkap') ?? 'Admin E-Kompen';
+    final email = prefs.getString('email') ?? 'admin@jti.com';
+    String? foto = prefs.getString('foto_profil');
+
+    // Jika foto kosong, pastikan jadi null
+    String? fotoFix = (foto != null && foto.startsWith('http')) ? foto : null;
+
+    String initials = '';
+    final nameParts = nama.trim().split(' ');
+    if (nameParts.length >= 2) {
+      initials = '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
+    } else if (nameParts.isNotEmpty && nameParts[0].isNotEmpty) {
+      initials = nameParts[0][0].toUpperCase();
+    }
+
+    if (mounted) {
+      setState(() {
+        _namaLengkap = nama;
+        _email = email;
+        _initials = initials;
+        _currentFotoPath = fotoFix;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Evaluasi akhir sebelum render image network
+    final bool isFotoValid = _currentFotoPath != null && 
+    _currentFotoPath!.isNotEmpty && 
+    _currentFotoPath!.startsWith('http');
+
     return Scaffold(
       backgroundColor: _primaryRed,
       body: Column(
@@ -55,84 +106,93 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                       ),
                       child: Row(
                         children: [
-                          Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 36,
-                                backgroundColor: _primaryRed,
-                                child: const Text(
-                                  'LA',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: Container(
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color: Colors.white, width: 2),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    size: 12,
-                                    color: _primaryRed,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          // ─ AVATAR BERSIH DENGAN AMAN ─
+                        CircleAvatar(
+                            radius: 36,
+                            backgroundColor: _primaryRed,
+                            child: _currentFotoPath != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      '$_currentFotoPath',
+                                      fit: BoxFit.cover,
+                                      width: 72,
+                                      height: 72,
+                                      errorBuilder: (ctx, err, stack) => Text(_initials, style: const TextStyle(color: Colors.white, fontSize: 20)),
+                                    ),
+                                  )
+                                : Text(_initials, style: const TextStyle(color: Colors.white, fontSize: 20)),
                           ),
                           const SizedBox(width: 16),
+                          // ─ BAGIAN DETAIL NAMA & BADGE ─
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Luqman Affandi, S.Kom., MMSI',
-                                  style: TextStyle(
+                                Text(
+                                  _namaLengkap,
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 15,
                                     color: _textDark,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'NIP: 198803012015041001',
-                                  style: TextStyle(
-                                      fontSize: 12, color: _textGrey),
-                                ),
                                 const SizedBox(height: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: _primaryRed.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Text(
-                                    'Admin',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: _primaryRed,
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'Admin Aktif',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: _primaryRed,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
+
+                          // ─ TOMBOL EDIT ─
                           GestureDetector(
-                            onTap: () {},
-                            child: const Icon(Icons.edit_outlined,
-                                color: _primaryRed, size: 20),
+                            onTap: () async {
+                              final updated = await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                              );
+                              if (updated == true) {
+                                _loadProfileData();
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: _primaryRed.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.edit_outlined,
+                                color: _primaryRed,
+                                size: 18,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -174,21 +234,24 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                                 color: _primaryRed, size: 18),
                           ),
                           const SizedBox(width: 12),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Email',
-                                  style: TextStyle(
-                                      fontSize: 11, color: _textGrey)),
-                              Text(
-                                'luqman.affandi@dosen.jti.ac.id',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: _primaryRed,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Email',
+                                    style: TextStyle(
+                                        fontSize: 11, color: _textGrey)),
+                                Text(
+                                  _email, // Email dinamis asli database
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: _primaryRed,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -223,7 +286,12 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                           _buildSettingsTile(
                             icon: Icons.lock_outline,
                             label: 'Ubah Password',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                              );
+                            },
                           ),
                           const Divider(height: 1, indent: 54),
                           // Notifikasi
@@ -263,7 +331,12 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                           _buildSettingsTile(
                             icon: Icons.help_outline,
                             label: 'Bantuan & FAQ',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const BantuanFaqScreen()),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -274,14 +347,12 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        // SESUDAH — muncul dialog konfirmasi dulu
                         onPressed: () {
                           showDialog(
                             context: context,
                             builder: (ctx) => AlertDialog(
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
+                                  borderRadius: BorderRadius.circular(20)),
                               title: const Text(
                                 'Keluar dari Akun',
                                 textAlign: TextAlign.center,

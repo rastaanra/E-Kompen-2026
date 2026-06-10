@@ -11,11 +11,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // ==========================================
     // LOGIN
     // POST /api/auth/login
     // Body: { email, password }
-    // ==========================================
     public function login(Request $request)
     {
         $user = Pengguna::where('email', $request->email)->first();
@@ -31,7 +29,6 @@ class AuthController extends Controller
             } elseif ($user->role === 'dosen') {
                 $roleData = Dosen::where('id_pengguna', $user->id_pengguna)->first();
 
-                // Cek apakah dosen ini adalah kaprodi
                 if ($roleData && $roleData->is_kaprodi) {
                     $role = 'kaprodi';
                 }
@@ -39,6 +36,7 @@ class AuthController extends Controller
             } elseif ($user->role === 'admin') {
                 $roleData = Admin::where('id_pengguna', $user->id_pengguna)->first();
             }
+
 
             return response()->json([
                 'success'   => true,
@@ -54,15 +52,13 @@ class AuthController extends Controller
         ], 401);
     }
 
-    // ==========================================
     // REGISTER
     // POST /api/auth/register
     // Body: { email, password, role, nim (mahasiswa) / nip (dosen) }
-    // Note: nama_lengkap diambil dari tabel mahasiswa/dosen
-    // ==========================================
+    // Note: nama_lengkap ituuu diambil dari tabel mahasiswa/dosen
     public function register(Request $request)
     {
-        // Cek email sudah terdaftar atau belum
+        // Cek email udh kedaftar?
         $emailExist = Pengguna::where('email', $request->email)->first();
         if ($emailExist) {
             return response()->json([
@@ -145,10 +141,8 @@ class AuthController extends Controller
         ], 400);
     }
 
-    // ==========================================
     // LOGOUT
     // POST /api/auth/logout
-    // ==========================================
     public function logout()
     {
         return response()->json([
@@ -157,60 +151,60 @@ class AuthController extends Controller
         ]);
     }
 
-// ==========================================
-    // UPDATE PROFILE (SUDAH DISINKRONKAN ANTAR TABEL)
+    // UPDATE PROFILE (SUDAH DISINKRONKAN ANTAR TABEL BISMILLAH)
     // PUT /api/auth/update-profile/{id}
-    // Body: { nama_lengkap, email, foto_profil (hanya sekali) }
-    // ==========================================
-    public function updateProfile(Request $request, $id)
-    {
-        $user = Pengguna::find($id);
+    // Body: { nama_lengkap, email, foto_profil }
+public function updateProfile(Request $request, $id)
+{
+    $pengguna = Pengguna::find($id);
+    if (!$pengguna) {
+        return response()->json(['success' => false, 'message' => 'User tidak ditemukan'], 404);
+    }
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan'
-            ], 404);
+    // Update Nama dan sinkronin ke tabel role
+    if ($request->has('nama_lengkap')) {
+        $namaBaru = $request->input('nama_lengkap');
+        $pengguna->nama_lengkap = $namaBaru;
+
+        if ($pengguna->role === 'admin') {
+            $admin = Admin::where('id_pengguna', $id)->first();
+            if ($admin) { $admin->update(['nama' => $namaBaru]); }
+        } elseif ($pengguna->role === 'dosen') {
+            $dosen = Dosen::where('id_pengguna', $id)->first();
+            if ($dosen) { $dosen->update(['nama_lengkap' => $namaBaru]); }
+        } elseif ($pengguna->role === 'mahasiswa') {
+            $mahasiswa = Mahasiswa::where('id_pengguna', $id)->first();
+            if ($mahasiswa) { $mahasiswa->update(['nama_lengkap' => $namaBaru]); }
         }
+    }
 
-        $data = $request->except('password');
-
-        // Foto profil hanya bisa diupload sekali, tidak bisa diganti
-        if ($user->foto_profil && isset($data['foto_profil'])) {
-            unset($data['foto_profil']);
-        }
-
-        // 1. Update data di tabel utama (pengguna) terlebih dahulu
-        $user->update($data);
-
-        // 2. 🟢 SINKRONISASI OTOMATIS: Jika nama_lengkap ikut diubah, update juga tabel relasinya
-        if (isset($data['nama_lengkap'])) {
-            if ($user->role === 'mahasiswa') {
-                Mahasiswa::where('id_pengguna', $user->id_pengguna)
-                    ->update(['nama_lengkap' => $data['nama_lengkap']]);
-
-            } elseif ($user->role === 'dosen') {
-                Dosen::where('id_pengguna', $user->id_pengguna)
-                    ->update(['nama_lengkap' => $data['nama_lengkap']]);
-
-            } elseif ($user->role === 'admin') {
-                Admin::where('id_pengguna', $user->id_pengguna)
-                    ->update(['nama_lengkap' => $data['nama_lengkap']]);
+    // Foto Profil
+    if ($request->hasFile('foto_profil')) {
+        if ($pengguna->foto_profil) {
+            // Hapus file lama dari storage
+            $pathLama = str_replace(url('storage/'), '', $pengguna->foto_profil);
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($pathLama)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($pathLama);
             }
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Profil berhasil diupdate dan disinkronkan di semua tabel! ✨',
-            'data'    => $user
-        ]);
+        $file = $request->file('foto_profil');
+        $path = $file->store('profil', 'public');
+        $pengguna->foto_profil = url('storage/' . $path);
     }
 
-        // ==========================================
+    $pengguna->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Profil dan sinkronisasi data berhasil!',
+        'data' => $pengguna
+    ], 200);
+}
+
         // CHANGE PASSWORD
         // POST /api/auth/change-password/{id}
         // Body: { old_password, new_password }
-        // ==========================================
         public function changePassword(Request $request, $id)
         {
             $user = Pengguna::find($id);

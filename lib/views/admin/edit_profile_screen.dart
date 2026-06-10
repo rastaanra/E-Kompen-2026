@@ -1,7 +1,13 @@
+import 'dart:io'; // Untuk handle file foto
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
 import '../../widgets/app_header.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/session_manager.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -24,7 +30,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isFetching = true;
 
   String? _idPengguna;
-  String? _nip; // hanya ditampilkan, tidak bisa diedit
+  String _fotoProfilUrl = ''; 
 
   @override
   void initState() {
@@ -34,51 +40,173 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+    String savedFoto = prefs.getString('foto_profil') ?? '';
+
+    if (savedFoto.isNotEmpty && !savedFoto.startsWith('http')) {
+      savedFoto = ''; 
+    }
+
     setState(() {
       _idPengguna = prefs.getInt('id_pengguna')?.toString();
       _namaController.text = prefs.getString('nama_lengkap') ?? '';
       _emailController.text = prefs.getString('email') ?? '';
-      // NIP disimpan saat login dari role_data
-      _nip = prefs.getString('nip') ?? '-';
+      _fotoProfilUrl = savedFoto; 
       _isFetching = false;
     });
   }
 
-  Future<void> _simpan() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_idPengguna == null) return;
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ganti Foto Profil',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: _primaryRed),
+                title: const Text('Ambil Foto dari Kamera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: _primaryRed),
+                title: const Text('Pilih dari Galeri'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    
+    final XFile? image = await picker.pickImage(
+      source: source,
+      imageQuality: 50, 
+    );
+    
+    if (image == null) return; 
+
+    final File imageFile = File(image.path);
     setState(() => _isLoading = true);
 
     try {
-      final result = await ApiService.put(
-        'auth/update-profile/$_idPengguna',
-        {
-          'nama_lengkap': _namaController.text.trim(),
-          'email': _emailController.text.trim(),
-        },
-      );
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final bool statusSukses = await authProvider.uploadFotoProfilOnce(imageFile);
+
+      if (statusSukses) {
+        final dynamic penggunaData = authProvider.pengguna;
+        String? newFotoUrl;
+        
+        if (penggunaData != null) {
+          if (penggunaData is Map) {
+            final fotoRaw = penggunaData['foto_profil'];
+            if (fotoRaw is Map) {
+              newFotoUrl = fotoRaw['foto_profil_full'] ?? fotoRaw['foto_profil']?.toString();
+            } else {
+              newFotoUrl = fotoRaw?.toString();
+            }
+          } else {
+            newFotoUrl = authProvider.pengguna?.fotoProfil?.toString();
+          }
+        }
+
+        if (newFotoUrl != null && newFotoUrl.isNotEmpty && newFotoUrl != 'null' && newFotoUrl.startsWith('http')) {
+          await SessionManager.setFotoProfil(newFotoUrl);
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('foto_profil', newFotoUrl);
+          
+          setState(() {
+            _fotoProfilUrl = newFotoUrl!;
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Foto profil berhasil dipasang! ✨"),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          setState(() {
+            _fotoProfilUrl = '';
+          });
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('foto_profil', '');
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Profil tersinkronisasi (Menggunakan Inisial)."),
+                backgroundColor: Colors.blue,
+              ),
+            );
+          }
+        }
+      } else {
+        _showError(authProvider.errorMessage ?? "Gagal memasang foto profil");
+      }
+    } catch (e) {
+      print("CRASH ERROR DETAIL: $e");
+      _showError("Terjadi kesalahan sistem: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+Future<void> _simpan() async {
+    if (!_formKey.currentState!.validate()) {
+      _showError('Nama tidak boleh kosong!');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ApiService.put('auth/update-profile/$_idPengguna', {
+        'nama_lengkap': _namaController.text.trim(),
+        'email': _emailController.text.trim(),
+      });
 
       if (!mounted) return;
 
       if (result['success'] == true) {
-        // Update SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('nama_lengkap', _namaController.text.trim());
-        await prefs.setString('email', _emailController.text.trim());
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil berhasil diperbarui'),
-            backgroundColor: _primaryRed,
-          ),
-        );
-        Navigator.pop(context, true); // kirim true supaya halaman profil refresh
+        final fotoBaru = result['data']['foto_profil'];
+        if (fotoBaru != null && fotoBaru.toString().startsWith('http')) {
+          await prefs.setString('foto_profil', fotoBaru.toString());
+        } else {
+          await prefs.remove('foto_profil'); 
+        }
+
+        Navigator.pop(context, true); 
       } else {
         _showError(result['message'] ?? 'Gagal memperbarui profil');
       }
     } catch (e) {
-      _showError('Terjadi kesalahan. Coba lagi.');
+      _showError('Terjadi kesalahan koneksi.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -99,6 +227,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isFotoAda = _fotoProfilUrl.isNotEmpty &&
+    _fotoProfilUrl != 'null' &&
+    _fotoProfilUrl.startsWith('http');
+
     return Scaffold(
       backgroundColor: _primaryRed,
       body: Column(
@@ -117,235 +249,184 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ? const Center(
                       child: CircularProgressIndicator(color: _primaryRed),
                     )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Judul
-                            Row(
+                  : Stack(
+                      children: [
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                GestureDetector(
-                                  onTap: () => Navigator.pop(context),
-                                  child: const Icon(Icons.arrow_back_ios,
-                                      color: _primaryRed, size: 20),
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => Navigator.pop(context),
+                                      child: const Icon(Icons.arrow_back_ios,
+                                          color: _primaryRed, size: 20),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Edit Profil',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: _textDark,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(height: 28),
+
+                                // 📸 FOTO PROFILE
+                                Center(
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Container(
+                                        width: 96,
+                                        height: 96,
+                                        decoration: const BoxDecoration(
+                                          color: _primaryRed,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: isFotoAda 
+                                            ? ClipOval(
+                                                child: Image.network(
+                                                  '$_fotoProfilUrl?v=${DateTime.now().millisecondsSinceEpoch}',
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (ctx, err, stack) => Center(
+                                                    child: Text(
+                                                      _namaController.text.isNotEmpty
+                                                          ? _namaController.text.trim().split(' ').take(2).map((w) => w[0].toUpperCase()).join()
+                                                          : 'AD',
+                                                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Center(
+                                                child: Text(
+                                                  _namaController.text.isNotEmpty
+                                                      ? _namaController.text.trim().split(' ').take(2).map((w) => w[0].toUpperCase()).join()
+                                                      : 'AD', 
+                                                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+                                                ),
+                                              ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: -4,
+                                        child: GestureDetector(
+                                          onTap: isFotoAda ? null : _showPhotoOptions, 
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: isFotoAda ? Colors.grey[400] : Colors.white, 
+                                              shape: BoxShape.circle,
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  color: Colors.black12,
+                                                  blurRadius: 4,
+                                                  offset: Offset(0, 2),
+                                                )
+                                              ],
+                                            ),
+                                            child: Icon(
+                                              Icons.camera_alt, 
+                                              color: isFotoAda ? Colors.white : _primaryRed, 
+                                              size: 18
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 35),
+
                                 const Text(
-                                  'Edit Profil',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: _textDark,
+                                  'Nama Lengkap',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _textDark),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _namaController,
+                                  style: const TextStyle(fontSize: 15, color: _textDark),
+                                  decoration: InputDecoration(
+                                    hintText: 'Masukkan nama lengkap',
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Nama lengkap tidak boleh kosong';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+
+                                const Text(
+                                  'Alamat Email',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _textDark),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _emailController,
+                                  readOnly: true, 
+                                  style: const TextStyle(fontSize: 15, color: _textGrey),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.grey[200],
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    prefixIcon: const Icon(Icons.lock_outline, size: 18, color: _textGrey),
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
+
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _simpan,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _primaryRed,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                          )
+                                        : const Text(
+                                            'Simpan Perubahan',
+                                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                                          ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 28),
-
-                            // Avatar
-                            Center(
-                              child: Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 48,
-                                    backgroundColor: _primaryRed,
-                                    child: Text(
-                                      _namaController.text.isNotEmpty
-                                          ? _namaController.text
-                                              .trim()
-                                              .split(' ')
-                                              .take(2)
-                                              .map((w) => w[0].toUpperCase())
-                                              .join()
-                                          : 'AD',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-
-                            // NIP — read only
-                            const Text(
-                              'NIP',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _textGrey,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    _nip ?? '-',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: _textGrey,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  const Icon(Icons.lock_outline,
-                                      size: 16, color: _textGrey),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'NIP tidak dapat diubah',
-                              style:
-                                  TextStyle(fontSize: 11, color: _textGrey),
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Nama Lengkap
-                            const Text(
-                              'Nama Lengkap',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _textGrey,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _namaController,
-                              textCapitalization: TextCapitalization.words,
-                              decoration: _inputDecoration(
-                                hint: 'Masukkan nama lengkap',
-                                icon: Icons.person_outline,
-                              ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'Nama tidak boleh kosong';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-
-                            // Email
-                            const Text(
-                              'Email',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _textGrey,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: _inputDecoration(
-                                hint: 'Masukkan email',
-                                icon: Icons.email_outlined,
-                              ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'Email tidak boleh kosong';
-                                }
-                                if (!v.contains('@')) {
-                                  return 'Format email tidak valid';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 36),
-
-                            // Tombol Simpan
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _simpan,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primaryRed,
-                                  disabledBackgroundColor:
-                                      _primaryRed.withOpacity(0.6),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Simpan Perubahan',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String hint,
-    required IconData icon,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: _textGrey, fontSize: 14),
-      prefixIcon: Icon(icon, color: _primaryRed, size: 20),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _primaryRed, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red),
       ),
     );
   }
