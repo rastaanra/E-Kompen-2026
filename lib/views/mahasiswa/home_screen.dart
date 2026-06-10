@@ -241,9 +241,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
         for (var item in provider.homeData) {
           totalSisa += (item['sisa_jam'] as int);
-          totalSelesai += (item['jam_selesai'] as int);
+          totalSelesai += int.tryParse(
+  item['jam_selesai']?.toString() ?? '0',
+) ?? 0;
         }
-
         return Row(
           children: [
             Expanded(
