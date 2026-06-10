@@ -388,7 +388,7 @@ Row(
     const SizedBox(width: 12),
     Expanded(
       child: ElevatedButton.icon(
-onPressed: sudahTTD
+        onPressed: sudahTTD
     ? null
     : () async {
         final success =
@@ -398,22 +398,22 @@ onPressed: sudahTTD
 
         setLocal(() => sudahTTD = true);
 
-        Navigator.pop(ctx);
-      }
-    },
-        icon: Icon(Icons.check,
-            size: 16,
-            color: sudahTTD ? Colors.grey[500] : Colors.white),
-        label: Text('Tandatangani',
-            style: TextStyle(
-                color: sudahTTD ? Colors.grey[500] : Colors.white)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-        ),
+              Navigator.pop(ctx);
+            }
+          },
+              icon: Icon(Icons.check,
+                  size: 16,
+                  color: sudahTTD ? Colors.grey[500] : Colors.white),
+              label: Text('Tandatangani',
+                  style: TextStyle(
+                      color: sudahTTD ? Colors.grey[500] : Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
       ),
     ),
   ],
