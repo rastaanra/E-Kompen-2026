@@ -6,6 +6,8 @@ import '../../utils/session_manager.dart';
 import '../../services/pengajuan_service.dart'; 
 import '../../models/pengajuan_kompen.dart';    
 import 'pengajuan_screen.dart';
+import '../../services/notifikasi_service.dart';
+import '../../views/notifikasi/notifikasi_screen.dart';
 // Jika file verifikasi_screen.dart belum kamu buat, silakan komen/hapus baris import di bawah ini:
 // import 'verifikasi_screen.dart';
 
@@ -18,7 +20,7 @@ class DosenHomeScreen extends StatefulWidget {
 
 class _DosenHomeScreenState extends State<DosenHomeScreen> {
   List<PengajuanKompen> pengajuanList = [];
-  
+  bool hasUnreadNotif = false;
   int jumlahPengajuan = 0;
   int jumlahVerifikasi = 0;
   int totalMahasiswa = 0;
@@ -38,6 +40,25 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
     super.initState();
     _loadUser();
     _loadDataDariAPI(); 
+    _loadNotif();
+  }
+
+  Future<void> _loadNotif() async {
+    try {
+      final idPengguna = await SessionManager.getIdPengguna();
+
+      if (idPengguna == null) return;
+
+      final notif =
+          await NotifikasiService().getNotifikasi(idPengguna);
+
+      setState(() {
+        hasUnreadNotif =
+            notif.any((n) => n.sudahDilihat == false);
+      });
+    } catch (e) {
+      debugPrint('Notif error: $e');
+    }
   }
 
   Future<void> _loadUser() async {
@@ -84,7 +105,19 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+      AppHeader(
+        hasUnreadNotif: hasUnreadNotif,
+        onNotifTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const NotifikasiScreen(),
+            ),
+          );
+
+          _loadNotif(); // refresh badge
+        },
+      ), 
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -360,4 +393,6 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
       ),
     );
   }
+
+  
 }

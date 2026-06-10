@@ -20,4 +20,11 @@ class NotifikasiService {
     }
     return [];
   }
+
+  Future<bool> lihatSemua(int idPengguna) async {
+    final result =
+        await ApiService.put('notifikasi/$idPengguna/lihat', {});
+
+    return result['success'] ?? false;
+  }
 }

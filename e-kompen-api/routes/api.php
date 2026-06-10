@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AbsensiController;
 use App\Http\Controllers\API\PengajuanKompenController;
 use App\Http\Controllers\API\TtdDigitalController;
 use App\Http\Controllers\API\MataKuliahController;
+use App\Http\Controllers\API\NotifikasiController;
 // ==========================================
 // TEST KONEKSI
 // ==========================================
@@ -92,4 +93,14 @@ Route::get(
 
 // MATA KULIAH
 Route::get('/mata-kuliah/{idMahasiswa}',        [MataKuliahController::class, 'index']);
+
+//Notifikasi
+Route::get(
+    '/notifikasi/{id_pengguna}',
+    [NotifikasiController::class, 'getByPengguna']
+);
+Route::put(
+    '/notifikasi/{id_pengguna}/lihat',
+    [NotifikasiController::class, 'lihatSemua']
+);
 

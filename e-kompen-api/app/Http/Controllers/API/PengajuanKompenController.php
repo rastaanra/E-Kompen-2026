@@ -11,6 +11,7 @@ use App\Models\TtdDigital;
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\MataKuliah;
+use App\Models\Notifikasi;
 
 class PengajuanKompenController extends Controller
 {
@@ -116,6 +117,32 @@ class PengajuanKompenController extends Controller
             'total_jam_kompen'  => $request->total_jam_kompen,
             'status'            => 'pending',
         ]);
+                $idPenggunaTujuan = null;
+
+        if ($request->tujuan === 'dosen') {
+            $dosen = Dosen::find($request->id_dosen);
+
+            if ($dosen) {
+                $idPenggunaTujuan = $dosen->id_pengguna;
+            }
+        } else {
+            $admin = Admin::find($request->id_admin);
+
+            if ($admin) {
+                $idPenggunaTujuan = $admin->id_pengguna;
+            }
+        }
+
+        if ($idPenggunaTujuan) {
+            Notifikasi::create([
+                'id_pengajuan'   => $data->id_pengajuan,
+                'id_pengguna'    => $idPenggunaTujuan,
+                'judul'          => 'Pengajuan Kompen Baru',
+                'pesan'          => 'Ada pengajuan kompen baru yang perlu ditinjau.',
+                'waktu_kirim'    => now(),
+                'sudah_dilihat'  => 0,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
