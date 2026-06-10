@@ -86,6 +86,22 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
     return [];
   }
 
+  Future<List<PengajuanKompen>> getPengajuanDosen(int idDosen) async {
+    final data = await ApiService.get(
+      'pengajuan-kompen/dosen/$idDosen',
+    );
+
+    print('DOSEN RESPONSE = $data');
+
+    if (data['success']) {
+      return (data['data'] as List)
+          .map((item) => PengajuanKompen.fromJson(item))
+          .toList();
+    }
+
+    return [];
+  }
+
   // Update lokasi pengerjaan kompen
   // Sesuai class diagram: setLokasi / updateLokasi
   Future<bool> updateLokasi(int idPengajuan, double lat, double long, String namaLokasi) async {
@@ -217,6 +233,17 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
     return result['data'] ?? [];
   }
 
+    Future<bool> ttdDosen(int idPengajuan) async {
+    final result = await ApiService.post(
+      'ttd/$idPengajuan/ttd',
+      {},
+    );
+
+    print('TTD DOSEN RESULT = $result');
+
+    return result['success'] == true;
+  }
+
   Future<Map<String, dynamic>?> getKaprodi() async {
     final data = await ApiService.get('kaprodi');
 
@@ -226,21 +253,12 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
 
     return null;
   }
-
-  // 🟢 Tambahkan ini di bagian paling bawah class PengajuanService (sebelum penutup class '}')
-  Future<List<PengajuanKompen>> getPengajuanDosen() async {
-    final data = await ApiService.get(
-      'pengajuan-kompen/dosen', // ⚠️ Sesuaikan endpoint URL dari backend untuk dosen jika berbeda
+  Future<bool> konfirmasiPengajuan(int idPengajuan) async {
+    final result = await ApiService.put(
+      'pengajuan-kompen/$idPengajuan/konfirmasi',
+      {},
     );
 
-    print('DATA DOSEN = ${data['data']}');
-
-    if (data['success']) {
-      return (data['data'] as List)
-          .map((item) => PengajuanKompen.fromJson(item))
-          .toList();
-    }
-
-    return [];
+    return result['success'] == true;
   }
 }

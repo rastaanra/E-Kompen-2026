@@ -3,10 +3,11 @@ import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
 import '../../utils/session_manager.dart';
-import '../../services/pengajuan_service.dart'; // 🟢 Mengambil service yang sama
-import '../../models/pengajuan_kompen.dart';    // 🟢 Mengambil model data yang sama
+import '../../services/pengajuan_service.dart'; 
+import '../../models/pengajuan_kompen.dart';    
 import 'pengajuan_screen.dart';
-import 'verifikasi_screen.dart';
+// Jika file verifikasi_screen.dart belum kamu buat, silakan komen/hapus baris import di bawah ini:
+// import 'verifikasi_screen.dart';
 
 class DosenHomeScreen extends StatefulWidget {
   const DosenHomeScreen({super.key});
@@ -16,10 +17,8 @@ class DosenHomeScreen extends StatefulWidget {
 }
 
 class _DosenHomeScreenState extends State<DosenHomeScreen> {
-  // 🟢 List penampung data asli dari API
   List<PengajuanKompen> pengajuanList = [];
   
-  // 🟢 Variabel rekapitulasi & tindakan (Awalnya di-set 0, nanti diisi via API)
   int jumlahPengajuan = 0;
   int jumlahVerifikasi = 0;
   int totalMahasiswa = 0;
@@ -38,7 +37,7 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
   void initState() {
     super.initState();
     _loadUser();
-    _loadDataDariAPI(); // 🟢 Panggil fungsi API pas halaman dibuka
+    _loadDataDariAPI(); 
   }
 
   Future<void> _loadUser() async {
@@ -50,28 +49,28 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
     }
   }
 
-  // 🟢 FUNGSI UTAMA: Ambil data real-time dari API backend
   Future<void> _loadDataDariAPI() async {
     try {
-      // Sesuaiin dengan nama fungsi fetch khusus dosen di PengajuanService-mu (misal: getPengajuanDosen)
-      final data = await PengajuanService().getPengajuanDosen(); 
+      final idDosen = await SessionManager.getIdDosen();
+      if (idDosen == null) return;
+      
+      final data = await PengajuanService().getPengajuanDosen(idDosen);
 
       setState(() {
         pengajuanList = data;
 
-        // 1. Hitung jumlah tindakan Konfirmasi Pengajuan (yang butuh ttd/persetujuan dosen)
-        // Silakan sesuaikan string statusnya dengan response enum dari backend-mu
-        jumlahPengajuan = data.where((p) => p.status == 'menunggu_persetujuan_dosen').length;
+        // 1. Menghitung pengajuan yang berstatus 'pending' (Menunggu Persetujuan) seperti di screen pengajuan
+        jumlahPengajuan = data.where((p) => p.status == 'pending').length;
         
-        // 2. Hitung jumlah tindakan Tanda Tangan Penyelesaian (kalau alurnya ada 2 tahap)
+        // 2. Menghitung jumlah tindakan Tanda Tangan Penyelesaian
         jumlahVerifikasi = data.where((p) => p.status == 'menunggu_ttd_dosen').length;
 
-        // 3. Hitung jumlah Unik Mahasiswa yang ditangani oleh Dosen ini
-        totalMahasiswa = data.map((p) => p.idMahasiswa).toSet().length;
+        // 3. 🟢 PERBAIKAN: Menggunakan NIM atau namaMahasiswa untuk menghitung total Unik Mahasiswa agar tidak merah
+        totalMahasiswa = data.map((p) => p.nim ?? p.namaMahasiswa).toSet().length;
 
-        // 4. Hitung data rekapitulasi berdasarkan status kompen
-        totalDisetujui = data.where((p) => p.status == 'disetujui').length;
-        totalMenunggu = data.where((p) => p.status == 'menunggu_persetujuan_dosen' || p.status == 'menunggu_ttd_dosen').length;
+        // 4. Hitung data rekapitulasi berdasarkan kondisi status kompen
+        totalDisetujui = data.where((p) => p.status != 'pending').length;
+        totalMenunggu = data.where((p) => p.status == 'pending' || p.status == 'menunggu_ttd_dosen').length;
         totalSelesai = data.where((p) => p.status == 'selesai').length;
       });
     } catch (e) {
@@ -106,7 +105,6 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
                         children: [
                           _buildSectionTitle('PERLU TINDAKAN'),
                           const SizedBox(height: 12),
-                          // 🟢 Dinamis: Otomatis terkunci abu-abu jika jumlahPengajuan dari API adalah 0
                           _buildActionCard(
                             context: context,
                             icon: Icons.list_alt_outlined,
@@ -116,14 +114,17 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
                             onTap: () => NavDosen.toPengajuan(context),
                           ),
                           const SizedBox(height: 12),
-                          // 🟢 Dinamis: Otomatis terkunci abu-abu jika jumlahVerifikasi dari API adalah 0
                           _buildActionCard(
                             context: context,
                             icon: Icons.draw_outlined,
                             label: 'Tanda Tangan Penyelesaian',
                             count: jumlahVerifikasi,
                             emptyText: 'Tidak ada form',
-                            onTap: () => NavDosen.toVerifikasi(context),
+                            onTap: () {
+                              // Navigasi dialihkan sementara jika verifikasi_screen belum ada
+                              // atau tetap menggunakan fungsi NavDosen milikmu
+                              NavDosen.handleBottomNav(context, NavTabDosen.pengajuan, NavTabDosen.home);
+                            },
                           ),
                           const SizedBox(height: 20),
                           _buildSectionTitle('REKAPITULASI'),
@@ -317,7 +318,6 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
     );
   }
 
-  // 🟢 REKAPITULASI SEKARANG 100% DINAMIS: Menghitung dari hasil data list API Dosen
   Widget _buildRekapitulasiSection() {
     return Column(
       children: [

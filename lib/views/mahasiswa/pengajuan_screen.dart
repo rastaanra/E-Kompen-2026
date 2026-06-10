@@ -37,13 +37,18 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
   String? _selectedNamaLokasi;
 
   @override
-  void initState() {
-    super.initState();
-    _loadPengajuan();
-    _loadMataKuliah();
-    _loadDosen();
-    _loadAdmin();
-  }
+    void initState() {
+      super.initState();
+      // 🟢 PERBAIKAN: Berikan jeda post frame agar tidak tabrakan saat build widget
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadPengajuan();
+          _loadMataKuliah();
+          _loadDosen();
+          _loadAdmin();
+        }
+      });
+    }
 
   Future<void> _loadPengajuan() async {
     final idMahasiswa = await SessionManager.getIdMahasiswa();

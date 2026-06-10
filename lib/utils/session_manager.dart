@@ -26,7 +26,7 @@ class SessionManager {
     }
   }
 
-  // 🟢 TAMBAHKAN GETTER RESMI INI DI DALAM CLASS SESSIONMANAGER
+  // Ambil program studi (khusus mahasiswa)
   static Future<String?> getProgramStudi() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('program_studi');
@@ -97,15 +97,20 @@ class SessionManager {
     await prefs.setString('nama_lengkap', namaBaru);
   }
 
-  // 🟢 TAMBAHAN BARU: Menyimpan URL foto profil terbaru
+  //Menyimpan URL foto profil terbaru
   static Future<void> setFotoProfil(String newUrl) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('foto_profil', newUrl);
   }
 
-  // 🟢 TAMBAHAN BARU: Mengambil URL foto profil untuk UI
+  //Mengambil URL foto profil untuk UI
   static Future<String?> getFotoProfil() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('foto_profil');
+  }
+
+  static Future<int?> getIdDosen() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_dosen');
   }
 }

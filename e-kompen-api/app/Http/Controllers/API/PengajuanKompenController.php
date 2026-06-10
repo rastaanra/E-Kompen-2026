@@ -213,14 +213,33 @@ class PengajuanKompenController extends Controller
             ->map(function ($item) {
                 return [
                     'id_pengajuan'      => $item->id_pengajuan,
+
+                    'id_mahasiswa'      => $item->id_mahasiswa,
+                    'id_absensi'        => $item->id_absensi,
+                    'id_dosen'          => $item->id_dosen,
+                    'id_admin'          => $item->id_admin,
+                    'id_mata_kuliah'    => $item->id_mata_kuliah,
+
                     'nama_tujuan'       => $item->dosen->nama_lengkap ?? null,
+
                     'nama_mahasiswa'    => $item->mahasiswa->nama_lengkap ?? null,
                     'nim'               => $item->mahasiswa->nim ?? null,
                     'nama_matkul'       => $item->mataKuliah->nama_matkul ?? null,
+
+                    'tujuan'            => $item->tujuan,
                     'semester'          => $item->semester,
                     'tanggal_pertemuan' => $item->tanggal_pertemuan,
                     'total_jam_kompen'  => $item->total_jam_kompen,
+
+                    'deskripsi_tugas'   => $item->deskripsi_tugas,
+                    'nama_lokasi'       => $item->nama_lokasi,
+                    'latitude'          => $item->latitude,
+                    'longitude'         => $item->longitude,
+
                     'status'            => $item->status,
+                    'kode_ttd_tujuan' => optional(
+                        $item->ttdDigital->firstWhere('role_ttd', 'dosen')
+                    )->kode_ttd,
                     'ttd_digital'       => $item->ttdDigital->map(function ($ttd) {
                         return [
                             'id_ttd'     => $ttd->id_ttd,

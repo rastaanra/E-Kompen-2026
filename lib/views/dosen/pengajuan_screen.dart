@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/dosen/app_bottom_nav_dosen.dart';
 import '../../utils/nav_dosen.dart';
+import '../../models/pengajuan_kompen.dart';
+import '../../services/pengajuan_service.dart';
+import '../../utils/session_manager.dart';
 
 const _red = Color(0xFFB71C1C);
 const _cream = Color(0xFFF5EFE6);
@@ -10,25 +13,6 @@ const _grey = Color(0xFF9E9E9E);
 const _cardBg = Color(0xFFFFFFFF);
 const _cardBorder = Color(0xFFEDE0CC);
 
-class _PengajuanItem {
-  final String namaMahasiswa;
-  final String nim;
-  final String mataKuliah;
-  final String semester;
-  final String tanggal;
-  final int jam;
-  String status;
-
-  _PengajuanItem({
-    required this.namaMahasiswa,
-    required this.nim,
-    required this.mataKuliah,
-    required this.semester,
-    required this.tanggal,
-    required this.jam,
-    required this.status,
-  });
-}
 
 class DosenPengajuanScreen extends StatefulWidget {
   const DosenPengajuanScreen({super.key});
@@ -40,6 +24,26 @@ class DosenPengajuanScreen extends StatefulWidget {
 class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
+
+  Future<void> _loadData() async {
+  final idDosen = await SessionManager.getIdDosen();
+
+    if (idDosen == null) return;
+
+    final data =
+        await PengajuanService().getPengajuanDosen(idDosen);
+
+    setState(() {
+      pengajuanList = data;
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   final List<String> _semesterOptions = [
     'Semua Semester',
@@ -53,68 +57,47 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
     'Disetujui',
   ];
 
-  final List<_PengajuanItem> _dummyList = [
-    _PengajuanItem(
-      namaMahasiswa: 'Seli Permata',
-      nim: '244107060021',
-      mataKuliah: 'Basis Data',
-      semester: 'Semester 4',
-      tanggal: '8 Apr 2024',
-      jam: 3,
-      status: 'menunggu_persetujuan',
-    ),
-    _PengajuanItem(
-      namaMahasiswa: 'Rina Lestari',
-      nim: '244107060047',
-      mataKuliah: 'Jarkom Komputer II',
-      semester: 'Semester 4',
-      tanggal: '4 Apr 2024',
-      jam: 4,
-      status: 'menunggu_persetujuan',
-    ),
-    _PengajuanItem(
-      namaMahasiswa: 'Andi Budiman',
-      nim: '244107060034',
-      mataKuliah: 'Kalkulus',
-      semester: 'Semester 4',
-      tanggal: '6 Apr 2024',
-      jam: 2,
-      status: 'disetujui',
-    ),
-    _PengajuanItem(
-      namaMahasiswa: 'Budi Prasetyo',
-      nim: '244107060055',
-      mataKuliah: 'Basis Data',
-      semester: 'Semester 2',
-      tanggal: '2 Apr 2024',
-      jam: 3,
-      status: 'disetujui',
-    ),
-  ];
+  List<PengajuanKompen> pengajuanList = [];
+  bool isLoading = true;
 
-  List<_PengajuanItem> get _filteredList {
-    final filtered = _dummyList.where((p) {
-      final matchSemester = _selectedSemester == 'Semua Semester' ||
-          p.semester == _selectedSemester;
-      final matchStatus = _selectedStatus == 'Semua Status' ||
+  List<PengajuanKompen> get _filteredList {
+    final filtered = pengajuanList.where((p) {
+      final matchSemester =
+          _selectedSemester == 'Semua Semester' ||
+          'Semester ${p.semester}' == _selectedSemester;
+
+      final matchStatus =
+          _selectedStatus == 'Semua Status' ||
           (_selectedStatus == 'Menunggu Persetujuan' &&
-              p.status == 'menunggu_persetujuan') ||
-          (_selectedStatus == 'Disetujui' && p.status == 'disetujui');
+              p.status == 'pending') ||
+          (_selectedStatus == 'Disetujui' &&
+              (p.status == 'sedang_dikerjakan' ||
+              p.status == 'siap_diajukan' ||
+              p.status == 'menunggu_ttd_dosen' ||
+              p.status == 'menunggu_ttd_kaprodi' ||
+              p.status == 'selesai'));
+
       return matchSemester && matchStatus;
     }).toList();
 
     filtered.sort((a, b) {
-      if (a.status == 'menunggu_persetujuan' &&
-          b.status != 'menunggu_persetujuan') return -1;
-      if (a.status != 'menunggu_persetujuan' &&
-          b.status == 'menunggu_persetujuan') return 1;
+      if (a.status == 'pending' &&
+          b.status != 'pending') {
+        return -1;
+      }
+
+      if (a.status != 'pending' &&
+          b.status == 'pending') {
+        return 1;
+      }
+
       return 0;
     });
 
     return filtered;
   }
 
-  void _showDetailPengajuan(_PengajuanItem p) {
+  void _showDetailPengajuan(PengajuanKompen p) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -123,7 +106,8 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        bool sudahDisetujui = p.status == 'disetujui';
+      bool sudahDisetujui =
+          p.status != 'pending';
         return StatefulBuilder(
           builder: (ctx, setLocal) => Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -169,7 +153,7 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        p.namaMahasiswa,
+                        p.namaMahasiswa ?? '-',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -178,7 +162,7 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'NIM: ${p.nim}',
+                        'NIM: ${p.nim ?? '-'}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: _grey,
@@ -189,11 +173,24 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                _buildInfoRow('Mata Kuliah', p.mataKuliah),
-                _buildInfoRow('Semester',
-                    p.semester.replaceAll('Semester ', '')),
-                _buildInfoRow('Tanggal Pertemuan', p.tanggal),
-                _buildInfoRow('Total Jam Kompen', '${p.jam} Jam'),
+                _buildInfoRow(
+                  'Mata Kuliah',
+                  p.namaMatkul ?? '-',
+                ),
+                _buildInfoRow(
+                  'Semester',
+                  p.semester,
+                ),
+                _buildInfoRow(
+                  'Tanggal Pertemuan',
+                  p.tanggalPertemuan != null
+                      ? '${p.tanggalPertemuan!.day}/${p.tanggalPertemuan!.month}/${p.tanggalPertemuan!.year}'
+                      : '-',
+                ),
+                _buildInfoRow(
+                  'Total Jam Kompen',
+                  '${p.totalJamKompen ?? 0} Jam',
+                ),
                 const SizedBox(height: 20),
 
                 Row(
@@ -215,10 +212,30 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
                       child: ElevatedButton.icon(
                         onPressed: sudahDisetujui
                             ? null
-                            : () {
-                                setState(() => p.status = 'disetujui');
-                                setLocal(() => sudahDisetujui = true);
-                                Navigator.pop(ctx);
+                            : () async {
+
+                                final success =
+                                    await PengajuanService()
+                                        .konfirmasiPengajuan(
+                                            p.idPengajuan);
+
+                                if (success) {
+
+                                  await _loadData();
+
+                                  if (mounted) {
+                                    Navigator.pop(ctx);
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Pengajuan berhasil disetujui',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                         icon: Icon(Icons.check,
                             size: 16,
@@ -391,7 +408,7 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
     );
   }
 
-  Widget _buildCard(_PengajuanItem p) {
+  Widget _buildCard(PengajuanKompen p) {
     return Container(
       decoration: BoxDecoration(
         color: _cardBg,
@@ -413,7 +430,7 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                p.namaMahasiswa,
+                p.namaMahasiswa ?? '-',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -421,7 +438,9 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
                 ),
               ),
               Text(
-                p.tanggal,
+                p.tanggalPertemuan != null
+                  ? '${p.tanggalPertemuan!.day}/${p.tanggalPertemuan!.month}/${p.tanggalPertemuan!.year}'
+                  : '-',
                 style: const TextStyle(
                   fontSize: 10,
                   color: _grey,
@@ -445,14 +464,14 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
                 children: [
                   const Icon(Icons.menu_book_outlined, size: 13, color: _grey),
                   const SizedBox(width: 4),
-                  Text(p.mataKuliah, style: const TextStyle(fontSize: 12, color: _dark)),
+                  Text(p.namaMatkul ?? '-', style: const TextStyle(fontSize: 12, color: _dark)),
                 ],
               ),
               Row(
                 children: [
                   const Icon(Icons.school_outlined, size: 13, color: _grey),
                   const SizedBox(width: 4),
-                  Text(p.semester, style: const TextStyle(fontSize: 11, color: _grey)),
+                  Text('Semester ${p.semester}', style: const TextStyle(fontSize: 11, color: _grey)),
                 ],
               ),
             ],
@@ -463,7 +482,7 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
               const Icon(Icons.access_time_outlined, size: 13, color: _grey),
               const SizedBox(width: 4),
               Text(
-                '${p.jam} Jam',
+                '${p.totalJamKompen ?? 0} Jam',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -503,30 +522,31 @@ class _DosenPengajuanScreenState extends State<DosenPengajuanScreen> {
   }
 
   Widget _buildStatusBadge(String status) {
-    Color bg;
-    Color textColor;
-    String label;
-
-    switch (status) {
-      case 'disetujui':
-        bg = const Color(0xFFD1FAE5);
-        textColor = const Color(0xFF065F46);
-        label = 'Disetujui';
-        break;
-      default:
-        bg = const Color(0xFFFFF3CD);
-        textColor = const Color(0xFF856404);
-        label = 'Menunggu Persetujuan';
-    }
+    final bool sudahDisetujui = status != 'pending';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
-        color: bg,
+        color: sudahDisetujui
+            ? const Color(0xFFD1FAE5)
+            : const Color(0xFFFFF3CD),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textColor)),
+      child: Text(
+        sudahDisetujui
+            ? 'Disetujui'
+            : 'Menunggu Persetujuan',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: sudahDisetujui
+              ? const Color(0xFF065F46)
+              : const Color(0xFF856404),
+        ),
+      ),
     );
   }
 
