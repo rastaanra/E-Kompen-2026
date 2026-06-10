@@ -233,6 +233,17 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
     return result['data'] ?? [];
   }
 
+    Future<bool> ttdDosen(int idPengajuan) async {
+    final result = await ApiService.post(
+      'ttd/$idPengajuan/ttd',
+      {},
+    );
+
+    print('TTD DOSEN RESULT = $result');
+
+    return result['success'] == true;
+  }
+
   Future<Map<String, dynamic>?> getKaprodi() async {
     final data = await ApiService.get('kaprodi');
 

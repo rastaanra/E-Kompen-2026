@@ -25,6 +25,7 @@ class PengajuanKompen {
   final double? longitude;
   final String? namaTujuan;
   final String? namaMahasiswa;
+  final String? nip;
   final String? nim;
   final String? namaMatkul;
   String? kodeTtdTujuan;
@@ -51,6 +52,7 @@ class PengajuanKompen {
     this.longitude,
     this.namaTujuan,
     this.namaMahasiswa,
+    this.nip,
     this.nim,
     this.namaMatkul,
     this.kodeTtdTujuan,
@@ -84,6 +86,7 @@ class PengajuanKompen {
           ? double.parse(json['longitude'].toString())
           : null,
       namaTujuan: json['nama_tujuan'],
+      nip: json['nip'],
       namaMahasiswa: json['nama_mahasiswa'],
       nim: json['nim'],
       namaMatkul: json['nama_matkul'],
@@ -102,6 +105,7 @@ class PengajuanKompen {
       'id_dosen':          idDosen,
       'id_admin':          idAdmin,
       'tujuan':            tujuan,
+      'nip':                nip,
       'status':            status,
       'semester':          semester,
       'tanggal_pertemuan': tanggalPertemuan?.toIso8601String(),

@@ -237,7 +237,9 @@ class PengajuanKompenController extends Controller
                     'longitude'         => $item->longitude,
 
                     'status'            => $item->status,
-
+                    'kode_ttd_tujuan' => optional(
+                        $item->ttdDigital->firstWhere('role_ttd', 'dosen')
+                    )->kode_ttd,
                     'ttd_digital'       => $item->ttdDigital->map(function ($ttd) {
                         return [
                             'id_ttd'     => $ttd->id_ttd,
