@@ -76,6 +76,7 @@ class SessionManager {
     return prefs.getString('email');
   }
 
+<<<<<<< HEAD
   static Future<String?> getNip() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('nip');
@@ -113,4 +114,15 @@ class SessionManager {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('id_dosen');
   }
+=======
+static Future<bool> getNotifikasiAktif() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('notifikasi_aktif') ?? true;
+}
+
+static Future<int?> getIdDosen() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getInt('id_dosen');
+}
+>>>>>>> origin/rasta
 }

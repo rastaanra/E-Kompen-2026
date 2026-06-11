@@ -9,16 +9,16 @@ import 'api_service.dart';
 class PengajuanService {
   // Simpan pengajuan baru
   // Sesuai class diagram: simpanPengajuan(data: Map): bool
-  Future<bool> simpanPengajuan(Map<String, dynamic> data) async {
-  final result = await ApiService.post(
-    'pengajuan-kompen',
-    data,
-  );
+    Future<bool> simpanPengajuan(Map<String, dynamic> data) async {
+    final result = await ApiService.post(
+      'pengajuan-kompen',
+      data,
+    );
 
-  print(result);
+    print(result);
 
-  return result['success'] ?? false;
-}
+    return result['success'] ?? false;
+  }
 
   // Update status pengajuan
   // Sesuai class diagram: updateStatus(id_pengajuan: int, status: String): bool
@@ -262,3 +262,4 @@ Future<List<PengajuanKompen>> getAllPengajuan(int idMahasiswa) async {
     return result['success'] == true;
   }
 }
+

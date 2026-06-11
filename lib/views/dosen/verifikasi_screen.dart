@@ -93,9 +93,16 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
 
       final matchStatus =
           _selectedStatus == 'Semua Status' ||
+<<<<<<< HEAD
           (_selectedStatus == 'Menunggu TTD' && p.status == 'menunggu_ttd_dosen') ||
           (_selectedStatus == 'Sudah TTD' && 
               ['menunggu_ttd_admin', 'menunggu_ttd_kaprodi', 'selesai'].contains(p.status));
+=======
+          (_selectedStatus == 'Menunggu TTD' &&
+              p.status == 'menunggu_ttd_dosen') ||
+          (_selectedStatus == 'Sudah TTD' &&
+              p.status == 'menunggu_ttd_kaprodi');
+>>>>>>> origin/rasta
 
       return matchSemester && matchStatus;
     }).toList();
@@ -363,10 +370,13 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
 
                                 setLocal(() => sudahTTD = true);
 
+<<<<<<< HEAD
                                 if (mounted) {
                                   Navigator.pop(ctx);
                                 }
 
+=======
+>>>>>>> origin/rasta
                                       Navigator.pop(ctx);
                                     }
                                   },
@@ -652,14 +662,27 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
   }
 
   Widget _buildStatusBadge(String status) {
+<<<<<<< HEAD
     final bool belumTtdDosen = status == 'menunggu_ttd_dosen';
+=======
+    final bool menunggu =
+        status == 'menunggu_ttd_dosen' ||
+        status == 'menunggu_ttd_admin' ||
+        status == 'menunggu_ttd_kaprodi';
+>>>>>>> origin/rasta
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
+<<<<<<< HEAD
         color: belumTtdDosen
             ? const Color(0xFFFFF3CD) // Kuning
             : const Color(0xFFD1FAE5), // Hijau
+=======
+        color: menunggu
+            ? const Color(0xFFFFF3CD)
+            : const Color(0xFFD1FAE5),
+>>>>>>> origin/rasta
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -667,7 +690,11 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,
+<<<<<<< HEAD
           color: belumTtdDosen
+=======
+          color: menunggu
+>>>>>>> origin/rasta
               ? const Color(0xFF856404)
               : const Color(0xFF065F46),
         ),

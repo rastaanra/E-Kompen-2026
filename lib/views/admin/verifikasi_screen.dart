@@ -499,6 +499,57 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                             ),
                           ],
                         ),
+
+                        // Tombol
+                        // SESUDAH — disamain gaya dengan pengajuan
+Row(
+  children: [
+    Expanded(
+      child: OutlinedButton(
+        onPressed: () => Navigator.pop(ctx),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+          foregroundColor: _redV,
+          side: const BorderSide(color: _redV),
+        ),
+        child: const Text('Tutup'),
+      ),
+    ),
+    const SizedBox(width: 12),
+    Expanded(
+      child: ElevatedButton.icon(
+        onPressed: sudahTTD
+    ? null
+    : () async {
+        final success =
+      await PengajuanService().ttdAdmin(p.idPengajuan);
+      if (success) {
+        await _loadData(); // refresh data terbaru
+
+        setLocal(() => sudahTTD = true);
+
+              Navigator.pop(ctx);
+            }
+          },
+              icon: Icon(Icons.check,
+                  size: 16,
+                  color: sudahTTD ? Colors.grey[500] : Colors.white),
+              label: Text('Tandatangani',
+                  style: TextStyle(
+                      color: sudahTTD ? Colors.grey[500] : Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+      ),
+    ),
+  ],
+),
                       ],
                     ),
                   ),
