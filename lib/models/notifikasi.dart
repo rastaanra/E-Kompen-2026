@@ -25,7 +25,9 @@ class Notifikasi {
       judul: json['judul'],
       pesan: json['pesan'],
       waktuKirim: DateTime.parse(json['waktu_kirim']),
-      sudahDilihat: json['sudah_dilihat'] == 1,
+      sudahDilihat:
+        json['sudah_dilihat'] == 1 ||
+        json['sudah_dilihat'] == true,
     );
   }
 
