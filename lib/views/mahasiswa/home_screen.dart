@@ -19,12 +19,21 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _cardBeige = Color(0xFFEDE0CC);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+  String namaMahasiswa = 'Mahasiswa'; 
 
+  
+  Future<void> _loadUser() async {
+    final nama = await SessionManager.getNamaLengkap();
 
+    setState(() {
+      namaMahasiswa = nama ?? 'Mahasiswa';
+    });
+  }
 
  @override
   void initState() {
     super.initState();
+     _loadUser();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<MahasiswaProvider>();
@@ -135,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Halo, $nama!',
+                      'Halo, $namaMahasiswa',
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 22,
