@@ -30,23 +30,23 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
       }
 
       final service = NotifikasiService();
+    await service.lihatSemua(idPengguna);
 
-      final data = await service.getNotifikasi(idPengguna);
+    final data =
+        await service.getNotifikasi(idPengguna);
 
-      await service.lihatSemua(idPengguna);
+    setState(() {
+      notifList = data;
+      isLoading = false;
+    });
+        } catch (e) {
+          debugPrint('Error notif: $e');
 
-      setState(() {
-        notifList = data;
-        isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error notif: $e');
-
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
 
   @override
   Widget build(BuildContext context) {
