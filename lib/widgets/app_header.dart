@@ -17,7 +17,12 @@ class AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: _primaryRed,
-      padding: const EdgeInsets.only(top: 52, left: 20, right: 20, bottom: 20),
+      padding: const EdgeInsets.only(
+        top: 52,
+        left: 20,
+        right: 20,
+        bottom: 20,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -35,16 +40,10 @@ class AppHeader extends StatelessWidget {
               ),
             ],
           ),
+
           InkWell(
+            onTap: onNotifTap,
             borderRadius: BorderRadius.circular(20),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const NotifikasiScreen(),
-                ),
-              );
-            },
             child: Stack(
               children: [
                 const Icon(

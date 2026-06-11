@@ -105,19 +105,19 @@ class _DosenHomeScreenState extends State<DosenHomeScreen> {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-      AppHeader(
-        hasUnreadNotif: hasUnreadNotif,
-        onNotifTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const NotifikasiScreen(),
-            ),
-          );
+  AppHeader(
+    hasUnreadNotif: hasUnreadNotif,
+    onNotifTap: () async {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NotifikasiScreen(),
+        ),
+      );
 
-          _loadNotif(); // refresh badge
-        },
-      ), 
+      _loadNotif();
+    },
+  ), 
           Expanded(
             child: Container(
               decoration: const BoxDecoration(

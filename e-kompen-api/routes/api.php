@@ -83,7 +83,10 @@ Route::put('/pengajuan-kompen/{id}/ttd-admin',          [PengajuanKompenControll
 
 
 // TTD DIGITAL
-Route::post('/ttd/{id_pengajuan}/ttd',          [TtdDigitalController::class, 'ttdDosenAdmin']);
+Route::post(
+    '/ttd/{id_pengajuan}/ttd',
+    [TtdDigitalController::class, 'ttdDosen']
+);
 Route::post('/ttd/{id_pengajuan}/ttd-kaprodi',  [TtdDigitalController::class, 'ttdKaprodi']);
 Route::get('/ttd/{id_pengajuan}',               [TtdDigitalController::class, 'getByPengajuan']);
 Route::get(
