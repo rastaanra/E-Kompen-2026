@@ -2,18 +2,112 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/admin/app_bottom_nav_admin.dart';
 import '../../utils/nav_admin.dart';
+import '../../services/pengajuan_service.dart'; 
+import '../../models/pengajuan_kompen.dart';   
+import 'pengajuan_screen.dart';
+import '../../services/notifikasi_service.dart';//ini
+import '../../views/notifikasi/notifikasi_screen.dart';//ini
+import '../../utils/session_manager.dart';
 
-class AdminHomeScreen extends StatelessWidget {
+class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
+
+  @override
+  State<AdminHomeScreen> createState() => _AdminHomeScreenState();
+}
+
+class _AdminHomeScreenState extends State<AdminHomeScreen> {
+  List<PengajuanKompen> pengajuanList = [];
+  bool hasUnreadNotif = false;//ini
+  int jumlahPengajuan = 0;
+  int jumlahVerifikasi = 0;
+  int totalMahasiswa = 0;
+  int totalDisetujui = 0;
+  int totalMenunggu = 0;
+  int totalSelesai = 0;
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
   static const Color _cardBeige = Color(0xFFEDE0CC);
   static const Color _textDark = Color(0xFF2D2D2D);
   static const Color _textGrey = Color(0xFF9E9E9E);
+  String namaAdmin = 'Admin'; 
 
-  static const int jumlahPengajuan = 3;
-  static const int jumlahVerifikasi = 0;
+    @override
+  void initState() {
+    super.initState();
+    _loadUser();
+    _loadDataDariAPI(); 
+    _loadNotif();//ini
+  }
+
+    Future<void> _loadNotif() async {//ini
+    try {
+      final idPengguna = await SessionManager.getIdPengguna();
+
+      if (idPengguna == null) return;
+
+      final notif =
+          await NotifikasiService().getNotifikasi(idPengguna);
+
+      setState(() {
+        hasUnreadNotif =
+            notif.any((n) => n.sudahDilihat == false);
+      });
+    } catch (e) {
+      debugPrint('Notif error: $e');
+    }
+  }
+
+  Future<void> _loadUser() async {
+    final nama = await SessionManager.getNamaLengkap();
+    if (nama != null && nama.isNotEmpty) {
+      setState(() {
+        namaAdmin = nama;
+      });
+    }
+  }
+
+    Future<void> _loadDataDariAPI() async {
+    try {
+      final idAdmin = await SessionManager.getIdAdmin();
+      if (idAdmin == null) return;
+      
+      final data = await PengajuanService().getPengajuanAdmin(idAdmin);
+
+      setState(() {
+        pengajuanList = data;
+
+        // 1. Menghitung pengajuan yang berstatus 'pending' (Menunggu Persetujuan) seperti di screen pengajuan
+        jumlahPengajuan =
+        data.where(
+          (e) => e.status == 'pending',
+        ).length;
+            
+        // 2. Menghitung jumlah tindakan Tanda Tangan Penyelesaian
+        jumlahVerifikasi =
+        data.where(
+          (e) => e.status == 'menunggu_ttd_admin',
+        ).length;
+
+        // 3. 🟢 PERBAIKAN: Menggunakan NIM atau namaMahasiswa untuk menghitung total Unik Mahasiswa agar tidak merah
+        totalMahasiswa = data.map((p) => p.nim ?? p.namaMahasiswa).toSet().length;
+
+        // 4. Hitung data rekapitulasi berdasarkan kondisi status kompen
+        totalDisetujui = data.where((p) => p.status != 'pending').length;
+        totalMenunggu =
+        data.where(
+          (p) =>
+              p.status == 'pending' ||
+              p.status == 'menunggu_ttd_admin',
+        ).length;
+            totalSelesai = data.where((p) => p.status == 'selesai').length;
+          });
+        } catch (e) {
+          debugPrint("Gagal memuat data API Admin: $e");
+        }
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +115,19 @@ class AdminHomeScreen extends StatelessWidget {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+            AppHeader( //ini
+    hasUnreadNotif: hasUnreadNotif,
+    onNotifTap: () async {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NotifikasiScreen(),
+        ),
+      );
+
+      _loadNotif();
+    },
+  ),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
@@ -104,26 +210,29 @@ class AdminHomeScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Halo, Admin',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                    color: _textDark,
-                  ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Halo, $namaAdmin',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
+                  color: _textDark,
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Administrator',
-                  style: TextStyle(fontSize: 13, color: _textGrey),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Administrator',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _textGrey,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -230,7 +339,7 @@ class AdminHomeScreen extends StatelessWidget {
         hasAction ? Colors.white.withOpacity(0.8) : const Color(0xFFA09890);
 
       return GestureDetector(
-        onTap: onTap,
+        onTap: hasAction ? onTap : null,
         child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
