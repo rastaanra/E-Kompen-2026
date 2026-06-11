@@ -5,6 +5,8 @@ import '../../utils/nav_kaprodi.dart';
 import '../../services/pengajuan_service.dart';
 import '../../models/pengajuan_kompen.dart';
 import '../../utils/session_manager.dart';
+import '../../services/notifikasi_service.dart';//ini
+import '../../views/notifikasi/notifikasi_screen.dart';//ini
 class KaprodiHomeScreen extends StatefulWidget {
   const KaprodiHomeScreen({super.key});
 
@@ -13,10 +15,11 @@ class KaprodiHomeScreen extends StatefulWidget {
 }
 class _KaprodiHomeScreenState extends State<KaprodiHomeScreen> {
   List<PengajuanKompen> pengajuanList = [];
+  bool hasUnreadNotif = false;//ini
   int jumlahMenungguTtd = 0;
   int jumlahSudahTtd = 0;
   int totalMahasiswa = 0;
-   int jumlahVerifikasi = 0;
+  int jumlahVerifikasi = 0;
 
   static const Color _primaryRed = Color(0xFFB71C1C);
   static const Color _backgroundCream = Color(0xFFF5EFE6);
@@ -39,6 +42,24 @@ class _KaprodiHomeScreenState extends State<KaprodiHomeScreen> {
     super.initState();
     _loadData();
     _loadUser();
+    _loadNotif();//ini
+  }
+    Future<void> _loadNotif() async {//ini
+    try {
+      final idPengguna = await SessionManager.getIdPengguna();
+
+      if (idPengguna == null) return;
+
+      final notif =
+          await NotifikasiService().getNotifikasi(idPengguna);
+
+      setState(() {
+        hasUnreadNotif =
+            notif.any((n) => n.sudahDilihat == false);
+      });
+    } catch (e) {
+      debugPrint('Notif error: $e');
+    }
   }
 
   Future<void> _loadData() async {
@@ -70,7 +91,19 @@ class _KaprodiHomeScreenState extends State<KaprodiHomeScreen> {
       backgroundColor: _primaryRed,
       body: Column(
         children: [
-          const AppHeader(),
+            AppHeader( //ini
+        hasUnreadNotif: hasUnreadNotif,
+        onNotifTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const NotifikasiScreen(),
+            ),
+          );
+
+          _loadNotif();
+        },
+      ),
           Expanded(
             child: Container(
               decoration: const BoxDecoration(
