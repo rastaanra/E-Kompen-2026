@@ -36,32 +36,52 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() async {
-    if (_selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silakan pilih login sebagai terlebih dahulu'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
+void _login() async {
+  if (_selectedRole == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Silakan pilih login sebagai terlebih dahulu'),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
+  }
 
-    if (_formKey.currentState!.validate()) {
-      final provider = context.read<AuthProvider>();
+  if (_formKey.currentState!.validate()) {
+    final provider = context.read<AuthProvider>();
 
-      final berhasil = await provider.login(
-        _emailController.text,
-        _passwordController.text,
-      );
+    final berhasil = await provider.login(
+      _emailController.text,
+      _passwordController.text,
+    );
 
-      if (berhasil && mounted) {
-        print(provider.lastResponse);
-        // Simpan session sesuai format dari temenmu
-        await SessionManager.simpanLogin(provider.lastResponse);
+    if (berhasil && mounted) {
+      print("HASIL LOGIN:");
+      print(provider.lastResponse);
 
-        // Redirect sesuai role dari response backend
+      final roleBackend =
+    provider.lastResponse['role']
+        .toString()
+        .toLowerCase();
+
+      final roleDipilih =
+          _selectedRole!.toLowerCase();
+
+      if (roleBackend != roleDipilih) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Akun ini adalah $roleBackend, bukan $roleDipilih',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      await SessionManager.simpanLogin(provider.lastResponse);
+
       if (_selectedRole == 'Mahasiswa') {
         Navigator.pushReplacement(
           context,
@@ -69,24 +89,21 @@ class _LoginScreenState extends State<LoginScreen> {
             builder: (_) => const HomeScreen(),
           ),
         );
-      }
-      else if (_selectedRole == 'Dosen') {
+      } else if (_selectedRole == 'Dosen') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const DosenHomeScreen(),
           ),
         );
-      }
-      else if (_selectedRole == 'Kaprodi') {
+      } else if (_selectedRole == 'Kaprodi') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const KaprodiHomeScreen(),
           ),
         );
-      }
-      else if (_selectedRole == 'Admin') {
+      } else if (_selectedRole == 'Admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -94,17 +111,20 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(provider.errorMessage ?? 'Login gagal'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            provider.errorMessage ?? 'Login gagal',
           ),
-        );
-      }
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
+}
+  
   
   Widget _buildRoleButton(String label, IconData icon) {
     final bool isSelected = _selectedRole == label;

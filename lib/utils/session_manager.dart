@@ -15,7 +15,7 @@ class SessionManager {
     // Data sesuai role
     if (response['role'] == 'mahasiswa') {
       prefs.setInt('id_mahasiswa', response['role_data']['id_mahasiswa']);
-      prefs.setString('nim', response['role_data']['nim']);
+      prefs.setString('nim', response['role_data']['nim'].toString());
       // 🟢 Pastikan mengambil key yang tepat dari response API (misal: 'program_studi')
       prefs.setString('program_studi', response['role_data']['program_studi'] ?? '-');
     } else if (response['role'] == 'dosen' || response['role'] == 'kaprodi') {
@@ -113,4 +113,9 @@ class SessionManager {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('id_dosen');
   }
+
+//   static Future<String?> getNim() async {
+//   final prefs = await SharedPreferences.getInstance();
+//   return prefs.getString('nim');
+// }
 }

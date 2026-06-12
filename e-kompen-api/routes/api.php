@@ -8,6 +8,7 @@ use App\Http\Controllers\API\AbsensiController;
 use App\Http\Controllers\API\PengajuanKompenController;
 use App\Http\Controllers\API\TtdDigitalController;
 use App\Http\Controllers\API\MataKuliahController;
+use App\Http\Controllers\API\NotifikasiController;
 // ==========================================
 // TEST KONEKSI
 // ==========================================
@@ -82,7 +83,10 @@ Route::put('/pengajuan-kompen/{id}/ttd-admin',          [PengajuanKompenControll
 
 
 // TTD DIGITAL
-Route::post('/ttd/{id_pengajuan}/ttd',          [TtdDigitalController::class, 'ttdDosenAdmin']);
+Route::post(
+    '/ttd/{id_pengajuan}/ttd',
+    [TtdDigitalController::class, 'ttdDosen']
+);
 Route::post('/ttd/{id_pengajuan}/ttd-kaprodi',  [TtdDigitalController::class, 'ttdKaprodi']);
 Route::get('/ttd/{id_pengajuan}',               [TtdDigitalController::class, 'getByPengajuan']);
 Route::get(
@@ -93,3 +97,12 @@ Route::get(
 // MATA KULIAH
 Route::get('/mata-kuliah/{idMahasiswa}',        [MataKuliahController::class, 'index']);
 
+//Notifikasi
+Route::get(
+    '/notifikasi/{id_pengguna}',
+    [NotifikasiController::class, 'getByPengguna']
+);
+Route::put(
+    '/notifikasi/{id_pengguna}/lihat',
+    [NotifikasiController::class, 'lihatSemua']
+);

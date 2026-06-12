@@ -9,6 +9,9 @@ use App\Models\Absensi;
 use App\Models\BuktiKompen;
 use Illuminate\Http\Request;
 use App\Models\Mahasiswa;
+use App\Models\Notifikasi;
+use App\Models\Dosen;
+
 
 class TtdDigitalController extends Controller
 {
@@ -25,7 +28,7 @@ class TtdDigitalController extends Controller
     // POST /api/ttd/{id_pengajuan}/ttd
     // Untuk: Dosen & Admin
     // ==========================================
-    public function ttdDosenAdmin($id_pengajuan)
+    public function ttdDosen($id_pengajuan)
     {
         $pengajuan = PengajuanKompen::find($id_pengajuan);
         if (!$pengajuan) {
@@ -36,7 +39,7 @@ class TtdDigitalController extends Controller
         }
 
         // Validasi status
-        if (!in_array($pengajuan->status, ['menunggu_ttd_dosen', 'menunggu_ttd_admin'])) {
+        if ($pengajuan->status !== 'menunggu_ttd_dosen') {
             return response()->json([
                 'success' => false,
                 'message' => 'Pengajuan belum siap untuk ditandatangani'
@@ -44,11 +47,10 @@ class TtdDigitalController extends Controller
         }
 
         // Tentukan role TTD
-        $role = $pengajuan->tujuan === 'dosen' ? 'dosen' : 'admin';
+        $role = 'dosen';
 
         // Generate kode TTD Admin
         $mahasiswa = Mahasiswa::find($pengajuan->id_mahasiswa);
-
         if (!$mahasiswa) {
             return response()->json([
                 'success' => false,
@@ -56,16 +58,29 @@ class TtdDigitalController extends Controller
             ], 404);
         }
 
+            Notifikasi::create([
+            'id_pengajuan'  => $pengajuan->id_pengajuan,
+            'id_pengguna'   => $mahasiswa->id_pengguna,
+            'judul'         => 'Tanda Tangan Dosen',
+            'pesan'         =>
+                'Wahh! Pengajuan kompen untuk mata kuliah ' .
+                $pengajuan->mataKuliah->nama_matkul .
+                ' telah ditandatangani oleh Dosen. Selanjutnya pengajuan akan diteruskan ke Kaprodi untuk proses persetujuan akhir.',
+            'waktu_kirim'   => now(),
+            'sudah_dilihat' => 0,
+        ]);
+
+
         $kode = $this->generateKodeTTD(
             $id_pengajuan,
-            $role,
+            'dosen',
             $mahasiswa->nim
         );
 
         // Simpan TTD
         $ttd = TtdDigital::create([
             'id_pengajuan' => $id_pengajuan,
-            'role_ttd'     => $role,
+            'role_ttd' => 'dosen',
             'kode_ttd'     => $kode,
             'waktu_ttd'    => now(),
             'status_ttd'   => 'sudah',
@@ -73,12 +88,23 @@ class TtdDigitalController extends Controller
 
         // Update status pengajuan → menunggu TTD kaprodi
         $pengajuan->update(['status' => 'menunggu_ttd_kaprodi']);
+        // Cari kaprodi
+        $kaprodi = Dosen::where('is_kaprodi', 1)->first();
 
-        // Kurangi jam alpha di absensi
-        $absensi = Absensi::find($pengajuan->id_absensi);
-        if ($absensi) {
-            $sisaJam = $absensi->jml_jam - $pengajuan->total_jam_kompen;
-            $absensi->update(['jml_jam' => max(0, $sisaJam)]);
+        if ($kaprodi) {
+            Notifikasi::create([
+                'id_pengajuan'  => $pengajuan->id_pengajuan,
+                'id_pengguna'   => $kaprodi->id_pengguna,
+                'judul'         => 'Menunggu Persetujuan Kaprodi',
+                'pesan'         =>
+                    'Terdapat pengajuan kompen mata kuliah ' .
+                    $pengajuan->mataKuliah->nama_matkul .
+                    ' dari mahasiswa ' .
+                    $mahasiswa->nama_lengkap .
+                    ' yang menunggu tanda tangan Kaprodi.',
+                'waktu_kirim'   => now(),
+                'sudah_dilihat' => 0,
+            ]);
         }
 
         return response()->json([
@@ -139,6 +165,17 @@ class TtdDigitalController extends Controller
 
         // Update status pengajuan → selesai
         $pengajuan->update(['status' => 'selesai']);
+            Notifikasi::create([
+                'id_pengajuan'  => $pengajuan->id_pengajuan,
+                'id_pengguna'   => $mahasiswa->id_pengguna,
+                'judul'         => 'Kompen Selesai',
+                'pesan'         =>
+                    'Selamat! Seluruh proses kompen untuk mata kuliah ' .
+                    $pengajuan->mataKuliah->nama_matkul .
+                    ' telah selesai. Bukti kompen sekarang sudah dapat digunakan sebagai arsip penyelesaian kompen Anda.',
+                'waktu_kirim'   => now(),
+                'sudah_dilihat' => 0,
+            ]);
 
         // Generate bukti kompen (simpan path PDF)
         $filePath = 'bukti/bukti-kompen-' . $id_pengajuan . '.pdf';

@@ -33,7 +33,6 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
   String _selectedUrutan = 'Terbaru';
-  final _searchController = TextEditingController();
   String _searchQuery = '';
 
   final List<String> _semesterOptions = [
@@ -59,12 +58,6 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
   void initState() {
     super.initState();
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -176,8 +169,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
       ),
       builder: (ctx) {
         bool sudahTTD = p.status != 'menunggu_ttd_admin';
-        // Mengamankan pemanggilan qrCode / kodeTtdDigital agar tidak memicu eror undefined_getter
-        String qrData = p.idPengajuan.toString(); 
+        String qrData = p.idPengajuan.toString();
 
         return StatefulBuilder(
           builder: (ctx, setLocal) => DraggableScrollableSheet(
@@ -237,8 +229,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                               const SizedBox(width: 10),
                               const Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text('POLITEKNIK NEGERI MALANG',
                                         textAlign: TextAlign.center,
@@ -259,7 +250,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                                             fontSize: 9,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.white)),
-                                    SizedBox(height: 2),
+                                        SizedBox(height: 2),
                                     Text(
                                         'Jl. Soekarno Hatta No.9 Malang 65141 · Telp. (0341) 404424',
                                         textAlign: TextAlign.center,
@@ -306,13 +297,10 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                           'Jumlah Jam',
                           '${p.totalJamKompen ?? 0} (${_jamTerbilang(p.totalJamKompen ?? 0)} Jam)',
                         ),
-                        _buildFormRow(
-                            'Tanggal', _formatTanggal(p.tanggalPertemuan)),
                         const SizedBox(height: 16),
                         Text(
                           'Malang, ${_formatTanggal(p.tanggalPertemuan)}',
-                          style: const TextStyle(
-                              fontSize: 12, color: _darkV),
+                          style: const TextStyle(fontSize: 12, color: _darkV),
                         ),
                         const SizedBox(height: 16),
                         Row(
@@ -320,31 +308,24 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                           children: [
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                       'Yang memberikan rekomendasi,',
-                                      style: TextStyle(
-                                          fontSize: 11, color: _darkV)),
+                                      style: TextStyle(fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
                                     height: 110,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.black12),
-                                      borderRadius:
-                                          BorderRadius.circular(6),
-                                      color: sudahTTD
-                                          ? Colors.green[50]
-                                          : null,
+                                      border: Border.all(color: Colors.black12),
+                                      borderRadius: BorderRadius.circular(6),
+                                      color: sudahTTD ? Colors.green[50] : null,
                                     ),
                                     child: Center(
                                       child: sudahTTD
                                           ? Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
+                                              mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
                                                 QrImageView(
                                                   data: qrData,
@@ -352,19 +333,15 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                                                   size: 85,
                                                 ),
                                                 const SizedBox(height: 2),
-                                                Icon(
-                                                    Icons
-                                                        .check_circle_outline,
+                                                Icon(Icons.check_circle_outline,
                                                     color: Colors.green[600],
                                                     size: 14),
                                               ],
                                             )
-                                          : Text(
+                                          : const Text(
                                               'Belum\nditandatangani',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontSize: 9,
-                                                  color: _greyV),
+                                              style: TextStyle(fontSize: 9, color: _greyV),
                                             ),
                                     ),
                                   ),
@@ -380,40 +357,44 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                               ),
                             ),
                             const SizedBox(width: 16),
+                            
+                            // ── BOX TTD KAPRODI (FIX DISINI) ──────────────────
                             Expanded(
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                       'Mengetahui, Ka. Program Studi',
-                                      style: TextStyle(
-                                          fontSize: 11, color: _darkV)),
+                                      style: TextStyle(fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
                                     height: 110,
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.black12),
-                                      borderRadius:
-                                          BorderRadius.circular(6),
-                                      color: p.status == 'selesai'
-                                          ? Colors.green[50]
-                                          : null,
+                                      border: Border.all(color: Colors.black12),
+                                      borderRadius: BorderRadius.circular(6),
+                                      color: p.status == 'selesai' ? Colors.green[50] : null,
                                     ),
                                     child: Center(
                                       child: p.status == 'selesai'
-                                          ? Icon(
-                                              Icons.check_circle_outline,
-                                              color: Colors.green[600],
-                                              size: 24)
-                                          : Text(
+                                          ? Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                QrImageView(
+                                                  // Menggunakan kode ttd kaprodi jika ada, jika null pakai idPengajuan
+                                                  data: p.kodeTtdKaprodi ?? p.idPengajuan.toString(),
+                                                  version: QrVersions.auto,
+                                                  size: 85,
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Icon(Icons.check_circle_outline,
+                                                    color: Colors.green[600], size: 14),
+                                              ],
+                                            )
+                                          : const Text(
                                               'Belum\nditandatangani',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontSize: 9,
-                                                  color: _greyV),
+                                              style: TextStyle(fontSize: 9, color: _greyV),
                                             ),
                                     ),
                                   ),
@@ -424,8 +405,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                                           fontWeight: FontWeight.w700,
                                           color: _darkV)),
                                   Text('NIP. $nipKaprodi',
-                                      style: const TextStyle(
-                                          fontSize: 9, color: _greyV)),
+                                      style: const TextStyle(fontSize: 9, color: _greyV)),
                                 ],
                               ),
                             ),
@@ -438,11 +418,9 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                               child: OutlinedButton(
                                 onPressed: () => Navigator.pop(ctx),
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 14),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12)),
+                                      borderRadius: BorderRadius.circular(12)),
                                   foregroundColor: _redV,
                                   side: const BorderSide(color: _redV),
                                 ),
@@ -466,8 +444,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             const SnackBar(
-                                              content: Text(
-                                                  'Berhasil ditandatangani'),
+                                              content: Text('Berhasil ditandatangani'),
                                               backgroundColor: _redV,
                                             ),
                                           );
@@ -475,24 +452,17 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                                       },
                                 icon: Icon(Icons.draw_outlined,
                                     size: 16,
-                                    color: sudahTTD
-                                        ? Colors.grey[500]
-                                        : Colors.white),
+                                    color: sudahTTD ? Colors.grey[500] : Colors.white),
                                 label: Text(
                                   sudahTTD ? 'Sudah TTD' : 'Tandatangani',
                                   style: TextStyle(
-                                      color: sudahTTD
-                                          ? Colors.grey[500]
-                                          : Colors.white),
+                                      color: sudahTTD ? Colors.grey[500] : Colors.white),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      sudahTTD ? Colors.grey[200] : _redV,
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 14),
+                                  backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12)),
+                                      borderRadius: BorderRadius.circular(12)),
                                   elevation: 0,
                                 ),
                               ),
@@ -517,13 +487,12 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Navigator.canPop(context) ? const SizedBox() : const SizedBox(),
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: const TextStyle(fontSize: 12, color: _greyV)),
+            child: Text(label, style: const TextStyle(fontSize: 12, color: _greyV)),
           ),
-          const Text(': ',
-              style: TextStyle(fontSize: 12, color: _darkV)),
+          const Text(': ', style: TextStyle(fontSize: 12, color: _darkV)),
           Expanded(
             child: Text(value,
                 style: const TextStyle(
@@ -539,10 +508,6 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final total = _filteredList.length;
-    final menunggu =
-        _filteredList.where((p) => p.status == 'menunggu_ttd_admin').length;
-
     return Scaffold(
       backgroundColor: _redV,
       body: Column(
@@ -552,8 +517,7 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
             child: Container(
               decoration: const BoxDecoration(
                 color: _creamV,
-                borderRadius:
-                    BorderRadius.vertical(top: Radius.circular(35)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(35)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,102 +527,32 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text('Verifikasi Kompen',
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: _darkV)),
-                            ),
-                            if (menunggu > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _redV,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '$menunggu Menunggu TTD',
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text('$total form ditemukan',
-                            style: const TextStyle(
-                                fontSize: 12, color: _greyV)),
-                        const SizedBox(height: 14),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _cardBorderV),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (v) =>
-                                setState(() => _searchQuery = v),
-                            style: const TextStyle(
-                                fontSize: 13, color: _darkV),
-                            decoration: InputDecoration(
-                              hintText:
-                                  'Cari nama mahasiswa atau NIM...',
-                              hintStyle: const TextStyle(
-                                  fontSize: 13, color: _greyV),
-                              prefixIcon: const Icon(Icons.search,
-                                  color: _greyV, size: 20),
-                              suffixIcon: _searchQuery.isNotEmpty
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        _searchController.clear();
-                                        setState(
-                                            () => _searchQuery = '');
-                                      },
-                                      child: const Icon(Icons.close,
-                                          color: _greyV, size: 18),
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
+                        const Text('Verifikasi Kompen',
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: _darkV)),
+                        const SizedBox(height: 4),
+                        const Text('Form penyelesaian kompen yang perlu ditandatangani',
+                            style: TextStyle(fontSize: 13, color: _greyV)),
+                        const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
                               child: _buildDropdown(
                                 value: _selectedSemester,
                                 items: _semesterOptions,
-                                onChanged: (val) => setState(
-                                    () => _selectedSemester = val!),
+                                onChanged: (val) =>
+                                    setState(() => _selectedSemester = val!),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: _buildDropdown(
                                 value: _selectedStatus,
                                 items: _statusOptions,
-                                onChanged: (val) => setState(
-                                    () => _selectedStatus = val!),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildDropdown(
-                                value: _selectedUrutan,
-                                items: _urutanOptions,
-                                onChanged: (val) => setState(
-                                    () => _selectedUrutan = val!),
+                                onChanged: (val) =>
+                                    setState(() => _selectedStatus = val!),
                               ),
                             ),
                           ],
@@ -670,23 +564,19 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                   Expanded(
                     child: _isLoading
                         ? const Center(
-                            child: CircularProgressIndicator(
-                                color: _redV))
+                            child: CircularProgressIndicator(color: _redV))
                         : _filteredList.isEmpty
                             ? _buildEmptyState()
                             : RefreshIndicator(
                                 color: _redV,
                                 onRefresh: _loadData,
                                 child: ListView.builder(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      16, 0, 16, 24),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 0, 16, 24),
                                   itemCount: _filteredList.length,
-                                  itemBuilder: (context, index) =>
-                                      Padding(
-                                    padding: const EdgeInsets.only(
-                                        bottom: 12),
-                                    child: _buildCard(
-                                        _filteredList[index]),
+                                  itemBuilder: (context, index) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _buildCard(_filteredList[index]),
                                   ),
                                 ),
                               ),
@@ -697,7 +587,8 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
           ),
           AppBottomNavAdmin(
             activeTab: NavTabAdmin.verifikasi,
-            onTap: (tab) => NavAdmin.handleBottomNav(context, tab, NavTabAdmin.verifikasi),
+            onTap: (tab) =>
+                NavAdmin.handleBottomNav(context, tab, NavTabAdmin.verifikasi),
           ),
         ],
       ),
@@ -740,20 +631,50 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(p.namaMatkul ?? '-',
-                  style: const TextStyle(fontSize: 12, color: _darkV)),
-              Text('Sem. ${p.semester}',
-                  style: const TextStyle(fontSize: 11, color: _greyV)),
+              Row(children: [
+                const Icon(Icons.menu_book_outlined, size: 13, color: _greyV),
+                const SizedBox(width: 4),
+                Text(p.deskripsiTugas ?? '-',
+                    style: const TextStyle(fontSize: 12, color: _darkV)),
+              ]),
+              Row(children: [
+                const Icon(Icons.school_outlined, size: 13, color: _greyV),
+                const SizedBox(width: 4),
+                Text('Semester ${p.semester ?? '-'}',
+                    style: const TextStyle(fontSize: 11, color: _greyV)),
+              ]),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
+          Row(children: [
+            const Icon(Icons.location_on_outlined, size: 13, color: _greyV),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(p.namaLokasi ?? '-',
+                  style: const TextStyle(fontSize: 12, color: _darkV),
+                  overflow: TextOverflow.ellipsis),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          Row(children: [
+            const Icon(Icons.near_me_outlined, size: 13, color: _greyV),
+            const SizedBox(width: 4),
+            Text('${p.latitude}, ${p.longitude}',
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: _darkV)),
+          ]),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: nunggu ? const Color(0xFFFFF3CD) : const Color(0xFFD1FAE5),
+                  color: nunggu
+                      ? const Color(0xFFFFF3CD)
+                      : const Color(0xFFD1FAE5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -761,14 +682,17 @@ class _AdminVerifikasiScreenState extends State<AdminVerifikasiScreen> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: nunggu ? const Color(0xFF856404) : const Color(0xFF065F46),
+                    color: nunggu
+                        ? const Color(0xFF856404)
+                        : const Color(0xFF065F46),
                   ),
                 ),
               ),
               GestureDetector(
                 onTap: () => _showFormVerifikasi(p),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: _redV.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),

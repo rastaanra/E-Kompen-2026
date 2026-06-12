@@ -90,7 +90,16 @@ class PengajuanKompen {
       namaMahasiswa: json['nama_mahasiswa'],
       nim: json['nim'],
       namaMatkul: json['nama_matkul'],
-      kodeTtdTujuan: json['kode_ttd_tujuan'],
+      kodeTtdTujuan: json['kode_ttd_tujuan'] ?? (() {
+        final ttdList = json['ttd_digital'] as List?;
+        if (ttdList == null) return null;
+        try {
+          return ttdList.firstWhere(
+            (t) => (t['kode_ttd'] as String).startsWith('DOS-') ||
+                  (t['kode_ttd'] as String).startsWith('ADM-'),
+          )['kode_ttd'] as String?;
+        } catch (_) { return null; }
+      })(),
       kodeTtdKaprodi: json['kode_ttd_kaprodi'],
       namaKaprodi: json['nama_kaprodi'],
       nipKaprodi: json['nip_kaprodi'],

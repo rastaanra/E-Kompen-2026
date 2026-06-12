@@ -11,6 +11,7 @@ use App\Models\TtdDigital;
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\MataKuliah;
+use App\Models\Notifikasi;
 
 class PengajuanKompenController extends Controller
 {
@@ -115,6 +116,46 @@ class PengajuanKompenController extends Controller
             'tanggal_pertemuan' => $request->tanggal_pertemuan,
             'total_jam_kompen'  => $request->total_jam_kompen,
             'status'            => 'pending',
+        ]);
+
+        $idPenggunaTujuan = null;
+        if (!$idPenggunaTujuan) {
+            return response()->json([
+                'success'=>false,
+                'message'=>'Tujuan tidak ditemukan'
+            ]);
+        }
+
+        if ($request->tujuan === 'dosen') {
+            $dosen = Dosen::find($request->id_dosen);
+
+            if ($dosen) {
+                $idPenggunaTujuan = $dosen->id_pengguna;
+            }
+        } else {
+            $admin = Admin::find($request->id_admin);
+
+            if ($admin) {
+                $idPenggunaTujuan = $admin->id_pengguna;
+            }
+        }
+
+        $mahasiswa = Mahasiswa::find($request->id_mahasiswa);
+        if (!$mahasiswa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mahasiswa tidak ditemukan'
+            ],404);
+        }
+
+        Notifikasi::create([
+            'id_pengajuan'  => $data->id_pengajuan,
+            'id_pengguna'   => $idPenggunaTujuan,
+            'judul'         => 'Pengajuan Kompen Baru',
+            'pesan'         => $mahasiswa->nama_lengkap .
+                ' baru saja mengajukan kompen. Yuk tinjau pengajuannya sekarang.',
+            'waktu_kirim'   => now(),
+            'sudah_dilihat' => 0,
         ]);
 
         return response()->json([
@@ -504,7 +545,39 @@ class PengajuanKompenController extends Controller
             : 'menunggu_ttd_admin';
 
         $item->update(['status' => $newStatus]);
+        $idPenggunaTujuan = null;
+        if ($item->tujuan === 'dosen') {
 
+            $dosen = Dosen::find($item->id_dosen);
+
+            if ($dosen) {
+                $idPenggunaTujuan = $dosen->id_pengguna;
+            }
+
+        } else {
+
+            $admin = Admin::find($item->id_admin);
+
+            if ($admin) {
+                $idPenggunaTujuan = $admin->id_pengguna;
+            }
+        }
+
+        $mahasiswa = Mahasiswa::find($item->id_mahasiswa);
+
+        Notifikasi::create([
+            'id_pengajuan'  => $item->id_pengajuan,
+            'id_pengguna'   => $idPenggunaTujuan,
+            'judul'         => 'Pengajuan Menunggu Tanda Tangan ',
+            'pesan'         =>
+                'Penyelesaian kompen dari ' .
+                $mahasiswa->nama_lengkap .
+                ' untuk mata kuliah ' .
+                $item->mataKuliah->nama_matkul .
+                ' sudah siap ditinjau dan ditandatangani.',
+            'waktu_kirim'   => now(),
+            'sudah_dilihat' => 0,
+        ]);
         return response()->json([
             'success' => true,
             'message' => 'Pengajuan TTD berhasil dikirim',
@@ -535,6 +608,21 @@ class PengajuanKompenController extends Controller
         }
 
         $item->update(['status' => 'sedang_dikerjakan']);
+        $mahasiswa = Mahasiswa::find($item->id_mahasiswa);
+
+        if ($mahasiswa) {
+            Notifikasi::create([
+                'id_pengajuan'  => $item->id_pengajuan,
+                'id_pengguna'   => $mahasiswa->id_pengguna,
+                'judul'         => 'Pengajuan Disetujui',
+                'pesan'         =>
+                    'Kabar baik! Pengajuan kompen untuk mata kuliah ' .
+                    $item->mataKuliah->nama_matkul .
+                    ' telah disetujui. Yuk lanjutkan dengan melengkapi penyelesaian kompen agar proses dapat segera diproses.',
+                'waktu_kirim'   => now(),
+                'sudah_dilihat' => 0,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -543,57 +631,86 @@ class PengajuanKompenController extends Controller
         ]);
     }
 
-public function ttdAdmin($id)
-{
-    $item = PengajuanKompen::find($id);
+    public function ttdAdmin($id)
+    {
+        $item = PengajuanKompen::find($id);
 
-    if (!$item) {
+        if (!$item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengajuan tidak ditemukan'
+            ], 404);
+        }
+
+        if ($item->status !== 'menunggu_ttd_admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status tidak valid'
+            ], 400);
+        }
+
+        // Ambil mahasiswa
+        $mahasiswa = Mahasiswa::find($item->id_mahasiswa);
+
+        if (!$mahasiswa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mahasiswa tidak ditemukan'
+            ], 404);
+        }
+
+        // Generate kode TTD
+        $kode = 'ADM-' . $mahasiswa->nim . '-' . $item->id_pengajuan;
+
+        // Simpan TTD Digital
+        $ttd = TtdDigital::create([
+            'id_pengajuan' => $item->id_pengajuan,
+            'role_ttd'     => 'admin',
+            'kode_ttd'     => $kode,
+            'waktu_ttd'    => now(),
+            'status_ttd'   => 'sudah',
+        ]);
+
+        // Update status pengajuan
+        $item->update([
+            'status' => 'menunggu_ttd_kaprodi'
+        ]);
+        // Notif ke mahasiswa
+        Notifikasi::create([
+            'id_pengajuan'  => $item->id_pengajuan,
+            'id_pengguna'   => $mahasiswa->id_pengguna,
+            'judul'         => 'Tanda Tangan Admin',
+            'pesan'         =>
+                'Wahh! Pengajuan kompen untuk mata kuliah ' .
+                $item->mataKuliah->nama_matkul .
+                ' telah ditandatangani oleh Admin. Selanjutnya pengajuan akan diteruskan ke Kaprodi untuk proses persetujuan akhir.',
+            'waktu_kirim'   => now(),
+            'sudah_dilihat' => 0,
+        ]);
+        $kaprodi = Dosen::where('is_kaprodi', 1)->first();
+
+        if ($kaprodi) {
+            Notifikasi::create([
+                'id_pengajuan'  => $item->id_pengajuan,
+                'id_pengguna'   => $kaprodi->id_pengguna,
+                'judul'         => 'Menunggu Persetujuan Kaprodi',
+                'pesan'         =>
+                    'Terdapat pengajuan kompen mata kuliah ' .
+                    $item->mataKuliah->nama_matkul .
+                    ' dari mahasiswa ' .
+                    $mahasiswa->nama_lengkap .
+                    ' yang menunggu tanda tangan Kaprodi.',
+                'waktu_kirim'   => now(),
+                'sudah_dilihat' => 0,
+            ]);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Pengajuan tidak ditemukan'
-        ], 404);
+            'success' => true,
+            'message' => 'TTD Admin berhasil',
+            'kode_ttd' => $kode,
+            'ttd' => $ttd,
+            'data' => $item
+        ]);
     }
-
-    if ($item->status !== 'menunggu_ttd_admin') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Status tidak valid'
-        ], 400);
-    }
-
-    // Ambil mahasiswa
-    $mahasiswa = Mahasiswa::find($item->id_mahasiswa);
-
-    if (!$mahasiswa) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Mahasiswa tidak ditemukan'
-        ], 404);
-    }
-
-    // Generate kode TTD
-    $kode = 'ADM-' . $mahasiswa->nim . '-' . $item->id_pengajuan;
-
-    // Simpan TTD Digital
-    $ttd = TtdDigital::create([
-        'id_pengajuan' => $item->id_pengajuan,
-        'role_ttd'     => 'admin',
-        'kode_ttd'     => $kode,
-        'waktu_ttd'    => now(),
-        'status_ttd'   => 'sudah',
-    ]);
-
-    // Update status pengajuan
-    $item->update([
-        'status' => 'menunggu_ttd_kaprodi'
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'TTD Admin berhasil',
-        'kode_ttd' => $kode,
-        'ttd' => $ttd,
-        'data' => $item
-    ]);
-}
 }

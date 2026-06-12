@@ -22,20 +22,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
- @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = context.read<MahasiswaProvider>();
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final provider = context.read<MahasiswaProvider>();
+    final idMahasiswa = await SessionManager.getIdMahasiswa();
 
-      final idMahasiswa = await SessionManager.getIdMahasiswa();
-
-      if (idMahasiswa != null) {
-        await provider.getHomeData(idMahasiswa);
-      }
-    });
-  }
+    if (idMahasiswa != null) {
+      await provider.getHomeData(idMahasiswa);
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -86,18 +85,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           // List tagihan per matkul
                           Consumer<MahasiswaProvider>(
-                          builder: (context, provider, _) {
-
-                            return Column(
-                              children: provider.homeData.map((t) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildTagihanCard(t),
-                                );
-                              }).toList(),
-                            );
-                          },
-                        ),
+                            builder: (context, provider, _) {
+                              return Column(
+                                children: provider.homeData.map((t) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _buildTagihanCard(t),
+                                  );
+                                }).toList(),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -118,45 +116,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Greeting + ilustrasi dokumen
   Widget _buildGreetingCard() {
-    // TODO: ganti nama & NIM dari provider.mahasiswa
-    return Consumer<MahasiswaProvider>(
-      builder: (context, provider, _) {
-        final nama = provider.mahasiswa?.nama ?? 'Mahasiswa';
-        final nim = provider.mahasiswa?.nim ?? '-';
+  return FutureBuilder(
+    future: Future.wait([
+      SessionManager.getNamaLengkap(),
+      SessionManager.getIdMahasiswa().then((id) => id?.toString() ?? '-'),
+    ]),
+    builder: (context, snapshot) {
+      final nama = snapshot.data?[0] ?? 'Mahasiswa';
+      final nim = snapshot.data?[1] ?? '-';
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Halo, $nama!',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 22,
-                        color: _textDark,
-                      ),
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Halo, $nama!',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 22,
+                      color: _textDark,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Mahasiswa',
-                      style: const TextStyle(fontSize: 14, color: _textGrey),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Mahasiswa',
+                    style: const TextStyle(fontSize: 14, color: _textGrey),
+                  ),
+                ],
               ),
-              _buildDocIllustration(),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+            _buildDocIllustration(),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   // Ilustrasi dokumen di pojok kanan greeting
   Widget _buildDocIllustration() {
@@ -240,11 +241,10 @@ class _HomeScreenState extends State<HomeScreen> {
         int totalSelesai = 0;
 
         for (var item in provider.homeData) {
-          totalSisa += (item['sisa_jam'] as int);
-          totalSelesai += int.tryParse(
-  item['jam_selesai']?.toString() ?? '0',
-) ?? 0;
+          totalSisa += int.tryParse(item['sisa_jam'].toString()) ?? 0;
+          totalSelesai += int.tryParse(item['jam_selesai'].toString()) ?? 0;
         }
+
         return Row(
           children: [
             Expanded(
@@ -347,8 +347,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Card tagihan per mata kuliah
   Widget _buildTagihanCard(Map<String, dynamic> t) {
-    final int sisaJam = t['sisa_jam'];
-    final int totalJam = t['total_jam'];
+final int sisaJam = int.tryParse(t['sisa_jam'].toString()) ?? 0;
+final int totalJam = int.tryParse(t['total_jam'].toString()) ?? 0;
     final String status = t['status'];
     final double progress = totalJam > 0
         ? ((totalJam - sisaJam) / totalJam).clamp(0.0, 1.0)
@@ -390,11 +390,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        const Icon(Icons.school_outlined,
-                            size: 12, color: _textGrey),
+                        const Icon(Icons.school_outlined, size: 12, color: _textGrey),
                         const SizedBox(width: 4),
+                        Text(
+                          t['nama_matkul'] != null ? '' : '',  // ini placeholder kosong
+                        ),
                       ],
                     ),
+
                   ],
                 ),
               ),

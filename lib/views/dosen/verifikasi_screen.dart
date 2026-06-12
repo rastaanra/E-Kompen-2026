@@ -22,9 +22,9 @@ class DosenVerifikasiScreen extends StatefulWidget {
 }
 
 class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
-    String namaKaprodi = '';
-    String nipKaprodi = '';
-    String? _nipDosen;
+  String namaKaprodi = '';
+  String nipKaprodi = '';
+  String? _nipDosen;
 
   String _selectedSemester = 'Semua Semester';
   String _selectedStatus = 'Semua Status';
@@ -47,7 +47,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
   Future<void> _loadData() async {
     try {
       final idDosen = await SessionManager.getIdDosen();
-      
+
       if (idDosen == null) {
         setState(() {
           _isLoading = false;
@@ -61,9 +61,9 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
         _listPengajuan = data;
         _isLoading = false;
         if (kaprodi != null) {
-        namaKaprodi = kaprodi['nama'];
-        nipKaprodi = kaprodi['nip'];
-    }
+          namaKaprodi = kaprodi['nama'];
+          nipKaprodi = kaprodi['nip'];
+        }
       });
     } catch (e) {
       print(e);
@@ -77,14 +77,13 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
   ];
 
   final List<String> _statusOptions = <String>[
-    'Semua Status', 'Menunggu TTD', 'Sudah TTD',
+    'Semua Status', 
+    'Menunggu TTD', 
+    'Sudah TTD',
   ];
-
-
 
   List<PengajuanKompen> get _filteredList {
     final filtered = _listPengajuan.where((p) {
-
       final semesterText = 'Semester ${p.semester}';
 
       final matchSemester =
@@ -94,13 +93,28 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
       final matchStatus =
           _selectedStatus == 'Semua Status' ||
           (_selectedStatus == 'Menunggu TTD' && p.status == 'menunggu_ttd_dosen') ||
-          (_selectedStatus == 'Sudah TTD' && 
+          (_selectedStatus == 'Sudah TTD' &&
               ['menunggu_ttd_admin', 'menunggu_ttd_kaprodi', 'selesai'].contains(p.status));
 
       return matchSemester && matchStatus;
     }).toList();
 
     return filtered;
+  }
+
+  String _formatTanggal(DateTime? dt) {
+    if (dt == null) return '-';
+    const bulan = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return '${dt.day} ${bulan[dt.month]} ${dt.year}';
+  }
+
+  String _jamTerbilang(int jam) {
+    const terbilang = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh'];
+    if (jam >= 1 && jam <= 10) return terbilang[jam];
+    return '$jam';
   }
 
   void _showFormVerifikasi(PengajuanKompen p) {
@@ -112,10 +126,9 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        bool sudahTTD = [
-          'menunggu_ttd_kaprodi',
-          'selesai'
-        ].contains(p.status);
+        bool sudahTTD = p.status != 'menunggu_ttd_dosen';
+        String qrData = p.kodeTtdTujuan ?? p.idPengajuan.toString();
+
         return StatefulBuilder(
           builder: (ctx, setLocal) => DraggableScrollableSheet(
             expand: false,
@@ -139,10 +152,11 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Header institusi
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -194,12 +208,14 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
+
+                        // Judul berita acara
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5EFE6),
+                            color: _creamV,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Center(
@@ -211,23 +227,17 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                                     letterSpacing: 1)),
                           ),
                         ),
+                        const SizedBox(height: 14),
 
                         _buildFormRow('Nama Dosen', p.namaTujuan ?? '-'),
-                        _buildFormRow(
-                          'NIP',
-                          _nipDosen ?? '-',
-                        ),
-                        const SizedBox(height: 12),
+                        _buildFormRow('NIP', _nipDosen ?? '-'),
+                        const SizedBox(height: 8),
                         const Text(
                           'Memberikan rekomendasi kompensasi kepada:',
                           style: TextStyle(fontSize: 12, color: _darkV),
                         ),
                         const SizedBox(height: 8),
-
-                        _buildFormRow(
-                          'Nama Mahasiswa',
-                          p.namaMahasiswa ?? '-',
-                        ),
+                        _buildFormRow('Nama Mahasiswa', p.namaMahasiswa ?? '-'),
                         _buildFormRow('NIM', p.nim ?? '-'),
                         _buildFormRow('Semester', p.semester),
                         _buildFormRow('Mata Kuliah', p.namaMatkul ?? '-'),
@@ -236,19 +246,26 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                           'Jumlah Jam',
                           '${p.totalJamKompen ?? 0} (${_jamTerbilang(p.totalJamKompen ?? 0)}) Jam',
                         ),
+                        _buildFormRow('Tanggal', _formatTanggal(p.tanggalPertemuan)),
                         const SizedBox(height: 16),
 
-                        Text('Malang, ${p.tanggalPertemuan?.toString() ?? '-'}', style: const TextStyle(fontSize: 12, color: _darkV)),
+                        Text(
+                          'Malang, ${_formatTanggal(p.tanggalPertemuan)}',
+                          style: const TextStyle(fontSize: 12, color: _darkV),
+                        ),
                         const SizedBox(height: 16),
 
+                        // Dua kolom TTD: dosen (kiri) + kaprodi (kanan)
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Kolom dosen
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Yang memberikan rekomendasi,', style: TextStyle(fontSize: 11, color: _darkV)),
+                                  const Text('Yang memberikan rekomendasi,',
+                                      style: TextStyle(fontSize: 11, color: _darkV)),
                                   const SizedBox(height: 8),
                                   Container(
                                     height: 110,
@@ -256,43 +273,44 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                                     decoration: BoxDecoration(
                                       border: Border.all(color: Colors.black12),
                                       borderRadius: BorderRadius.circular(6),
+                                      color: sudahTTD ? Colors.green[50] : null,
                                     ),
                                     child: Center(
                                       child: sudahTTD
                                           ? Column(
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                      QrImageView(
-                                        data: p.kodeTtdTujuan ?? '',
-                                        version: QrVersions.auto,
-                                        size: 100,
-                                      ),
-
-                                    ],
+                                                QrImageView(
+                                                  data: qrData,
+                                                  version: QrVersions.auto,
+                                                  size: 85,
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Icon(Icons.check_circle_outline,
+                                                    color: Colors.green[600], size: 14),
+                                              ],
                                             )
-                                          : Text('Belum\nditandatangani', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, color: _greyV)),
+                                          : const Text('Belum\nditandatangani',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(fontSize: 9, color: _greyV)),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     p.namaTujuan ?? '-',
                                     style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: _darkV,
-                                    ),
+                                        fontSize: 10, fontWeight: FontWeight.w700, color: _darkV),
                                   ),
                                   Text(
-                                    _nipDosen ?? '-',
-                                    style: const TextStyle(
-                                    fontSize: 9,
-                                    color: _greyV,
-                                    ),
+                                    'NIP: ${_nipDosen ?? '-'}',
+                                    style: const TextStyle(fontSize: 9, color: _greyV),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 16),
+                            
+                            // ── BOX TTD KAPRODI (PERUBAHAN DISINI) ───────────
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,29 +324,34 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                                     decoration: BoxDecoration(
                                       border: Border.all(color: Colors.black12),
                                       borderRadius: BorderRadius.circular(6),
+                                      color: p.status == 'selesai' ? Colors.green[50] : null,
                                     ),
                                     child: Center(
-                                      child: Text('Belum\nditandatangani',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                              fontSize: 9, color: _greyV)),
+                                      child: p.status == 'selesai'
+                                          ? Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                QrImageView(
+                                                  data: p.kodeTtdKaprodi ?? p.idPengajuan.toString(),
+                                                  version: QrVersions.auto,
+                                                  size: 85,
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Icon(Icons.check_circle_outline,
+                                                    color: Colors.green[600], size: 14),
+                                              ],
+                                            )
+                                          : const Text('Belum\nditandatangani',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(fontSize: 9, color: _greyV)),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  Text(
-                                  namaKaprodi,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: _darkV,
-                                  ),),
-                                 Text(
-                                  'NIP. $nipKaprodi',
-                                  style: const TextStyle(
-                                    fontSize: 9,
-                                    color: _greyV,
-                                  ),
-                                ),
+                                  Text(namaKaprodi,
+                                      style: const TextStyle(
+                                          fontSize: 10, fontWeight: FontWeight.w700, color: _darkV)),
+                                  Text('NIP. $nipKaprodi',
+                                      style: const TextStyle(fontSize: 9, color: _greyV)),
                                 ],
                               ),
                             ),
@@ -336,6 +359,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                         ),
                         const SizedBox(height: 24),
 
+                        // Tutup + Tandatangani
                         Row(
                           children: [
                             Expanded(
@@ -354,35 +378,35 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: sudahTTD
-                            ? null
-                            : () async {
-                                final success =
-                              await PengajuanService().ttdDosen(p.idPengajuan);
-                              if (success) {
-                                await _loadData(); // refresh data terbaru
-
-                                setLocal(() => sudahTTD = true);
-
-                                if (mounted) {
-                                  Navigator.pop(ctx);
-                                }
-
-                                      Navigator.pop(ctx);
-                                    }
-                                  },
-                                      icon: Icon(Icons.check,
-                                          size: 16,
-                                          color: sudahTTD ? Colors.grey[500] : Colors.white),
-                                      label: Text('Tandatangani',
-                                          style: TextStyle(
-                                              color: sudahTTD ? Colors.grey[500] : Colors.white)),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12)),
-                                        elevation: 0,
-                                      ),
+                                    ? null
+                                    : () async {
+                                        final success = await PengajuanService().ttdDosen(p.idPengajuan);
+                                        if (success) {
+                                          await _loadData();
+                                          if (!mounted) return;
+                                          setLocal(() => sudahTTD = true);
+                                          Navigator.pop(ctx);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Berhasil ditandatangani'),
+                                              backgroundColor: _redV,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                icon: Icon(Icons.draw_outlined,
+                                    size: 16,
+                                    color: sudahTTD ? Colors.grey[500] : Colors.white),
+                                label: Text(
+                                  sudahTTD ? 'Sudah TTD' : 'Tandatangani',
+                                  style: TextStyle(color: sudahTTD ? Colors.grey[500] : Colors.white),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: sudahTTD ? Colors.grey[200] : _redV,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  elevation: 0,
+                                ),
                               ),
                             ),
                           ],
@@ -415,17 +439,12 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
           ),
           const Text(': ', style: TextStyle(fontSize: 12, color: _darkV)),
           Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _darkV)),
+            child: Text(value,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _darkV)),
           ),
         ],
       ),
     );
-  }
-
-  String _jamTerbilang(int jam) {
-    const terbilang = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh'];
-    if (jam <= 10) return terbilang[jam];
-    return '$jam';
   }
 
   @override
@@ -449,9 +468,11 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Verifikasi Kompen', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _darkV)),
+                        const Text('Verifikasi Kompen',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _darkV)),
                         const SizedBox(height: 4),
-                        const Text('Form penyelesaian kompen yang perlu ditandatangani', style: TextStyle(fontSize: 13, color: _greyV)),
+                        const Text('Form penyelesaian kompen yang perlu ditandatangani',
+                            style: TextStyle(fontSize: 13, color: _greyV)),
                         const SizedBox(height: 16),
                         Row(
                           children: [
@@ -477,16 +498,18 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                     ),
                   ),
                   Expanded(
-                    child: _filteredList.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                            itemCount: _filteredList.length,
-                            itemBuilder: (context, index) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCard(_filteredList[index]),
-                            ),
-                          ),
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator(color: _redV))
+                        : _filteredList.isEmpty
+                            ? _buildEmptyState()
+                            : ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                                itemCount: _filteredList.length,
+                                itemBuilder: (context, index) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCard(_filteredList[index]),
+                                ),
+                              ),
                   ),
                 ],
               ),
@@ -549,52 +572,36 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nama + tanggal
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(p.namaMahasiswa ?? '-',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: _darkV)),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _darkV)),
               Text(p.tanggalPertemuan?.toString().split(' ')[0] ?? '-',
                   style: const TextStyle(fontSize: 10, color: _greyV)),
             ],
           ),
           const SizedBox(height: 2),
-          Text('NIM: ${p.nim}',
-              style: const TextStyle(fontSize: 11, color: _greyV)),
+          Text('NIM: ${p.nim}', style: const TextStyle(fontSize: 11, color: _greyV)),
           const SizedBox(height: 10),
-
-          // Matkul + semester
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(children: [
-                const Icon(Icons.menu_book_outlined,
-                    size: 13, color: _greyV),
+                const Icon(Icons.menu_book_outlined, size: 13, color: _greyV),
                 const SizedBox(width: 4),
-                Text(p.deskripsiTugas ?? '-',
-                    style:
-                        const TextStyle(fontSize: 12, color: _darkV)),
+                Text(p.deskripsiTugas ?? '-', style: const TextStyle(fontSize: 12, color: _darkV)),
               ]),
               Row(children: [
-                const Icon(Icons.school_outlined,
-                    size: 13, color: _greyV),
+                const Icon(Icons.school_outlined, size: 13, color: _greyV),
                 const SizedBox(width: 4),
-                Text(p.semester,
-                    style:
-                        const TextStyle(fontSize: 11, color: _greyV)),
+                Text('Semester ${p.semester ?? '-'}', style: const TextStyle(fontSize: 11, color: _greyV)),
               ]),
             ],
           ),
           const SizedBox(height: 6),
-
-          // Nama Lokasi
           Row(children: [
-            const Icon(Icons.location_on_outlined ,
-                size: 13, color: _greyV),
+            const Icon(Icons.location_on_outlined, size: 13, color: _greyV),
             const SizedBox(width: 4),
             Expanded(
               child: Text(p.namaLokasi ?? '-',
@@ -603,21 +610,13 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
             ),
           ]),
           const SizedBox(height: 6),
-
-          // Titik koordinat
           Row(children: [
-            const Icon(Icons.near_me_outlined,
-                size: 13, color: _greyV),
+            const Icon(Icons.near_me_outlined, size: 13, color: _greyV),
             const SizedBox(width: 4),
             Text('${p.latitude}, ${p.longitude}',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: _darkV)),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _darkV)),
           ]),
           const SizedBox(height: 10),
-
-          // Status + Detail
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -625,8 +624,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
               GestureDetector(
                 onTap: () => _showFormVerifikasi(p),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: _redV.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
@@ -634,10 +632,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
                   child: const Row(
                     children: [
                       Text('Detail',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: _redV)),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _redV)),
                       SizedBox(width: 2),
                       Icon(Icons.chevron_right, size: 14, color: _redV),
                     ],
@@ -657,9 +652,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: belumTtdDosen
-            ? const Color(0xFFFFF3CD) // Kuning
-            : const Color(0xFFD1FAE5), // Hijau
+        color: belumTtdDosen ? const Color(0xFFFFF3CD) : const Color(0xFFD1FAE5),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -667,9 +660,7 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,
-          color: belumTtdDosen
-              ? const Color(0xFF856404)
-              : const Color(0xFF065F46),
+          color: belumTtdDosen ? const Color(0xFF856404) : const Color(0xFF065F46),
         ),
       ),
     );
@@ -682,9 +673,11 @@ class _DosenVerifikasiScreenState extends State<DosenVerifikasiScreen> {
         children: [
           Icon(Icons.draw_outlined, size: 48, color: _greyV.withOpacity(0.5)),
           const SizedBox(height: 12),
-          const Text('Tidak ada form penyelesaian', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _greyV)),
+          const Text('Tidak ada form penyelesaian',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _greyV)),
           const SizedBox(height: 4),
-          const Text('Belum ada form yang sesuai filter', style: TextStyle(fontSize: 12, color: _greyV)),
+          const Text('Belum ada form yang sesuai filter',
+              style: TextStyle(fontSize: 12, color: _greyV)),
         ],
       ),
     );

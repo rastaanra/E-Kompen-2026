@@ -11,6 +11,10 @@ import '../../services/auth_service.dart';
 import '../../providers/auth_provider.dart';
 import '../login/login_screen.dart';
 
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
+import 'bantuan_faq_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -481,7 +485,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ]),
           ),
           GestureDetector(
-            onTap: _showEditProfileSheet,
+            onTap: () async {
+              final updated = await Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              if (updated == true) _loadUser();
+            },
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -547,12 +554,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: Icons.lock_outline,
           label: 'Ubah Password',
           trailing: const Icon(Icons.chevron_right, color: _textGrey, size: 20),
-          onTap: _showChangePasswordDialog,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
         ),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
         _buildSettingsTile(icon: Icons.notifications_outlined, label: 'Notifikasi', trailing: _buildToggle()),
         const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0EBE0), indent: 16, endIndent: 16),
-        _buildSettingsTile(icon: Icons.help_outline, label: 'Bantuan & FAQ', trailing: const Icon(Icons.chevron_right, color: _textGrey, size: 20)),
+        _buildSettingsTile(
+          icon: Icons.help_outline,
+          label: 'Bantuan & FAQ',
+          trailing: const Icon(Icons.chevron_right, color: _textGrey, size: 20),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BantuanFaqScreen())),
+        ),
       ]),
     );
   }

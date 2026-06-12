@@ -217,8 +217,6 @@ Future<void> _loadAdmin() async {
 
     final List<String> fieldKurang = [];
     if (p.totalJamKompen == null) fieldKurang.add('Durasi jam');
-    if (p.deskripsiTugas == null || p.deskripsiTugas!.isEmpty)
-      fieldKurang.add('Deskripsi');
     if (p.namaLokasi != null && p.namaLokasi!.isNotEmpty)
       Row(
         children: [
@@ -476,6 +474,10 @@ Future<void> _loadAdmin() async {
         builder: (ctx, setSheetState) => Padding(
           padding:
               EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+          ),
           child: Container(
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -515,8 +517,8 @@ Future<void> _loadAdmin() async {
                     Consumer<PengajuanProvider>(
                       builder: (context, provider, child) {
                         return _buildDropdown(
-                          hint: 'Cari mata kuliah...',
-                          icon: Icons.search,
+                          hint: 'Pilih mata kuliah...',
+                          icon: Icons.book_outlined,
                           value: _selectedMK,
                           items: provider.mataKuliah
                               .map((mk) => mk.namaMk)
@@ -530,22 +532,22 @@ Future<void> _loadAdmin() async {
                     const SizedBox(height: 14),
 
                     // ── Tujuan Pengajuan
-                    _fieldLabel('Tujuan Pengajuan'),
-                    const SizedBox(height: 6),
-                    _buildDropdown(
-                      hint: 'Pilih tujuan pengajuan',
-                      icon: Icons.send_outlined,
-                      value: _selectedTujuan,
-                      items: const ['Dosen', 'Admin'],
-                      onChanged: (v) {
-                        setSheetState(() {
-                          _selectedTujuan = v;
-                          _selectedDosen = null; // reset saat ganti tujuan
-                        });
-                      },
-                      errorMsg: 'Tujuan pengajuan wajib dipilih',
-                    ),
-                    const SizedBox(height: 14),
+_fieldLabel('Tujuan Pengajuan'),
+const SizedBox(height: 8),
+_buildSelectionCards(
+  selectedValue: _selectedTujuan,
+  options: const [
+    {'value': 'Dosen', 'label': 'Dosen', 'icon': Icons.person_outline},
+    {'value': 'Admin', 'label': 'Admin', 'icon': Icons.admin_panel_settings_outlined},
+  ],
+  onSelected: (v) {
+    setSheetState(() {
+      _selectedTujuan = v;
+      _selectedDosen = null; // reset saat ganti tujuan
+    });
+  },
+),
+const SizedBox(height: 14),
 
                     // ── Kondisional: Dosen atau Admin
                     if (_selectedTujuan == 'Dosen') ...[
@@ -705,6 +707,8 @@ Future<void> _loadAdmin() async {
               ),
             ),
           ),
+          ),
+          
         ),
       ),
     );
@@ -1123,7 +1127,7 @@ Future<void> _loadAdmin() async {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: success ? const Color(0xFF1565C0) : _red,
+        backgroundColor: success ? const Color(0xFF2E7D32) : _red,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Text(
@@ -1154,46 +1158,90 @@ Future<void> _loadAdmin() async {
       );
 
   Widget _buildDropdown({
-    required String hint,
-    required IconData icon,
-    required String? value,
-    required List<String> items,
-    required void Function(String?) onChanged,
-    required String errorMsg,
-  }) =>
-      DropdownButtonFormField<String>(
-        value: value,
-        validator: (v) => (v == null || v.isEmpty) ? errorMsg : null,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, size: 18, color: _grey),
-          filled: true,
-          fillColor: _fieldBg,
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _fieldBorder)),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _fieldBorder)),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _red, width: 1.5)),
-          errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.redAccent)),
-        ),
-        hint: Text(hint, style: const TextStyle(fontSize: 13, color: _grey)),
-        items: items
-            .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e,
-                      style: const TextStyle(fontSize: 13, color: _dark)),
-                ))
-            .toList(),
-        icon: const Icon(Icons.keyboard_arrow_down, color: _grey),
+  required String hint,
+  required IconData icon,
+  required String? value,
+  required List<String> items,
+  required void Function(String?) onChanged,
+  required String errorMsg,
+}) {
+  return FormField<String>(
+    initialValue: value,
+    validator: (v) => (v == null || v.isEmpty) ? errorMsg : null,
+    builder: (FormFieldState<String> state) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownMenu<String>(
+            initialSelection: value,
+            // 🟢 UKURAN DIKECILIN: Lebar dikunci pas dengan area Form (Lebar Layar - Padding Sheet)
+            width: MediaQuery.of(context).size.width - 40, 
+            hintText: hint,
+            leadingIcon: Icon(icon, size: 18, color: _grey),
+            trailingIcon: const Icon(Icons.keyboard_arrow_down_rounded, color: _grey),
+            selectedTrailingIcon: const Icon(Icons.keyboard_arrow_up_rounded, color: _grey),
+            menuHeight: 220, // 🟢 MODIFIKASI TINGGI: Biar pop-up tidak kepanjangan & rapi bisa di-scroll
+            textStyle: const TextStyle(fontSize: 13, color: _dark),
+            
+            // Desain bentuk field-nya agar serasi dengan textfield lainnya
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: _fieldBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: state.hasError ? Colors.redAccent : _fieldBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: state.hasError ? Colors.redAccent : _red, width: 1.5),
+              ),
+            ),
+            
+            // Desain dekorasi pop-up menu internal saat terbuka
+            menuStyle: MenuStyle(
+              backgroundColor: WidgetStateProperty.all(Colors.white),
+              surfaceTintColor: WidgetStateProperty.all(Colors.white),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              elevation: WidgetStateProperty.all(6),
+            ),
+            
+            // Isi list item di dalam dropdown-nya
+            dropdownMenuEntries: items.map((String item) {
+              return DropdownMenuEntry<String>(
+                value: item,
+                label: item,
+                style: MenuItemButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  textStyle: const TextStyle(fontSize: 13, color: _dark, fontWeight: FontWeight.w500),
+                ),
+              );
+            }).toList(),
+            
+            onSelected: (String? newValue) {
+              state.didChange(newValue); // Trigger validasi Form
+              onChanged(newValue);       // Lempar data ke fungsi utama
+            },
+          ),
+          
+          // Menampilkan pesan error validasi di bawah field jika belum dipilih
+          if (state.hasError) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                state.errorText ?? '',
+                style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+              ),
+            ),
+          ]
+        ],
       );
+    },
+  );
+}
 
   Widget _buildTextField({
     required String hint,
@@ -1370,6 +1418,58 @@ Future<void> _loadAdmin() async {
           ),
         ),
       );
+
+      Widget _buildSelectionCards({
+  required String? selectedValue,
+  required List<Map<String, dynamic>> options,
+  required Function(String) onSelected,
+}) {
+  return Row(
+    children: options.map((opt) {
+      final isSelected = selectedValue == opt['value'];
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => onSelected(opt['value']),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: isSelected ? _red.withOpacity(0.08) : _fieldBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? _red : _fieldBorder,
+                width: isSelected ? 1.8 : 1,
+              ),
+              boxShadow: isSelected
+                  ? [BoxShadow(color: _red.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))]
+                  : [],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  opt['icon'],
+                  size: 18,
+                  color: isSelected ? _red : _grey,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  opt['label'],
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? _red : _dark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }).toList(),
+  );
+}
 
   String _formatTanggal(DateTime? dt) {
     if (dt == null) return '-';

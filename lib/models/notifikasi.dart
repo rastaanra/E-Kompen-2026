@@ -5,6 +5,7 @@ class Notifikasi {
   final String judul;
   final String pesan;
   final DateTime waktuKirim;
+  final bool sudahDilihat;
 
   Notifikasi({
     required this.idNotifikasi,
@@ -13,6 +14,7 @@ class Notifikasi {
     required this.judul,
     required this.pesan,
     required this.waktuKirim,
+    required this.sudahDilihat,
   });
 
   factory Notifikasi.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,9 @@ class Notifikasi {
       judul: json['judul'],
       pesan: json['pesan'],
       waktuKirim: DateTime.parse(json['waktu_kirim']),
+      sudahDilihat:
+        json['sudah_dilihat'] == 1 ||
+        json['sudah_dilihat'] == true,
     );
   }
 
@@ -34,6 +39,7 @@ class Notifikasi {
       'judul': judul,
       'pesan': pesan,
       'waktu_kirim': waktuKirim.toIso8601String(),
+      'sudah_dilihat': sudahDilihat,
     };
   }
 }
