@@ -10,7 +10,7 @@ Sistem ini mendigitalisasi proses pengajuan kompensasi, validasi,
 pemantauan status, hingga pengelolaan data kompensasi bagi mahasiswa,
 dosen, kaprodi, dan admin.
 
-> 🎓 Dikembangkan sebagai project kelompok Product Based Learning (PBL)
+> Dikembangkan sebagai project kelompok Product Based Learning (PBL)
 > oleh mahasiswa D-IV Sistem Informasi Bisnis Politeknik Negeri Malang.
 >
 > 1. Atha Maulidia
@@ -18,7 +18,7 @@ dosen, kaprodi, dan admin.
 > 3. Rasta Nura Rayani Saputri
 > 4. Sally Savista Anindya
 
-📌 **Status Project**
+ **Status Project**
 
 E-Kompensasi merupakan project akademik yang masih dalam tahap
 pengembangan. Sebagian besar fitur utama telah berhasil
@@ -28,19 +28,19 @@ sepenuhnya optimal dan masih dapat dikembangkan lebih lanjut.
 | PeranFitur Utama |
 | ---------------- |
 
-| 👨‍🎓 **Mahasiswa** | Mengajukan kompensasi, melihat status, mengelola profil, dan melihat riwayat |
+|  **Mahasiswa** | Mengajukan kompensasi, melihat status, mengelola profil, dan melihat riwayat |
 | ------------------- | ---------------------------------------------------------------------------- |
 
-| 👨‍🏫 **Dosen** | Memvalidasi pengajuan, mengonfirmasi pengajuan, dan melakukan tanda tangan digital |
+|  **Dosen** | Memvalidasi pengajuan, mengonfirmasi pengajuan, dan melakukan tanda tangan digital |
 | --------------- | ---------------------------------------------------------------------------------- |
 
-| 👨‍💼 **Kaprodi** | Memvalidasi pengajuan dan melakukan tanda tangan digital |
+|  **Kaprodi** | Memvalidasi pengajuan dan melakukan tanda tangan digital |
 | ----------------- | -------------------------------------------------------- |
 
-| 🧑‍💻 **Admin** | Mengelola pengguna, mahasiswa, dosen, absensi, dan data kompensasi |
+|  **Admin** | Mengelola pengguna, mahasiswa, dosen, absensi, dan data kompensasi |
 | --------------- | ------------------------------------------------------------------ |
 
-## 🛠️ Teknologi yang Digunakan
+##  Teknologi yang Digunakan
 
 **Mobile**
 
@@ -61,7 +61,7 @@ sepenuhnya optimal dan masih dapat dikembangkan lebih lanjut.
 * Figma
   
 
-## 🚀 Menjalankan Project
+##  Menjalankan Project
 
 ### Persyaratan
 
@@ -90,7 +90,7 @@ dan environment sesuai konfigurasi backend sebelum menjalankan aplikasi.
 
 ---
 
-## 📚 Konteks Project
+##  Konteks Project
 
 **Institusi:** Politeknik Negeri Malang
 
