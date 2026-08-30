@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../views/notifikasi/notifikasi_screen.dart';
 
 class AppHeader extends StatelessWidget {
-  const AppHeader({super.key});
+  final bool hasUnreadNotif;
+  final VoidCallback? onNotifTap;
+
+  const AppHeader({
+    super.key,
+    this.hasUnreadNotif = false,
+    this.onNotifTap,
+  });
 
   static const Color _primaryRed = Color(0xFFB71C1C);
 
@@ -9,7 +17,12 @@ class AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: _primaryRed,
-      padding: const EdgeInsets.only(top: 52, left: 20, right: 20, bottom: 20),
+      padding: const EdgeInsets.only(
+        top: 52,
+        left: 20,
+        right: 20,
+        bottom: 20,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -27,26 +40,33 @@ class AppHeader extends StatelessWidget {
               ),
             ],
           ),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 26,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.yellow,
-                    shape: BoxShape.circle,
-                  ),
+
+          InkWell(
+            onTap: onNotifTap,
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 26,
                 ),
-              ),
-            ],
+
+                if (hasUnreadNotif)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.yellow,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

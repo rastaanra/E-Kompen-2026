@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../screens/dosen/home_screen.dart';
-import '../screens/dosen/pengajuan_screen.dart';
-import '../screens/dosen/verifikasi_screen.dart';
-import '../screens/dosen/profile_screen.dart';
+import '../views/dosen/home_screen.dart';
+import '../views/dosen/pengajuan_screen.dart';
+import '../views/dosen/verifikasi_screen.dart';
+import '../views/dosen/profile_screen.dart';
 import '../widgets/dosen/app_bottom_nav_dosen.dart';
+import '../views/login/login_screen.dart';
 
 class NavDosen {
   static void toHome(BuildContext context) {
@@ -33,6 +34,14 @@ class NavDosen {
       MaterialPageRoute(builder: (_) => ProfileDosenScreen()),
     );
   }
+
+  static void toLogin(BuildContext context) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const LoginScreen()),
+    (route) => false,
+  );
+}
 
   static void handleBottomNav(BuildContext context, NavTabDosen tab, NavTabDosen activeTab) {
     if (tab == activeTab) return;
